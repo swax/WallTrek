@@ -10,6 +10,30 @@ namespace WallTrek
         {
             InitializeComponent();
             Directory.CreateDirectory(outputDirectory);
+            Hide();
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                Hide();
+            }
+            base.OnFormClosing(e);
+        }
+
+        private void NotifyIcon_DoubleClick(object sender, EventArgs e)
+        {
+            Show();
+            WindowState = FormWindowState.Normal;
+            Activate();
+        }
+
+        private void QuitMenuItem_Click(object sender, EventArgs e)
+        {
+            notifyIcon.Visible = false;
+            Application.Exit();
         }
 
         private void CancelButton_Click(object sender, EventArgs e)

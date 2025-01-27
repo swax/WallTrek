@@ -28,6 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
+            notifyIcon = new NotifyIcon(components);
+            trayContextMenu = new ContextMenuStrip(components);
+            quitMenuItem = new ToolStripMenuItem();
+
             label1 = new Label();
             PromptTextBox = new TextBox();
             label2 = new Label();
@@ -117,7 +122,24 @@
             OpenFolderButton.UseVisualStyleBackColor = true;
             OpenFolderButton.Click += OpenFolderButton_Click;
             // 
-            // Form1
+            // notifyIcon
+            // 
+            notifyIcon.Text = "WallTrek";
+            notifyIcon.Visible = true;
+            notifyIcon.ContextMenuStrip = trayContextMenu;
+            notifyIcon.Icon = Icon;
+            notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
+            // 
+            // trayContextMenu
+            // 
+            trayContextMenu.Items.AddRange(new ToolStripItem[] { quitMenuItem });
+            // 
+            // quitMenuItem
+            // 
+            quitMenuItem.Text = "Quit";
+            quitMenuItem.Click += QuitMenuItem_Click;
+            // 
+            // MainForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -134,6 +156,8 @@
             MinimizeBox = false;
             Name = "Form1";
             Text = "WallTrek";
+            ShowInTaskbar = false;
+            WindowState = FormWindowState.Minimized;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -148,5 +172,8 @@
         private Button CancelButton;
         private ProgressBar progressBar1;
         private Button OpenFolderButton;
+        private NotifyIcon notifyIcon;
+        private ContextMenuStrip trayContextMenu;
+        private ToolStripMenuItem quitMenuItem;
     }
 }
