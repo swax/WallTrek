@@ -4,9 +4,12 @@ namespace WallTrek
 {
     public partial class MainForm : Form
     {
+        private readonly string outputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "WallTrek");
+
         public MainForm()
         {
             InitializeComponent();
+            Directory.CreateDirectory(outputDirectory);
         }
 
         private void CancelButton_Click(object sender, EventArgs e)
@@ -38,7 +41,8 @@ namespace WallTrek
                 GeneratedImage image = await Task.Run(() => client.GenerateImage(prompt, options));
                 BinaryData bytes = image.ImageBytes;
 
-                var filePath = $"{Guid.NewGuid()}.png";
+                var fileName = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".png";
+                var filePath = Path.Combine(outputDirectory, fileName);
                 using (var stream = File.OpenWrite(filePath))
                 {
                     bytes.ToStream().CopyTo(stream);
@@ -54,6 +58,20 @@ namespace WallTrek
             {
                 progressBar1.Visible = false;
                 GenerateButton.Enabled = true;
+            }
+        }
+
+        private void OpenFolderButton_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("explorer.exe", outputDirectory);
+        }
+
+        private void TextBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter && GenerateButton.Enabled)
+            {
+                e.Handled = true;
+                GenerateButton_Click(sender, e);
             }
         }
     }

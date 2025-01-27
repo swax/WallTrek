@@ -35,6 +35,7 @@
             GenerateButton = new Button();
             CancelButton = new Button();
             progressBar1 = new ProgressBar();
+            OpenFolderButton = new Button();
             SuspendLayout();
             // 
             // label1
@@ -54,6 +55,7 @@
             PromptTextBox.Name = "PromptTextBox";
             PromptTextBox.Size = new Size(473, 105);
             PromptTextBox.TabIndex = 1;
+            PromptTextBox.KeyPress += TextBox_KeyPress;
             // 
             // label2
             // 
@@ -97,18 +99,30 @@
             // progressBar1
             // 
             progressBar1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            progressBar1.Location = new Point(12, 224);
+            progressBar1.Location = new Point(138, 224);
             progressBar1.Name = "progressBar1";
-            progressBar1.Size = new Size(273, 29);
+            progressBar1.Size = new Size(147, 29);
             progressBar1.Style = ProgressBarStyle.Marquee;
             progressBar1.Visible = false;
             progressBar1.TabIndex = 6;
+            // 
+            // OpenFolderButton
+            // 
+            OpenFolderButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            OpenFolderButton.Location = new Point(12, 224);
+            OpenFolderButton.Name = "OpenFolderButton";
+            OpenFolderButton.Size = new Size(120, 29);
+            OpenFolderButton.TabIndex = 7;
+            OpenFolderButton.Text = "Open Folder";
+            OpenFolderButton.UseVisualStyleBackColor = true;
+            OpenFolderButton.Click += OpenFolderButton_Click;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(497, 265);
+            Controls.Add(OpenFolderButton);
             Controls.Add(progressBar1);
             Controls.Add(CancelButton);
             Controls.Add(GenerateButton);
@@ -133,5 +147,6 @@
         private Button GenerateButton;
         private Button CancelButton;
         private ProgressBar progressBar1;
+        private Button OpenFolderButton;
     }
 }
