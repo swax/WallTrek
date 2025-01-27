@@ -34,6 +34,7 @@
             ApiKeyTextBox = new TextBox();
             GenerateButton = new Button();
             CancelButton = new Button();
+            progressBar1 = new ProgressBar();
             SuspendLayout();
             // 
             // label1
@@ -93,11 +94,22 @@
             CancelButton.UseVisualStyleBackColor = true;
             CancelButton.Click += CancelButton_Click;
             // 
+            // progressBar1
+            // 
+            progressBar1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            progressBar1.Location = new Point(12, 224);
+            progressBar1.Name = "progressBar1";
+            progressBar1.Size = new Size(273, 29);
+            progressBar1.Style = ProgressBarStyle.Marquee;
+            progressBar1.Visible = false;
+            progressBar1.TabIndex = 6;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(497, 265);
+            Controls.Add(progressBar1);
             Controls.Add(CancelButton);
             Controls.Add(GenerateButton);
             Controls.Add(ApiKeyTextBox);
@@ -120,5 +132,6 @@
         private TextBox ApiKeyTextBox;
         private Button GenerateButton;
         private Button CancelButton;
+        private ProgressBar progressBar1;
     }
 }
