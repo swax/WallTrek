@@ -1,10 +1,9 @@
-using OpenAI.Images;
-
 namespace WallTrek
 {
     public partial class MainForm : Form
     {
         private readonly string outputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "WallTrek");
+        private ImageGenerator? imageGenerator;
 
         public MainForm()
         {
@@ -62,32 +61,8 @@ namespace WallTrek
                 progressBar1.Visible = true;
                 progressBar1.Style = ProgressBarStyle.Marquee;
                 
-                ImageClient client = new("dall-e-3", Settings.Instance.ApiKey);
-
-                var prompt = PromptTextBox.Text;
-                var sanitizedPrompt = string.Join("_", prompt.Split(Path.GetInvalidFileNameChars()));
-                if (sanitizedPrompt.Length > 50) sanitizedPrompt = sanitizedPrompt.Substring(0, 50);
-
-                ImageGenerationOptions options = new()
-                {
-                    Quality = GeneratedImageQuality.High,
-                    Size = GeneratedImageSize.W1792xH1024,
-                    Style = GeneratedImageStyle.Vivid,
-                    ResponseFormat = GeneratedImageFormat.Bytes
-                };
-
-                GeneratedImage image = await Task.Run(() => client.GenerateImage(prompt, options));
-                BinaryData bytes = image.ImageBytes;
-
-                var fileName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss} ({sanitizedPrompt}).png";
-                var filePath = Path.Combine(outputDirectory, fileName);
-                
-                // Save the image
-                using (var stream = File.OpenWrite(filePath))
-                {
-                    bytes.ToStream().CopyTo(stream);
-                }
-
+                imageGenerator ??= new ImageGenerator(Settings.Instance.ApiKey, outputDirectory);
+                var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text);
                 Wallpaper.Set(filePath);
             }
             catch (Exception ex)
