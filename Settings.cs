@@ -5,6 +5,9 @@ namespace WallTrek
     public class SettingsModel
     {
         public string? ApiKey { get; set; }
+        public string? LastPrompt { get; set; }
+        public bool AutoGenerateEnabled { get; set; }
+        public int AutoGenerateMinutes { get; set; }
     }
 
     public class Settings
@@ -22,6 +25,24 @@ namespace WallTrek
         {
             get => _model.ApiKey;
             set => _model.ApiKey = value;
+        }
+
+        public string? LastPrompt
+        {
+            get => _model.LastPrompt;
+            set => _model.LastPrompt = value;
+        }
+
+        public bool AutoGenerateEnabled
+        {
+            get => _model.AutoGenerateEnabled;
+            set => _model.AutoGenerateEnabled = value;
+        }
+
+        public int AutoGenerateMinutes
+        {
+            get => _model.AutoGenerateMinutes;
+            set => _model.AutoGenerateMinutes = value;
         }
 
         public void Save()

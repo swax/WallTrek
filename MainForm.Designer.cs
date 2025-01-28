@@ -165,6 +165,8 @@
             autoGenerateMinutes.Size = new Size(70, 27);
             autoGenerateMinutes.TabIndex = 3;
             autoGenerateMinutes.Value = new decimal(new int[] { 60, 0, 0, 0 });
+            autoGenerateMinutes.ValueChanged += AutoGenerateMinutes_ValueChanged;
+            autoGenerateMinutes.TextChanged += AutoGenerateMinutes_TextChanged;
             // 
             // minutesLabel
             // 

@@ -6,12 +6,21 @@ namespace WallTrek
         private ImageGenerator? imageGenerator;
         private System.Windows.Forms.Timer? autoGenerateTimer;
         private DateTime? nextGenerateTime;
+        private bool isLoadingSettings = true;
 
         public MainForm()
         {
             InitializeComponent();
             Directory.CreateDirectory(outputDirectory);
             Settings.Instance.Load();
+
+            // Load saved settings
+            PromptTextBox.Text = Settings.Instance.LastPrompt;
+            autoGenerateCheckbox.Checked = Settings.Instance.AutoGenerateEnabled;
+            autoGenerateMinutes.Value = Settings.Instance.AutoGenerateMinutes > 0 ?
+                Settings.Instance.AutoGenerateMinutes : autoGenerateMinutes.Minimum;
+
+            isLoadingSettings = false;
             Hide();
         }
 
@@ -59,6 +68,10 @@ namespace WallTrek
 
         private async void GenerateButton_Click(object sender, EventArgs e)
         {
+            // Save prompt when generating
+            Settings.Instance.LastPrompt = PromptTextBox.Text;
+            Settings.Instance.Save();
+
             if (string.IsNullOrEmpty(Settings.Instance.ApiKey))
             {
                 MessageBox.Show("Please set your OpenAI API key in Settings first.", "API Key Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -74,7 +87,7 @@ namespace WallTrek
                 GenerateButton.Enabled = false;
                 progressBar1.Visible = true;
                 progressBar1.Style = ProgressBarStyle.Marquee;
-                
+
                 imageGenerator ??= new ImageGenerator(Settings.Instance.ApiKey, outputDirectory);
                 var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text);
                 Wallpaper.Set(filePath);
@@ -98,8 +111,12 @@ namespace WallTrek
 
         private void SetupAutoGenerateTimer()
         {
-            autoGenerateTimer?.Stop();
-            autoGenerateTimer?.Dispose();
+            StopAutoGenerate();
+
+            if (autoGenerateMinutes.Value <= 0)
+            {
+                return;
+            }
 
             int minutes = (int)autoGenerateMinutes.Value;
             autoGenerateTimer = new System.Windows.Forms.Timer();
@@ -138,6 +155,14 @@ namespace WallTrek
         private void AutoGenerateCheckbox_CheckedChanged(object sender, EventArgs e)
         {
             autoGenerateMinutes.Enabled = autoGenerateCheckbox.Checked;
+
+            // Save auto-generate settings only if not loading
+            if (!isLoadingSettings)
+            {
+                Settings.Instance.AutoGenerateEnabled = autoGenerateCheckbox.Checked;
+                Settings.Instance.Save();
+            }
+
             if (!autoGenerateCheckbox.Checked)
             {
                 StopAutoGenerate();
@@ -145,6 +170,41 @@ namespace WallTrek
             else if (GenerateButton.Enabled)
             {
                 SetupAutoGenerateTimer();
+            }
+        }
+
+        private void AutoGenerateMinutes_ValueChanged(object sender, EventArgs e)
+        {
+            // Save minutes value only if not loading
+            if (!isLoadingSettings)
+            {
+                Settings.Instance.AutoGenerateMinutes = (int)autoGenerateMinutes.Value;
+                Settings.Instance.Save();
+            }
+
+            if (autoGenerateCheckbox.Checked && GenerateButton.Enabled)
+            {
+                SetupAutoGenerateTimer();
+            }
+        }
+
+        private void AutoGenerateMinutes_TextChanged(object sender, EventArgs e)
+        {
+            if (decimal.TryParse(autoGenerateMinutes.Text, out decimal value))
+            {
+                if (value >= autoGenerateMinutes.Minimum && value <= autoGenerateMinutes.Maximum)
+                {
+                    if (!isLoadingSettings)
+                    {
+                        Settings.Instance.AutoGenerateMinutes = (int)value;
+                        Settings.Instance.Save();
+                    }
+
+                    if (autoGenerateCheckbox.Checked && GenerateButton.Enabled)
+                    {
+                        SetupAutoGenerateTimer();
+                    }
+                }
             }
         }
 
