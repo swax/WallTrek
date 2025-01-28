@@ -6,11 +6,11 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>walltrek.ico</ApplicationIcon>
+    <ApplicationIcon>Assets\walltrek.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="walltrek.ico" />
+    <Content Include="Assets\walltrek.ico" />
   </ItemGroup>
 
   <ItemGroup>

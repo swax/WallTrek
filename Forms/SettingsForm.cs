@@ -1,3 +1,5 @@
+using WallTrek.Services;
+
 namespace WallTrek
 {
     public partial class SettingsForm : Form
@@ -6,6 +8,7 @@ namespace WallTrek
         {
             InitializeComponent();
             ApiKeyTextBox.Text = Settings.Instance.ApiKey;
+            Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         }
 
         private void SaveButton_Click(object sender, EventArgs e)

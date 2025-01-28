@@ -1,6 +1,6 @@
 using OpenAI.Images;
 
-namespace WallTrek
+namespace WallTrek.Services
 {
     public class ImageGenerator
     {
@@ -10,7 +10,7 @@ namespace WallTrek
         public ImageGenerator(string apiKey, string outputDirectory)
         {
             this.outputDirectory = outputDirectory;
-            this.client = new ImageClient("dall-e-3", apiKey);
+            client = new ImageClient("dall-e-3", apiKey);
         }
 
         public async Task<string> GenerateAndSaveImage(string prompt)
@@ -31,7 +31,7 @@ namespace WallTrek
 
             var fileName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss} ({sanitizedPrompt}).png";
             var filePath = Path.Combine(outputDirectory, fileName);
-            
+
             // Save the image
             using (var stream = File.OpenWrite(filePath))
             {

@@ -1,3 +1,5 @@
+using WallTrek.Services;
+
 namespace WallTrek
 {
     public partial class MainForm : Form
@@ -13,6 +15,11 @@ namespace WallTrek
             InitializeComponent();
             Directory.CreateDirectory(outputDirectory);
             Settings.Instance.Load();
+
+            // Set form icon to main app icon
+            var appIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            Icon = appIcon;
+            notifyIcon.Icon = appIcon;
 
             // Load saved settings
             PromptTextBox.Text = Settings.Instance.LastPrompt;

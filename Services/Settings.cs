@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace WallTrek
+namespace WallTrek.Services
 {
     public class SettingsModel
     {
@@ -20,7 +20,7 @@ namespace WallTrek
         public static Settings Instance { get; private set; } = new Settings();
 
         private SettingsModel _model = new();
-        
+
         public string? ApiKey
         {
             get => _model.ApiKey;

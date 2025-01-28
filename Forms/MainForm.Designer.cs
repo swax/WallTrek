@@ -29,17 +29,16 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             notifyIcon = new NotifyIcon(components);
             trayContextMenu = new ContextMenuStrip(components);
             quitMenuItem = new ToolStripMenuItem();
-            SettingsButton = new Button();
+            SettingsButton = new LinkLabel();
             label1 = new Label();
             PromptTextBox = new TextBox();
             GenerateButton = new Button();
             CloseButton = new Button();
             progressBar1 = new ProgressBar();
-            OpenFolderButton = new Button();
+            OpenFolderButton = new LinkLabel();
             autoGenerateCheckbox = new CheckBox();
             autoGenerateMinutes = new NumericUpDown();
             minutesLabel = new Label();
@@ -51,7 +50,6 @@
             // notifyIcon
             // 
             notifyIcon.ContextMenuStrip = trayContextMenu;
-            notifyIcon.Icon = Icon = GetEmbeddedIcon();
             notifyIcon.Text = "WallTrek";
             notifyIcon.Visible = true;
             notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
@@ -73,18 +71,20 @@
             // SettingsButton
             // 
             SettingsButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            SettingsButton.Location = new Point(460, 12);
+            SettingsButton.LinkBehavior = LinkBehavior.HoverUnderline;
+            SettingsButton.Location = new Point(479, 9);
             SettingsButton.Name = "SettingsButton";
-            SettingsButton.Size = new Size(94, 29);
+            SettingsButton.Size = new Size(75, 20);
             SettingsButton.TabIndex = 8;
+            SettingsButton.TabStop = true;
             SettingsButton.Text = "Settings";
-            SettingsButton.UseVisualStyleBackColor = true;
+            SettingsButton.TextAlign = ContentAlignment.TopRight;
             SettingsButton.Click += SettingsButton_Click;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(12, 24);
+            label1.Location = new Point(12, 9);
             label1.Name = "label1";
             label1.Size = new Size(58, 20);
             label1.TabIndex = 0;
@@ -93,10 +93,10 @@
             // PromptTextBox
             // 
             PromptTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            PromptTextBox.Location = new Point(12, 47);
+            PromptTextBox.Location = new Point(12, 32);
             PromptTextBox.Multiline = true;
             PromptTextBox.Name = "PromptTextBox";
-            PromptTextBox.Size = new Size(542, 67);
+            PromptTextBox.Size = new Size(542, 82);
             PromptTextBox.TabIndex = 1;
             PromptTextBox.KeyPress += TextBox_KeyPress;
             // 
@@ -135,12 +135,14 @@
             // OpenFolderButton
             // 
             OpenFolderButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            OpenFolderButton.Location = new Point(291, 12);
+            OpenFolderButton.LinkBehavior = LinkBehavior.HoverUnderline;
+            OpenFolderButton.Location = new Point(324, 9);
             OpenFolderButton.Name = "OpenFolderButton";
-            OpenFolderButton.Size = new Size(163, 29);
+            OpenFolderButton.Size = new Size(149, 20);
             OpenFolderButton.TabIndex = 7;
+            OpenFolderButton.TabStop = true;
             OpenFolderButton.Text = "Open Image Folder";
-            OpenFolderButton.UseVisualStyleBackColor = true;
+            OpenFolderButton.TextAlign = ContentAlignment.TopRight;
             OpenFolderButton.Click += OpenFolderButton_Click;
             // 
             // autoGenerateCheckbox
@@ -165,8 +167,8 @@
             autoGenerateMinutes.Size = new Size(70, 27);
             autoGenerateMinutes.TabIndex = 3;
             autoGenerateMinutes.Value = new decimal(new int[] { 60, 0, 0, 0 });
-            autoGenerateMinutes.ValueChanged += AutoGenerateMinutes_ValueChanged;
             autoGenerateMinutes.TextChanged += AutoGenerateMinutes_TextChanged;
+            autoGenerateMinutes.ValueChanged += AutoGenerateMinutes_ValueChanged;
             // 
             // minutesLabel
             // 
@@ -203,7 +205,6 @@
             Controls.Add(GenerateButton);
             Controls.Add(PromptTextBox);
             Controls.Add(label1);
-            Icon = GetEmbeddedIcon();
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "MainForm";
@@ -229,11 +230,11 @@
         private Button GenerateButton;
         private Button CloseButton;
         private ProgressBar progressBar1;
-        private Button OpenFolderButton;
+        private LinkLabel OpenFolderButton;
         private NotifyIcon notifyIcon;
         private ContextMenuStrip trayContextMenu;
         private ToolStripMenuItem quitMenuItem;
-        private Button SettingsButton;
+        private LinkLabel SettingsButton;
         private CheckBox autoGenerateCheckbox;
         private NumericUpDown autoGenerateMinutes;
         private Label minutesLabel;

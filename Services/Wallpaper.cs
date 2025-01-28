@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WallTrek
+namespace WallTrek.Services
 {
     public sealed class Wallpaper
     {
@@ -32,11 +32,11 @@ namespace WallTrek
 
             //using (Image img = Image.FromFile(Path.GetFullPath(wpaper)))
             //{
-                tempPath = Path.Combine(Path.GetTempPath(), "wallpaper.bmp");
+            tempPath = Path.Combine(Path.GetTempPath(), "wallpaper.bmp");
 
-                //img.Save(tempPath, System.Drawing.Imaging.ImageFormat.Bmp);
+            //img.Save(tempPath, System.Drawing.Imaging.ImageFormat.Bmp);
 
-                File.Copy(wpaper, tempPath, true);
+            File.Copy(wpaper, tempPath, true);
 
             //}
 
