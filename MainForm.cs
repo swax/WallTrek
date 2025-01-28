@@ -4,6 +4,8 @@ namespace WallTrek
     {
         private readonly string outputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "WallTrek");
         private ImageGenerator? imageGenerator;
+        private System.Windows.Forms.Timer? autoGenerateTimer;
+        private DateTime? nextGenerateTime;
 
         public MainForm()
         {
@@ -46,6 +48,15 @@ namespace WallTrek
             Close();
         }
 
+        private void StopAutoGenerate()
+        {
+            autoGenerateTimer?.Stop();
+            autoGenerateTimer?.Dispose();
+            autoGenerateTimer = null;
+            nextGenerateTime = null;
+            nextGenerateLabel.Text = "";
+        }
+
         private async void GenerateButton_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(Settings.Instance.ApiKey))
@@ -54,6 +65,9 @@ namespace WallTrek
                 ShowSettingsDialog();
                 return;
             }
+
+            // Stop any existing auto-generate timer before starting new generation
+            StopAutoGenerate();
 
             try
             {
@@ -64,6 +78,12 @@ namespace WallTrek
                 imageGenerator ??= new ImageGenerator(Settings.Instance.ApiKey, outputDirectory);
                 var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text);
                 Wallpaper.Set(filePath);
+
+                // Setup auto-generate timer if enabled and minutes > 0
+                if (autoGenerateCheckbox.Checked && autoGenerateMinutes.Value > 0)
+                {
+                    SetupAutoGenerateTimer();
+                }
             }
             catch (Exception ex)
             {
@@ -73,6 +93,58 @@ namespace WallTrek
             {
                 progressBar1.Visible = false;
                 GenerateButton.Enabled = true;
+            }
+        }
+
+        private void SetupAutoGenerateTimer()
+        {
+            autoGenerateTimer?.Stop();
+            autoGenerateTimer?.Dispose();
+
+            int minutes = (int)autoGenerateMinutes.Value;
+            autoGenerateTimer = new System.Windows.Forms.Timer();
+            autoGenerateTimer.Interval = minutes * 60 * 1000; // Convert minutes to milliseconds
+            autoGenerateTimer.Tick += async (s, e) => await Task.Run(() => BeginInvoke(GenerateButton_Click, s, e));
+            autoGenerateTimer.Start();
+
+            nextGenerateTime = DateTime.Now.AddMinutes(minutes);
+            UpdateNextGenerateLabel();
+
+            // Start a timer to update the "next generate" label
+            var updateTimer = new System.Windows.Forms.Timer();
+            updateTimer.Interval = 1000; // Update every second
+            updateTimer.Tick += (s, e) => UpdateNextGenerateLabel();
+            updateTimer.Start();
+        }
+
+        private void UpdateNextGenerateLabel()
+        {
+            if (!nextGenerateTime.HasValue)
+            {
+                nextGenerateLabel.Text = "";
+                return;
+            }
+
+            var timeLeft = nextGenerateTime.Value - DateTime.Now;
+            if (timeLeft.TotalSeconds <= 0)
+            {
+                nextGenerateLabel.Text = "";
+                return;
+            }
+
+            nextGenerateLabel.Text = $"Next generation in: {timeLeft.Hours:D2}:{timeLeft.Minutes:D2}:{timeLeft.Seconds:D2}";
+        }
+
+        private void AutoGenerateCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            autoGenerateMinutes.Enabled = autoGenerateCheckbox.Checked;
+            if (!autoGenerateCheckbox.Checked)
+            {
+                StopAutoGenerate();
+            }
+            else if (GenerateButton.Enabled)
+            {
+                SetupAutoGenerateTimer();
             }
         }
 
