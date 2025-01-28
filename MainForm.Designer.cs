@@ -32,13 +32,12 @@
             notifyIcon = new NotifyIcon(components);
             trayContextMenu = new ContextMenuStrip(components);
             quitMenuItem = new ToolStripMenuItem();
+            SettingsButton = new Button();
 
             label1 = new Label();
             PromptTextBox = new TextBox();
-            label2 = new Label();
-            ApiKeyTextBox = new TextBox();
             GenerateButton = new Button();
-            CancelButton = new Button();
+            CloseButton = new Button();
             progressBar1 = new ProgressBar();
             OpenFolderButton = new Button();
             SuspendLayout();
@@ -54,30 +53,13 @@
             // 
             // PromptTextBox
             // 
-            PromptTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            PromptTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             PromptTextBox.Location = new Point(12, 32);
             PromptTextBox.Multiline = true;
             PromptTextBox.Name = "PromptTextBox";
-            PromptTextBox.Size = new Size(473, 105);
+            PromptTextBox.Size = new Size(473, 176);
             PromptTextBox.TabIndex = 1;
             PromptTextBox.KeyPress += TextBox_KeyPress;
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(12, 155);
-            label2.Name = "label2";
-            label2.Size = new Size(113, 20);
-            label2.TabIndex = 2;
-            label2.Text = "OpenAI API Key";
-            // 
-            // ApiKeyTextBox
-            // 
-            ApiKeyTextBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            ApiKeyTextBox.Location = new Point(12, 178);
-            ApiKeyTextBox.Name = "ApiKeyTextBox";
-            ApiKeyTextBox.Size = new Size(473, 27);
-            ApiKeyTextBox.TabIndex = 3;
             // 
             // GenerateButton
             // 
@@ -90,16 +72,16 @@
             GenerateButton.UseVisualStyleBackColor = true;
             GenerateButton.Click += GenerateButton_Click;
             // 
-            // CancelButton
+            // CloseButton
             // 
-            CancelButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            CancelButton.Location = new Point(391, 224);
-            CancelButton.Name = "CancelButton";
-            CancelButton.Size = new Size(94, 29);
-            CancelButton.TabIndex = 5;
-            CancelButton.Text = "Cancel";
-            CancelButton.UseVisualStyleBackColor = true;
-            CancelButton.Click += CancelButton_Click;
+            CloseButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            CloseButton.Location = new Point(391, 224);
+            CloseButton.Name = "CloseButton";
+            CloseButton.Size = new Size(94, 29);
+            CloseButton.TabIndex = 5;
+            CloseButton.Text = "Close";
+            CloseButton.UseVisualStyleBackColor = true;
+            CloseButton.Click += CloseButton_Click;
             // 
             // progressBar1
             // 
@@ -114,13 +96,24 @@
             // OpenFolderButton
             // 
             OpenFolderButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            OpenFolderButton.Location = new Point(12, 224);
+            OpenFolderButton.Location = new Point(112, 224);
             OpenFolderButton.Name = "OpenFolderButton";
             OpenFolderButton.Size = new Size(120, 29);
             OpenFolderButton.TabIndex = 7;
             OpenFolderButton.Text = "Open Folder";
             OpenFolderButton.UseVisualStyleBackColor = true;
             OpenFolderButton.Click += OpenFolderButton_Click;
+            // 
+            // SettingsButton
+            // 
+            SettingsButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            SettingsButton.Location = new Point(12, 224);
+            SettingsButton.Name = "SettingsButton";
+            SettingsButton.Size = new Size(94, 29);
+            SettingsButton.TabIndex = 8;
+            SettingsButton.Text = "Settings";
+            SettingsButton.UseVisualStyleBackColor = true;
+            SettingsButton.Click += SettingsButton_Click;
             // 
             // notifyIcon
             // 
@@ -144,12 +137,11 @@
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(497, 265);
+            Controls.Add(SettingsButton);
             Controls.Add(OpenFolderButton);
             Controls.Add(progressBar1);
-            Controls.Add(CancelButton);
+            Controls.Add(CloseButton);
             Controls.Add(GenerateButton);
-            Controls.Add(ApiKeyTextBox);
-            Controls.Add(label2);
             Controls.Add(PromptTextBox);
             Controls.Add(label1);
             MaximizeBox = false;
@@ -166,14 +158,13 @@
 
         private Label label1;
         private TextBox PromptTextBox;
-        private Label label2;
-        private TextBox ApiKeyTextBox;
         private Button GenerateButton;
-        private Button CancelButton;
+        private Button CloseButton;
         private ProgressBar progressBar1;
         private Button OpenFolderButton;
         private NotifyIcon notifyIcon;
         private ContextMenuStrip trayContextMenu;
         private ToolStripMenuItem quitMenuItem;
+        private Button SettingsButton;
     }
 }

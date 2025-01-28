@@ -10,6 +10,7 @@ namespace WallTrek
         {
             InitializeComponent();
             Directory.CreateDirectory(outputDirectory);
+            Settings.Instance.Load();
             Hide();
         }
 
@@ -41,18 +42,31 @@ namespace WallTrek
             Close();
         }
 
+        private void CloseButton_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
         private async void GenerateButton_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrEmpty(Settings.Instance.ApiKey))
+            {
+                MessageBox.Show("Please set your OpenAI API key in Settings first.", "API Key Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ShowSettingsDialog();
+                return;
+            }
+
             try
             {
                 GenerateButton.Enabled = false;
                 progressBar1.Visible = true;
                 progressBar1.Style = ProgressBarStyle.Marquee;
                 
-
-                ImageClient client = new("dall-e-3", apiKey);
+                ImageClient client = new("dall-e-3", Settings.Instance.ApiKey);
 
                 var prompt = PromptTextBox.Text;
+                var sanitizedPrompt = string.Join("_", prompt.Split(Path.GetInvalidFileNameChars()));
+                if (sanitizedPrompt.Length > 50) sanitizedPrompt = sanitizedPrompt.Substring(0, 50);
 
                 ImageGenerationOptions options = new()
                 {
@@ -65,8 +79,10 @@ namespace WallTrek
                 GeneratedImage image = await Task.Run(() => client.GenerateImage(prompt, options));
                 BinaryData bytes = image.ImageBytes;
 
-                var fileName = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss") + ".png";
+                var fileName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss} ({sanitizedPrompt}).png";
                 var filePath = Path.Combine(outputDirectory, fileName);
+                
+                // Save the image
                 using (var stream = File.OpenWrite(filePath))
                 {
                     bytes.ToStream().CopyTo(stream);
@@ -97,6 +113,22 @@ namespace WallTrek
                 e.Handled = true;
                 GenerateButton_Click(sender, e);
             }
+        }
+
+        private void SettingsMenuItem_Click(object sender, EventArgs e)
+        {
+            ShowSettingsDialog();
+        }
+
+        private void SettingsButton_Click(object sender, EventArgs e)
+        {
+            ShowSettingsDialog();
+        }
+
+        private void ShowSettingsDialog()
+        {
+            using var settingsForm = new SettingsForm();
+            settingsForm.ShowDialog(this);
         }
     }
 }
