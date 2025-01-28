@@ -6,7 +6,12 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>walltrek.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="walltrek.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OpenAI" Version="2.1.0" />

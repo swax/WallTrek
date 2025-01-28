@@ -59,6 +59,7 @@ namespace WallTrek
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(384, 112);
+            Icon = MainForm.GetEmbeddedIcon();
             Controls.Add(CancelButton);
             Controls.Add(SaveButton);
             Controls.Add(ApiKeyTextBox);

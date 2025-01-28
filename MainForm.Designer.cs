@@ -51,7 +51,7 @@
             // notifyIcon
             // 
             notifyIcon.ContextMenuStrip = trayContextMenu;
-            notifyIcon.Icon = (Icon)resources.GetObject("notifyIcon.Icon");
+            notifyIcon.Icon = Icon = GetEmbeddedIcon();
             notifyIcon.Text = "WallTrek";
             notifyIcon.Visible = true;
             notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
@@ -201,6 +201,7 @@
             Controls.Add(GenerateButton);
             Controls.Add(PromptTextBox);
             Controls.Add(label1);
+            Icon = GetEmbeddedIcon();
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "MainForm";
@@ -211,6 +212,12 @@
             ((System.ComponentModel.ISupportInitialize)autoGenerateMinutes).EndInit();
             ResumeLayout(false);
             PerformLayout();
+        }
+
+        public static Icon GetEmbeddedIcon()
+        {
+            using var stream = typeof(MainForm).Assembly.GetManifestResourceStream("WallTrek.walltrek.ico");
+            return new Icon(stream);
         }
 
         #endregion
