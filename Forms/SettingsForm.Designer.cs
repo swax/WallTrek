@@ -19,6 +19,10 @@ namespace WallTrek
             ApiKeyTextBox = new TextBox();
             SaveButton = new Button();
             CancelButton = new Button();
+            autoGenerateCheckbox = new CheckBox();
+            autoGenerateMinutes = new NumericUpDown();
+            minutesLabel = new Label();
+            ((System.ComponentModel.ISupportInitialize)autoGenerateMinutes).BeginInit();
             SuspendLayout();
             // 
             // label1
@@ -36,10 +40,42 @@ namespace WallTrek
             ApiKeyTextBox.Name = "ApiKeyTextBox";
             ApiKeyTextBox.Size = new Size(360, 27);
             // 
+            // autoGenerateCheckbox
+            // 
+            autoGenerateCheckbox.AutoSize = true;
+            autoGenerateCheckbox.Location = new Point(12, 65);
+            autoGenerateCheckbox.Name = "autoGenerateCheckbox";
+            autoGenerateCheckbox.Size = new Size(170, 24);
+            autoGenerateCheckbox.TabIndex = 2;
+            autoGenerateCheckbox.Text = "Auto-generate every:";
+            autoGenerateCheckbox.CheckedChanged += AutoGenerateCheckbox_CheckedChanged;
+            // 
+            // autoGenerateMinutes
+            // 
+            autoGenerateMinutes.Enabled = false;
+            autoGenerateMinutes.Location = new Point(188, 65);
+            autoGenerateMinutes.Maximum = new decimal(new int[] { 1440, 0, 0, 0 });
+            autoGenerateMinutes.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            autoGenerateMinutes.Name = "autoGenerateMinutes";
+            autoGenerateMinutes.Size = new Size(70, 27);
+            autoGenerateMinutes.TabIndex = 3;
+            autoGenerateMinutes.Value = new decimal(new int[] { 60, 0, 0, 0 });
+            autoGenerateMinutes.TextChanged += AutoGenerateMinutes_TextChanged;
+            autoGenerateMinutes.ValueChanged += AutoGenerateMinutes_ValueChanged;
+            // 
+            // minutesLabel
+            // 
+            minutesLabel.AutoSize = true;
+            minutesLabel.Location = new Point(264, 69);
+            minutesLabel.Name = "minutesLabel";
+            minutesLabel.Size = new Size(61, 20);
+            minutesLabel.TabIndex = 4;
+            minutesLabel.Text = "minutes";
+            // 
             // SaveButton
             // 
             SaveButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            SaveButton.Location = new Point(178, 71);
+            SaveButton.Location = new Point(178, 104);
             SaveButton.Name = "SaveButton";
             SaveButton.Size = new Size(94, 29);
             SaveButton.Text = "Save";
@@ -48,7 +84,7 @@ namespace WallTrek
             // CancelButton
             // 
             CancelButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            CancelButton.Location = new Point(278, 71);
+            CancelButton.Location = new Point(278, 104);
             CancelButton.Name = "CancelButton";
             CancelButton.Size = new Size(94, 29);
             CancelButton.Text = "Cancel";
@@ -58,7 +94,10 @@ namespace WallTrek
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(384, 112);
+            ClientSize = new Size(384, 145);
+            Controls.Add(minutesLabel);
+            Controls.Add(autoGenerateMinutes);
+            Controls.Add(autoGenerateCheckbox);
             Controls.Add(CancelButton);
             Controls.Add(SaveButton);
             Controls.Add(ApiKeyTextBox);
@@ -69,6 +108,7 @@ namespace WallTrek
             Name = "SettingsForm";
             StartPosition = FormStartPosition.CenterParent;
             Text = "Settings";
+            ((System.ComponentModel.ISupportInitialize)autoGenerateMinutes).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -77,5 +117,8 @@ namespace WallTrek
         private TextBox ApiKeyTextBox;
         private Button SaveButton;
         private new Button CancelButton;
+        private CheckBox autoGenerateCheckbox;
+        private NumericUpDown autoGenerateMinutes;
+        private Label minutesLabel;
     }
 }

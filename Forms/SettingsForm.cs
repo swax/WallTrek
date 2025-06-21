@@ -4,16 +4,27 @@ namespace WallTrek
 {
     public partial class SettingsForm : Form
     {
+        private bool isLoadingSettings = true;
+
         public SettingsForm()
         {
             InitializeComponent();
             ApiKeyTextBox.Text = Settings.Instance.ApiKey;
             Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            
+            // Load auto-generate settings
+            autoGenerateCheckbox.Checked = Settings.Instance.AutoGenerateEnabled;
+            autoGenerateMinutes.Value = Settings.Instance.AutoGenerateMinutes > 0 ?
+                Settings.Instance.AutoGenerateMinutes : autoGenerateMinutes.Minimum;
+            
+            isLoadingSettings = false;
         }
 
         private void SaveButton_Click(object sender, EventArgs e)
         {
             Settings.Instance.ApiKey = ApiKeyTextBox.Text;
+            Settings.Instance.AutoGenerateEnabled = autoGenerateCheckbox.Checked;
+            Settings.Instance.AutoGenerateMinutes = (int)autoGenerateMinutes.Value;
             Settings.Instance.Save();
             DialogResult = DialogResult.OK;
             Close();
@@ -22,6 +33,46 @@ namespace WallTrek
         private void CancelButton_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        private void AutoGenerateCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            autoGenerateMinutes.Enabled = autoGenerateCheckbox.Checked;
+
+            if (!isLoadingSettings)
+            {
+                Settings.Instance.AutoGenerateEnabled = autoGenerateCheckbox.Checked;
+                Settings.Instance.Save();
+            }
+
+            if (!autoGenerateCheckbox.Checked)
+            {
+                AutoGenerateService.Instance.Cancel();
+            }
+        }
+
+        private void AutoGenerateMinutes_ValueChanged(object sender, EventArgs e)
+        {
+            if (!isLoadingSettings)
+            {
+                Settings.Instance.AutoGenerateMinutes = (int)autoGenerateMinutes.Value;
+                Settings.Instance.Save();
+            }
+        }
+
+        private void AutoGenerateMinutes_TextChanged(object sender, EventArgs e)
+        {
+            if (decimal.TryParse(autoGenerateMinutes.Text, out decimal value))
+            {
+                if (value >= autoGenerateMinutes.Minimum && value <= autoGenerateMinutes.Maximum)
+                {
+                    if (!isLoadingSettings)
+                    {
+                        Settings.Instance.AutoGenerateMinutes = (int)value;
+                        Settings.Instance.Save();
+                    }
+                }
+            }
         }
     }
 }

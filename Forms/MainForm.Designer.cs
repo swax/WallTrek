@@ -36,11 +36,7 @@
             CloseButton = new Button();
             progressBar1 = new ProgressBar();
             OpenFolderButton = new LinkLabel();
-            autoGenerateCheckbox = new CheckBox();
-            autoGenerateMinutes = new NumericUpDown();
-            minutesLabel = new Label();
             nextGenerateLabel = new Label();
-            ((System.ComponentModel.ISupportInitialize)autoGenerateMinutes).BeginInit();
             SuspendLayout();
             // 
             // SettingsButton
@@ -100,7 +96,7 @@
             // progressBar1
             // 
             progressBar1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            progressBar1.Location = new Point(-2, 185);
+            progressBar1.Location = new Point(-2, 163);
             progressBar1.Name = "progressBar1";
             progressBar1.Size = new Size(569, 10);
             progressBar1.Style = ProgressBarStyle.Marquee;
@@ -120,46 +116,11 @@
             OpenFolderButton.TextAlign = ContentAlignment.TopRight;
             OpenFolderButton.Click += OpenFolderButton_Click;
             // 
-            // autoGenerateCheckbox
-            // 
-            autoGenerateCheckbox.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            autoGenerateCheckbox.AutoSize = true;
-            autoGenerateCheckbox.Location = new Point(12, 135);
-            autoGenerateCheckbox.Name = "autoGenerateCheckbox";
-            autoGenerateCheckbox.Size = new Size(170, 24);
-            autoGenerateCheckbox.TabIndex = 4;
-            autoGenerateCheckbox.Text = "Auto-generate every:";
-            autoGenerateCheckbox.CheckedChanged += AutoGenerateCheckbox_CheckedChanged;
-            // 
-            // autoGenerateMinutes
-            // 
-            autoGenerateMinutes.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            autoGenerateMinutes.Enabled = false;
-            autoGenerateMinutes.Location = new Point(188, 135);
-            autoGenerateMinutes.Maximum = new decimal(new int[] { 1440, 0, 0, 0 });
-            autoGenerateMinutes.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
-            autoGenerateMinutes.Name = "autoGenerateMinutes";
-            autoGenerateMinutes.Size = new Size(70, 27);
-            autoGenerateMinutes.TabIndex = 3;
-            autoGenerateMinutes.Value = new decimal(new int[] { 60, 0, 0, 0 });
-            autoGenerateMinutes.TextChanged += AutoGenerateMinutes_TextChanged;
-            autoGenerateMinutes.ValueChanged += AutoGenerateMinutes_ValueChanged;
-            // 
-            // minutesLabel
-            // 
-            minutesLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            minutesLabel.AutoSize = true;
-            minutesLabel.Location = new Point(264, 139);
-            minutesLabel.Name = "minutesLabel";
-            minutesLabel.Size = new Size(61, 20);
-            minutesLabel.TabIndex = 2;
-            minutesLabel.Text = "minutes";
-            // 
             // nextGenerateLabel
             // 
             nextGenerateLabel.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
             nextGenerateLabel.AutoSize = true;
-            nextGenerateLabel.Location = new Point(12, 166);
+            nextGenerateLabel.Location = new Point(12, 135);
             nextGenerateLabel.Name = "nextGenerateLabel";
             nextGenerateLabel.Size = new Size(0, 20);
             nextGenerateLabel.TabIndex = 1;
@@ -168,11 +129,8 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(566, 196);
+            ClientSize = new Size(566, 174);
             Controls.Add(nextGenerateLabel);
-            Controls.Add(minutesLabel);
-            Controls.Add(autoGenerateMinutes);
-            Controls.Add(autoGenerateCheckbox);
             Controls.Add(SettingsButton);
             Controls.Add(OpenFolderButton);
             Controls.Add(progressBar1);
@@ -186,7 +144,6 @@
             ShowInTaskbar = false;
             Text = "WallTrek";
             WindowState = FormWindowState.Minimized;
-            ((System.ComponentModel.ISupportInitialize)autoGenerateMinutes).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -206,9 +163,6 @@
         private ProgressBar progressBar1;
         private LinkLabel OpenFolderButton;
         private LinkLabel SettingsButton;
-        private CheckBox autoGenerateCheckbox;
-        private NumericUpDown autoGenerateMinutes;
-        private Label minutesLabel;
         private Label nextGenerateLabel;
     }
 }

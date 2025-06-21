@@ -1,13 +1,15 @@
+notification of background update
+launch on startup
+
 test timer and persistance across starts
-sep notify icon and code from main form
+when setting the auto timer, the label doesnt update on main form
 
 on fail reset timer
 autogen doesnt seem to be working
     maybe on startup, make sure timer starts
 on error just show a message of last error and restart timer
 temp function to rename my images in the standard format
-notification of background update
-launch on startup
+
 save prompt somewhere in image metadata or something
 
 

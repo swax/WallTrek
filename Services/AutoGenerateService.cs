@@ -6,10 +6,31 @@ namespace WallTrek.Services
 {
     public class AutoGenerateService
     {
+        private static AutoGenerateService? _instance;
+        private static readonly object _lock = new object();
+        
+        public static AutoGenerateService Instance 
+        { 
+            get 
+            { 
+                if (_instance == null) 
+                { 
+                    lock (_lock) 
+                    { 
+                        if (_instance == null) 
+                            _instance = new AutoGenerateService(); 
+                    } 
+                } 
+                return _instance; 
+            } 
+        }
+
         private System.Windows.Forms.Timer? pollTimer;
 
         public event EventHandler? AutoGenerateTriggered;
         public event EventHandler<string>? NextGenerateTimeUpdated;
+
+        private AutoGenerateService() { }
 
         public bool IsEnabled => pollTimer?.Enabled ?? false;
         public DateTime? NextGenerateTime => Settings.Instance.NextAutoGenerateTime;
