@@ -5,7 +5,6 @@ namespace WallTrek
     public partial class MainForm : Form
     {
         private readonly string outputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "WallTrek");
-        private ImageGenerator? imageGenerator;
         private System.Windows.Forms.Timer? autoGenerateTimer;
         private DateTime? nextGenerateTime;
         private bool isLoadingSettings = true;
@@ -95,7 +94,7 @@ namespace WallTrek
                 progressBar1.Visible = true;
                 progressBar1.Style = ProgressBarStyle.Marquee;
 
-                imageGenerator ??= new ImageGenerator(Settings.Instance.ApiKey, outputDirectory);
+                var imageGenerator = new ImageGenerator(Settings.Instance.ApiKey, outputDirectory);
                 var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text);
                 Wallpaper.Set(filePath);
 
