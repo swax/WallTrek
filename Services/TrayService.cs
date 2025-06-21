@@ -72,6 +72,11 @@ namespace WallTrek.Services
             QuitRequested?.Invoke(this, EventArgs.Empty);
         }
 
+        public void ShowNotification(string title, string text, ToolTipIcon icon = ToolTipIcon.Info, int timeout = 3000)
+        {
+            notifyIcon.ShowBalloonTip(timeout, title, text, icon);
+        }
+
         public void Dispose()
         {
             notifyIcon?.Dispose();

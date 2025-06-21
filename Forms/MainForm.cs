@@ -5,9 +5,11 @@ namespace WallTrek
     public partial class MainForm : Form
     {
         private readonly string outputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "WallTrek");
+        private readonly TrayService? trayService;
 
-        public MainForm()
+        public MainForm(TrayService? trayService = null)
         {
+            this.trayService = trayService;
             InitializeComponent();
             Directory.CreateDirectory(outputDirectory);
             Settings.Instance.Load();
@@ -85,6 +87,9 @@ namespace WallTrek
                 var imageGenerator = new ImageGenerator(Settings.Instance.ApiKey, outputDirectory);
                 var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text);
                 Wallpaper.Set(filePath);
+
+                // Show notification
+                trayService?.ShowNotification("WallTrek", "New wallpaper generated and set!", ToolTipIcon.Info);
 
                 // Setup auto-generate timer if enabled and minutes > 0
                 if (Settings.Instance.AutoGenerateEnabled && Settings.Instance.AutoGenerateMinutes > 0)

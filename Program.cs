@@ -14,8 +14,8 @@ namespace WallTrek
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
 
-            var mainForm = new MainForm();
             var trayService = new TrayService();
+            var mainForm = new MainForm(trayService);
 
             // Wire up tray service events
             trayService.ShowFormRequested += (sender, e) => mainForm.ShowAndActivate();

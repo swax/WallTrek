@@ -1,5 +1,3 @@
-notification of background update
-
 test 
     autogen on timer
     persistance regen time across starts
