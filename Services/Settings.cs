@@ -8,6 +8,7 @@ namespace WallTrek.Services
         public string? LastPrompt { get; set; }
         public bool AutoGenerateEnabled { get; set; }
         public int AutoGenerateMinutes { get; set; }
+        public DateTime? NextAutoGenerateTime { get; set; }
     }
 
     public class Settings
@@ -43,6 +44,12 @@ namespace WallTrek.Services
         {
             get => _model.AutoGenerateMinutes;
             set => _model.AutoGenerateMinutes = value;
+        }
+
+        public DateTime? NextAutoGenerateTime
+        {
+            get => _model.NextAutoGenerateTime;
+            set => _model.NextAutoGenerateTime = value;
         }
 
         public void Save()
