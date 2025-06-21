@@ -22,6 +22,7 @@ namespace WallTrek
             autoGenerateCheckbox = new CheckBox();
             autoGenerateMinutes = new NumericUpDown();
             minutesLabel = new Label();
+            startupCheckbox = new CheckBox();
             ((System.ComponentModel.ISupportInitialize)autoGenerateMinutes).BeginInit();
             SuspendLayout();
             // 
@@ -50,6 +51,16 @@ namespace WallTrek
             autoGenerateCheckbox.Text = "Auto-generate every:";
             autoGenerateCheckbox.CheckedChanged += AutoGenerateCheckbox_CheckedChanged;
             // 
+            // startupCheckbox
+            // 
+            startupCheckbox.AutoSize = true;
+            startupCheckbox.Location = new Point(12, 98);
+            startupCheckbox.Name = "startupCheckbox";
+            startupCheckbox.Size = new Size(184, 24);
+            startupCheckbox.TabIndex = 5;
+            startupCheckbox.Text = "Launch on Windows startup";
+            startupCheckbox.CheckedChanged += StartupCheckbox_CheckedChanged;
+            // 
             // autoGenerateMinutes
             // 
             autoGenerateMinutes.Enabled = false;
@@ -75,7 +86,7 @@ namespace WallTrek
             // SaveButton
             // 
             SaveButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            SaveButton.Location = new Point(178, 104);
+            SaveButton.Location = new Point(178, 137);
             SaveButton.Name = "SaveButton";
             SaveButton.Size = new Size(94, 29);
             SaveButton.Text = "Save";
@@ -84,7 +95,7 @@ namespace WallTrek
             // CancelButton
             // 
             CancelButton.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            CancelButton.Location = new Point(278, 104);
+            CancelButton.Location = new Point(278, 137);
             CancelButton.Name = "CancelButton";
             CancelButton.Size = new Size(94, 29);
             CancelButton.Text = "Cancel";
@@ -94,7 +105,8 @@ namespace WallTrek
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(384, 145);
+            ClientSize = new Size(384, 178);
+            Controls.Add(startupCheckbox);
             Controls.Add(minutesLabel);
             Controls.Add(autoGenerateMinutes);
             Controls.Add(autoGenerateCheckbox);
@@ -120,5 +132,6 @@ namespace WallTrek
         private CheckBox autoGenerateCheckbox;
         private NumericUpDown autoGenerateMinutes;
         private Label minutesLabel;
+        private CheckBox startupCheckbox;
     }
 }

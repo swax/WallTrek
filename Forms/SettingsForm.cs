@@ -17,6 +17,9 @@ namespace WallTrek
             autoGenerateMinutes.Value = Settings.Instance.AutoGenerateMinutes > 0 ?
                 Settings.Instance.AutoGenerateMinutes : autoGenerateMinutes.Minimum;
             
+            // Load startup setting from registry
+            startupCheckbox.Checked = StartupManager.IsStartupEnabled();
+            
             isLoadingSettings = false;
         }
 
@@ -72,6 +75,14 @@ namespace WallTrek
                         Settings.Instance.Save();
                     }
                 }
+            }
+        }
+
+        private void StartupCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (!isLoadingSettings)
+            {
+                StartupManager.SetStartupEnabled(startupCheckbox.Checked);
             }
         }
     }
