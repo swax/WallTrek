@@ -29,9 +29,6 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            notifyIcon = new NotifyIcon(components);
-            trayContextMenu = new ContextMenuStrip(components);
-            quitMenuItem = new ToolStripMenuItem();
             SettingsButton = new LinkLabel();
             label1 = new Label();
             PromptTextBox = new TextBox();
@@ -43,30 +40,8 @@
             autoGenerateMinutes = new NumericUpDown();
             minutesLabel = new Label();
             nextGenerateLabel = new Label();
-            trayContextMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)autoGenerateMinutes).BeginInit();
             SuspendLayout();
-            // 
-            // notifyIcon
-            // 
-            notifyIcon.ContextMenuStrip = trayContextMenu;
-            notifyIcon.Text = "WallTrek";
-            notifyIcon.Visible = true;
-            notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
-            // 
-            // trayContextMenu
-            // 
-            trayContextMenu.ImageScalingSize = new Size(20, 20);
-            trayContextMenu.Items.AddRange(new ToolStripItem[] { quitMenuItem });
-            trayContextMenu.Name = "trayContextMenu";
-            trayContextMenu.Size = new Size(107, 28);
-            // 
-            // quitMenuItem
-            // 
-            quitMenuItem.Name = "quitMenuItem";
-            quitMenuItem.Size = new Size(106, 24);
-            quitMenuItem.Text = "Quit";
-            quitMenuItem.Click += QuitMenuItem_Click;
             // 
             // SettingsButton
             // 
@@ -211,7 +186,6 @@
             ShowInTaskbar = false;
             Text = "WallTrek";
             WindowState = FormWindowState.Minimized;
-            trayContextMenu.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)autoGenerateMinutes).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -231,9 +205,6 @@
         private Button CloseButton;
         private ProgressBar progressBar1;
         private LinkLabel OpenFolderButton;
-        private NotifyIcon notifyIcon;
-        private ContextMenuStrip trayContextMenu;
-        private ToolStripMenuItem quitMenuItem;
         private LinkLabel SettingsButton;
         private CheckBox autoGenerateCheckbox;
         private NumericUpDown autoGenerateMinutes;

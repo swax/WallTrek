@@ -22,7 +22,6 @@ namespace WallTrek
             // Set form icon to main app icon
             var appIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             Icon = appIcon;
-            notifyIcon.Icon = appIcon;
 
             // Load saved settings
             PromptTextBox.Text = Settings.Instance.LastPrompt;
@@ -51,17 +50,11 @@ namespace WallTrek
             base.OnFormClosing(e);
         }
 
-        private void NotifyIcon_DoubleClick(object sender, EventArgs e)
+        public void ShowAndActivate()
         {
             Show();
             WindowState = FormWindowState.Normal;
             Activate();
-        }
-
-        private void QuitMenuItem_Click(object sender, EventArgs e)
-        {
-            notifyIcon.Visible = false;
-            Application.Exit();
         }
 
         private void CancelButton_Click(object sender, EventArgs e)
@@ -200,7 +193,7 @@ namespace WallTrek
             ShowSettingsDialog();
         }
 
-        private void ShowSettingsDialog()
+        public void ShowSettingsDialog()
         {
             using var settingsForm = new SettingsForm();
             settingsForm.ShowDialog(this);
