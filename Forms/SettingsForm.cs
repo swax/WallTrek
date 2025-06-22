@@ -52,6 +52,10 @@ namespace WallTrek
             {
                 AutoGenerateService.Instance.Cancel();
             }
+            else if (!isLoadingSettings && Settings.Instance.AutoGenerateMinutes > 0)
+            {
+                AutoGenerateService.Instance.Start(Settings.Instance.AutoGenerateMinutes);
+            }
         }
 
         private void AutoGenerateMinutes_ValueChanged(object sender, EventArgs e)
