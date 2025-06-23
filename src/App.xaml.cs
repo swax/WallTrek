@@ -24,7 +24,7 @@ namespace WallTrek
 {
     public partial class App : Application
     {
-        private MainWindow? m_window;
+        private MainWindow? _window;
         private SettingsWindow? settingsWindow;
         private TaskbarIcon? trayIcon;
         
@@ -37,26 +37,26 @@ namespace WallTrek
             ShowMainWindowCommand = new RelayCommand(ShowMainWindow);
             InitializeTrayIcon();
         }
-        
+
         private void InitializeTrayIcon()
         {
             // Create tray context menu
             var contextMenu = new MenuFlyout();
-            
+
             var showItem = new MenuFlyoutItem { Text = "Show WallTrek" };
             showItem.Click += ShowMenuItem_Click;
             contextMenu.Items.Add(showItem);
-            
+
             var settingsItem = new MenuFlyoutItem { Text = "Settings" };
             settingsItem.Click += SettingsMenuItem_Click;
             contextMenu.Items.Add(settingsItem);
-            
+
             contextMenu.Items.Add(new MenuFlyoutSeparator());
-            
+
             var quitItem = new MenuFlyoutItem { Text = "Quit" };
             quitItem.Click += QuitMenuItem_Click;
             contextMenu.Items.Add(quitItem);
-            
+
             // Create tray icon
             trayIcon = new TaskbarIcon
             {
@@ -64,14 +64,16 @@ namespace WallTrek
                 ContextFlyout = contextMenu,
                 IconSource = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///Assets/walltrek.ico"))
             };
-            
+
             // Handle left click to show window
             trayIcon.LeftClickCommand = ShowMainWindowCommand;
+
+            trayIcon.ForceCreate();
         }
 
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            m_window = new MainWindow();
+            _window = new MainWindow();
             
             // Start minimized to tray - don't show window initially
             // m_window.Activate();
@@ -88,15 +90,15 @@ namespace WallTrek
         
         private void OnAutoGenerateTriggered(object? sender, EventArgs e)
         {
-            if (m_window != null)
+            if (_window != null)
             {
-                m_window.DispatcherQueue.TryEnqueue(() => m_window.TriggerAutoGenerate());
+                _window.DispatcherQueue.TryEnqueue(() => _window.TriggerAutoGenerate());
             }
         }
         
         private void ShowMainWindow()
         {
-            m_window?.Activate();
+            _window?.Activate();
         }
         
         private void ShowMenuItem_Click(object sender, RoutedEventArgs e)
