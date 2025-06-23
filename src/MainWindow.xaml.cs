@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using WallTrek.Services;
+using Windows.UI;
 
 namespace WallTrek
 {
@@ -15,6 +16,11 @@ namespace WallTrek
             
             // Set window icon
             this.AppWindow.SetIcon("Assets/walltrek.ico");
+            
+            // Remove title bar
+            var titleBar = this.AppWindow.TitleBar;
+            titleBar.ExtendsContentIntoTitleBar = true;
+            titleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
             
             // Handle window state changes to minimize to tray based on setting
             this.AppWindow.Changed += AppWindow_Changed;

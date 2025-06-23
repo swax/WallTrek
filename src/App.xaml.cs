@@ -19,6 +19,7 @@ using Windows.Foundation.Collections;
 using WallTrek.Services;
 using System.Windows.Input;
 using H.NotifyIcon;
+using System.Runtime.InteropServices;
 
 namespace WallTrek
 {
@@ -101,7 +102,18 @@ namespace WallTrek
         
         private void ShowMainWindow()
         {
-            _window?.Activate();
+            if (_window != null)
+            {
+                // Show the window if it's hidden
+                _window.AppWindow.Show();
+                
+                // Activate and bring to front
+                _window.Activate();
+                
+                // Use Win32 API to ensure window comes to foreground
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(_window);
+                Win32Helper.BringWindowToFront(hwnd);
+            }
         }
         
         private void QuitApplication()
