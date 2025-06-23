@@ -1,7 +1,13 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace WallTrek.Services
 {
+    [JsonSerializable(typeof(SettingsModel))]
+    internal partial class SettingsJsonContext : JsonSerializerContext
+    {
+    }
+
     public class SettingsModel
     {
         public string? ApiKey { get; set; }
@@ -64,7 +70,7 @@ namespace WallTrek.Services
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
-                string jsonString = JsonSerializer.Serialize(_model, new JsonSerializerOptions { WriteIndented = true });
+                string jsonString = JsonSerializer.Serialize(_model, SettingsJsonContext.Default.SettingsModel);
                 File.WriteAllText(SettingsPath, jsonString);
             }
             catch (Exception ex)
@@ -80,7 +86,7 @@ namespace WallTrek.Services
                 if (File.Exists(SettingsPath))
                 {
                     string jsonString = File.ReadAllText(SettingsPath);
-                    _model = JsonSerializer.Deserialize<SettingsModel>(jsonString) ?? new SettingsModel();
+                    _model = JsonSerializer.Deserialize(jsonString, SettingsJsonContext.Default.SettingsModel) ?? new SettingsModel();
                 }
             }
             catch (Exception ex)

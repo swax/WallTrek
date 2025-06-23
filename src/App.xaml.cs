@@ -33,6 +33,10 @@ namespace WallTrek
         public App()
         {
             this.InitializeComponent();
+            
+            // Set required environment variable for WindowsAppSDK SingleFile publishing
+            // Environment.SetEnvironmentVariable("MICROSOFT_WINDOWSAPPRUNTIME_BASE_DIRECTORY", AppContext.BaseDirectory);
+            
             Settings.Instance.Load();
             ShowMainWindowCommand = new RelayCommand(ShowMainWindow);
             InitializeTrayIcon();
@@ -66,7 +70,7 @@ namespace WallTrek
             {
                 ToolTipText = "WallTrek - AI Wallpaper Generator",
                 ContextFlyout = contextMenu,
-                IconSource = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///Assets/walltrek.ico"))
+                IconSource = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///assets/walltrek.ico"))
             };
 
             // Handle left click to show window

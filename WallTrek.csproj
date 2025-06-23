@@ -13,12 +13,34 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Tabavoco</RootNamespace>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     
     <!-- App Options -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <EnableDefaultPageItems>false</EnableDefaultPageItems>
+
+    <!-- Assembly Information -->
+    <AssemblyTitle>WallTrek</AssemblyTitle>
+    <AssemblyDescription>Generate desktop wallpapers with DALL·E 3</AssemblyDescription>
+    <AssemblyCompany>John Marshall</AssemblyCompany>
+    <AssemblyProduct>WallTrek</AssemblyProduct>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyCopyright>Copyright © 2025 John Marshall</AssemblyCopyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    
+    <!-- Publishing optimizations
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>link</TrimMode>
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebuggerSupport>false</DebuggerSupport>
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>  -->
   </PropertyGroup>
 
     <!-- Include generated XAML files for C# Dev Kit IntelliSense -->
@@ -48,7 +70,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\walltrek.ico" />
+    <Content Include="assets\walltrek.ico" />
   </ItemGroup>
 
   <!--

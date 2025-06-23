@@ -42,7 +42,6 @@ dotnet.exe restore
 ### Key Technical Details
 
 - **Framework**: .NET 9.0 with WinUI 3 (Windows App SDK 1.7.250606001)
-- **Namespace**: Primary namespace is `WallTrek`, but project uses `Tabavoco` as RootNamespace
 - **Output**: Images saved to `%USERPROFILE%\Pictures\WallTrek\` with timestamp and prompt in filename
 - **Settings**: Stored in `%APPDATA%\WallTrek\settings.json`
 - **Tray Behavior**: Application starts minimized to tray and minimizes to tray instead of closing

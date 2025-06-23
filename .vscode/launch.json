@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/net9.0-windows10.0.19041.0/WallTrek2.exe",
+            "program": "${workspaceFolder}/bin/Debug/net9.0-windows10.0.19041.0/WallTrek.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
@@ -17,7 +17,7 @@
             "name": "Attach to WallTrek Process",
             "type": "coreclr",
             "request": "attach",
-            "processName": "WallTrek2.exe"
+            "processName": "WallTrek.exe"
         }
     ]
 }

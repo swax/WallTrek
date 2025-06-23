@@ -15,7 +15,7 @@ namespace WallTrek
             this.Title = "WallTrek";
             
             // Set window icon
-            this.AppWindow.SetIcon("Assets/walltrek.ico");
+            this.AppWindow.SetIcon("assets/walltrek.ico");
             
             // Remove title bar
             var titleBar = this.AppWindow.TitleBar;

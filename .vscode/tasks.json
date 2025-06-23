@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/WallTrek2.csproj",
+                "${workspaceFolder}/WallTrek.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -23,7 +23,7 @@
             "type": "process",
             "args": [
                 "clean",
-                "${workspaceFolder}/WallTrek2.csproj"
+                "${workspaceFolder}/WallTrek.csproj"
             ],
             "problemMatcher": "$msCompile"
         },
@@ -33,7 +33,7 @@
             "type": "process",
             "args": [
                 "restore",
-                "${workspaceFolder}/WallTrek2.csproj"
+                "${workspaceFolder}/WallTrek.csproj"
             ],
             "problemMatcher": "$msCompile"
         },
@@ -44,7 +44,7 @@
             "args": [
                 "run",
                 "--project",
-                "${workspaceFolder}/WallTrek2.csproj"
+                "${workspaceFolder}/WallTrek.csproj"
             ],
             "problemMatcher": "$msCompile",
             "group": "test"
