@@ -70,6 +70,9 @@ namespace WallTrek
 
             // Handle left click to show window
             trayIcon.LeftClickCommand = ShowMainWindowCommand;
+            
+            // Handle double click to show window as well
+            trayIcon.DoubleClickCommand = ShowMainWindowCommand;
 
             trayIcon.ForceCreate();
         }
@@ -110,6 +113,11 @@ namespace WallTrek
             trayIcon?.Dispose();
             _window?.Close();
             Exit();
+        }
+
+        public void ShowBalloonTip(string title, string message)
+        {
+            trayIcon?.ShowNotification(title, message);
         }
     }
     
