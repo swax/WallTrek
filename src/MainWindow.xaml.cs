@@ -14,7 +14,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 
-namespace Hello_World
+namespace WallTrek
 {
     public sealed partial class MainWindow : Window
     {

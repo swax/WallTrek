@@ -16,14 +16,16 @@ using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using WallTrek.Services;
 
-namespace Hello_World
+namespace WallTrek
 {
     public partial class App : Application
     {
         public App()
         {
             this.InitializeComponent();
+            Settings.Instance.Load();
         }
 
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
@@ -32,6 +34,6 @@ namespace Hello_World
             m_window.Activate();
         }
 
-        private Window m_window;
+        private Window? m_window;
     }
 }
