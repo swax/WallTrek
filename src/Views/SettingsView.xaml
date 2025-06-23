@@ -27,6 +27,7 @@
             
             <StackPanel Spacing="10">
                 <CheckBox x:Name="MinimizeToTrayCheckBox" Content="Minimize to System Tray" IsChecked="True"/>
+                <CheckBox x:Name="RunOnStartupCheckBox" Content="Run on Windows Startup"/>
             </StackPanel>
             
             <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,20,0,0">

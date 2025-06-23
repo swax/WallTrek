@@ -23,6 +23,9 @@ namespace WallTrek.Views
             AutoGenerateCheckBox.IsChecked = settings.AutoGenerateEnabled;
             AutoGenerateMinutesNumberBox.Value = settings.AutoGenerateMinutes > 0 ? settings.AutoGenerateMinutes : 60;
             MinimizeToTrayCheckBox.IsChecked = settings.MinimizeToTray;
+            
+            // Load startup setting from both settings and registry to ensure sync
+            RunOnStartupCheckBox.IsChecked = StartupManager.IsStartupEnabled();
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -32,6 +35,10 @@ namespace WallTrek.Views
             settings.AutoGenerateEnabled = AutoGenerateCheckBox.IsChecked ?? false;
             settings.AutoGenerateMinutes = (int)AutoGenerateMinutesNumberBox.Value;
             settings.MinimizeToTray = MinimizeToTrayCheckBox.IsChecked ?? true;
+            
+            // Handle startup setting - only update registry, no need to store in settings
+            var runOnStartup = RunOnStartupCheckBox.IsChecked ?? false;
+            StartupManager.SetStartupEnabled(runOnStartup);
 
             settings.Save();
             StatusTextBlock.Text = "Settings saved successfully!";
