@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using WallTrek.Services;
 using Windows.System;
 
@@ -24,6 +25,36 @@ namespace WallTrek
             
             // Load saved prompt
             LoadSettings();
+            
+            // Handle window closing - minimize to tray instead
+            this.Closed += MainWindow_Closed;
+            
+            // Connect to auto-generate events
+            AutoGenerateService.Instance.NextGenerateTimeUpdated += OnNextGenerateTimeUpdated;
+        }
+        
+        private void MainWindow_Closed(object sender, WindowEventArgs args)
+        {
+            // Prevent actual closing - just hide the window
+            args.Handled = true;
+            this.AppWindow.Hide();
+        }
+        
+        private void OnNextGenerateTimeUpdated(object? sender, string timeText)
+        {
+            DispatcherQueue.TryEnqueue(() => {
+                NextGenerateTextBlock.Text = timeText;
+            });
+        }
+        
+        public async void TriggerAutoGenerate()
+        {
+            // Use the last saved prompt for auto-generation
+            if (!string.IsNullOrWhiteSpace(Settings.Instance.LastPrompt))
+            {
+                PromptTextBox.Text = Settings.Instance.LastPrompt;
+                await GenerateWallpaper();
+            }
         }
 
         private void LoadSettings()
@@ -33,6 +64,11 @@ namespace WallTrek
         }
 
         private async void GenerateButton_Click(object sender, RoutedEventArgs e)
+        {
+            await GenerateWallpaper();
+        }
+        
+        private async Task GenerateWallpaper()
         {
             // Save prompt when generating
             Settings.Instance.LastPrompt = PromptTextBox.Text;
@@ -67,6 +103,12 @@ namespace WallTrek
 
                 StatusTextBlock.Text = "Wallpaper generated and set successfully!";
                 StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Green);
+                
+                // Setup auto-generate timer if enabled and minutes > 0
+                if (Settings.Instance.AutoGenerateEnabled && Settings.Instance.AutoGenerateMinutes > 0)
+                {
+                    AutoGenerateService.Instance.Start(Settings.Instance.AutoGenerateMinutes);
+                }
             }
             catch (Exception ex)
             {
