@@ -18,16 +18,15 @@
             </StackPanel>
             
             <StackPanel Spacing="10">
-                <TextBlock Text="Last Prompt:" FontWeight="SemiBold"/>
-                <TextBox x:Name="LastPromptTextBox" PlaceholderText="Enter wallpaper prompt" Width="400" Height="80" TextWrapping="Wrap" AcceptsReturn="True" HorizontalAlignment="Left"/>
-            </StackPanel>
-            
-            <StackPanel Spacing="10">
                 <CheckBox x:Name="AutoGenerateCheckBox" Content="Enable Auto-Generate"/>
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <TextBlock Text="Auto-Generate Interval (minutes):" VerticalAlignment="Center"/>
                     <NumberBox x:Name="AutoGenerateMinutesNumberBox" Value="60" Minimum="1" Maximum="1440" Width="100"/>
                 </StackPanel>
+            </StackPanel>
+            
+            <StackPanel Spacing="10">
+                <CheckBox x:Name="MinimizeToTrayCheckBox" Content="Minimize to System Tray" IsChecked="True"/>
             </StackPanel>
             
             <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,20,0,0">

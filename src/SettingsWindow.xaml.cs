@@ -30,21 +30,23 @@ namespace WallTrek
         {
             var settings = Settings.Instance;
             ApiKeyTextBox.Text = settings.ApiKey ?? string.Empty;
-            LastPromptTextBox.Text = settings.LastPrompt ?? string.Empty;
             AutoGenerateCheckBox.IsChecked = settings.AutoGenerateEnabled;
             AutoGenerateMinutesNumberBox.Value = settings.AutoGenerateMinutes > 0 ? settings.AutoGenerateMinutes : 60;
+            MinimizeToTrayCheckBox.IsChecked = settings.MinimizeToTray;
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             var settings = Settings.Instance;
             settings.ApiKey = ApiKeyTextBox.Text;
-            settings.LastPrompt = LastPromptTextBox.Text;
             settings.AutoGenerateEnabled = AutoGenerateCheckBox.IsChecked ?? false;
             settings.AutoGenerateMinutes = (int)AutoGenerateMinutesNumberBox.Value;
-            
+            settings.MinimizeToTray = MinimizeToTrayCheckBox.IsChecked ?? true;
+
             settings.Save();
             StatusTextBlock.Text = "Settings saved successfully!";
+            
+             this.Close();
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

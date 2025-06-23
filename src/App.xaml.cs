@@ -40,6 +40,8 @@ namespace WallTrek
         private void InitializeTrayIcon()
         {
             // Create tray context menu with commands instead of click events
+            // The menu shows in the bottom right corner of the screen and not over the icon
+            // The experimental/preview version of h.NotifyIcon does support it
             var contextMenu = new MenuFlyout();
 
             var showItem = new MenuFlyoutItem 

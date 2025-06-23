@@ -31,6 +31,9 @@ namespace WallTrek
             
             // Connect to auto-generate events
             AutoGenerateService.Instance.NextGenerateTimeUpdated += OnNextGenerateTimeUpdated;
+            
+            // Handle window state changes to minimize to tray based on setting
+            this.AppWindow.Changed += AppWindow_Changed;
         }
         
         private void OnNextGenerateTimeUpdated(object? sender, string timeText)
@@ -39,6 +42,23 @@ namespace WallTrek
             {
                 NextGenerateTextBlock.Text = timeText;
             });
+        }
+        
+        private void AppWindow_Changed(object? sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs e)
+        {
+            // Check if the window was minimized and the setting is enabled
+            if (e.DidPresenterChange && Settings.Instance.MinimizeToTray)
+            {
+                if (this.AppWindow.Presenter.Kind == Microsoft.UI.Windowing.AppWindowPresenterKind.Overlapped)
+                {
+                    var overlappedPresenter = this.AppWindow.Presenter as Microsoft.UI.Windowing.OverlappedPresenter;
+                    if (overlappedPresenter?.State == Microsoft.UI.Windowing.OverlappedPresenterState.Minimized)
+                    {
+                        // Hide the window instead of showing it minimized
+                        this.AppWindow.Hide();
+                    }
+                }
+            }
         }
         
         public async void TriggerAutoGenerate()
