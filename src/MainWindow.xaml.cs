@@ -20,29 +20,23 @@ namespace WallTrek
             this.InitializeComponent();
             this.Title = "WallTrek";
             
+            // Set window icon
+            this.AppWindow.SetIcon("Assets/walltrek.ico");
+            
             // Create output directory
             Directory.CreateDirectory(outputDirectory);
             
             // Load saved prompt
             LoadSettings();
             
-            // Handle window closing - minimize to tray instead
-            this.Closed += MainWindow_Closed;
-            
             // Connect to auto-generate events
             AutoGenerateService.Instance.NextGenerateTimeUpdated += OnNextGenerateTimeUpdated;
         }
         
-        private void MainWindow_Closed(object sender, WindowEventArgs args)
-        {
-            // Prevent actual closing - just hide the window
-            args.Handled = true;
-            this.AppWindow.Hide();
-        }
-        
         private void OnNextGenerateTimeUpdated(object? sender, string timeText)
         {
-            DispatcherQueue.TryEnqueue(() => {
+            DispatcherQueue.TryEnqueue(() =>
+            {
                 NextGenerateTextBlock.Text = timeText;
             });
         }

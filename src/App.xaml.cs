@@ -25,7 +25,6 @@ namespace WallTrek
     public partial class App : Application
     {
         private MainWindow? _window;
-        private SettingsWindow? settingsWindow;
         private TaskbarIcon? trayIcon;
         
         public ICommand ShowMainWindowCommand { get; private set; }
@@ -49,13 +48,6 @@ namespace WallTrek
                 Command = ShowMainWindowCommand
             };
             contextMenu.Items.Add(showItem);
-
-            var settingsItem = new MenuFlyoutItem 
-            { 
-                Text = "Settings",
-                Command = new RelayCommand(ShowSettings)
-            };
-            contextMenu.Items.Add(settingsItem);
 
             contextMenu.Items.Add(new MenuFlyoutSeparator());
 
@@ -110,20 +102,11 @@ namespace WallTrek
             _window?.Activate();
         }
         
-        private void ShowSettings()
-        {
-            if (settingsWindow == null)
-            {
-                settingsWindow = new SettingsWindow();
-                settingsWindow.Closed += (s, e) => settingsWindow = null;
-            }
-            settingsWindow.Activate();
-        }
-        
         private void QuitApplication()
         {
             AutoGenerateService.Instance.Stop();
             trayIcon?.Dispose();
+            _window?.Close();
             Exit();
         }
     }

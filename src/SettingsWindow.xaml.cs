@@ -47,11 +47,9 @@ namespace WallTrek
             StatusTextBlock.Text = "Settings saved successfully!";
         }
 
-        private void LoadButton_Click(object sender, RoutedEventArgs e)
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            Settings.Instance.Load();
-            LoadSettingsToUI();
-            StatusTextBlock.Text = "Settings loaded successfully!";
+            this.Close();
         }
     }
 }
