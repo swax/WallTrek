@@ -28,19 +28,6 @@
     <FileVersion>1.0.0.0</FileVersion>
     <AssemblyCopyright>Copyright © 2025 John Marshall</AssemblyCopyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    
-    <!-- Publishing optimizations
-    <PublishTrimmed>true</PublishTrimmed>
-    <TrimMode>link</TrimMode>
-    <PublishSingleFile>true</PublishSingleFile>
-    <PublishReadyToRun>true</PublishReadyToRun>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    <DebuggerSupport>false</DebuggerSupport>
-    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
-    <EnableUnsafeUTF7Encoding>false</EnableUnsafeUTF7Encoding>
-    <InvariantGlobalization>false</InvariantGlobalization>
-    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>  -->
   </PropertyGroup>
 
     <!-- Include generated XAML files for C# Dev Kit IntelliSense -->
@@ -72,13 +59,4 @@
   <ItemGroup>
     <Content Include="assets\walltrek.ico" />
   </ItemGroup>
-
-  <!--
-    If you have an app.manifest for window settings or DPI awareness, include it:
-    <ItemGroup>
-      <None Update="app.manifest">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-  -->
 </Project>

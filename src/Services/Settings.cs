@@ -16,6 +16,7 @@ namespace WallTrek.Services
         public int AutoGenerateMinutes { get; set; }
         public DateTime? NextAutoGenerateTime { get; set; }
         public bool MinimizeToTray { get; set; } = true;
+        public bool IsFirstRun { get; set; } = true;
     }
 
     public class Settings
@@ -63,6 +64,12 @@ namespace WallTrek.Services
         {
             get => _model.MinimizeToTray;
             set => _model.MinimizeToTray = value;
+        }
+
+        public bool IsFirstRun
+        {
+            get => _model.IsFirstRun;
+            set => _model.IsFirstRun = value;
         }
 
         public void Save()

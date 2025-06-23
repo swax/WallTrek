@@ -86,8 +86,13 @@ namespace WallTrek
         {
             _window = new MainWindow();
             
-            // Start minimized to tray - don't show window initially
-            // m_window.Activate();
+            // Show window normally on first run, otherwise start minimized to tray
+            if (Settings.Instance.IsFirstRun)
+            {
+                _window.Activate();
+                Settings.Instance.IsFirstRun = false;
+                Settings.Instance.Save();
+            }
             
             // Connect auto-generate events
             AutoGenerateService.Instance.AutoGenerateTriggered += OnAutoGenerateTriggered;
