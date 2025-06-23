@@ -1,20 +1,62 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+
+    <!-- WinUI 3 -->
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType>None</WindowsPackageType>
+
+    <!-- Project Options -->
     <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
-    <ApplicationIcon>Assets\walltrek.ico</ApplicationIcon>
+    <RootNamespace>Tabavoco</RootNamespace>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    
+    <!-- App Options -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
   </PropertyGroup>
+
+    <!-- Include generated XAML files for C# Dev Kit IntelliSense -->
+  <ItemGroup Condition="'$(DesignTimeBuild)' == 'true'">
+    <Compile Include="obj/Debug/net9.0-windows10.0.19041.0/src/**/*.cs">
+        <AutoGen>True</AutoGen>
+        <DesignTime>True</DesignTime>
+        <DependentUpon>%(Filename).xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="src\**\*.cs" />
+    <ApplicationDefinition Include="src\App.xaml">
+        <Generator>MSBuild:Compile</Generator>
+    </ApplicationDefinition>
+    <Page Include="src\**\*.xaml" Exclude="src\App.xaml">
+        <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
+    <PackageReference Include="OpenAI" Version="2.1.0" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.6" />
+    <PackageReference Include="H.NotifyIcon.WinUI" Version="2.3.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\walltrek.ico" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="OpenAI" Version="2.1.0" />
-  </ItemGroup>
-
+  <!--
+    If you have an app.manifest for window settings or DPI awareness, include it:
+    <ItemGroup>
+      <None Update="app.manifest">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+  -->
 </Project>

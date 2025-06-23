@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using Microsoft.UI.Dispatching;
 
 namespace WallTrek.Services
 {
@@ -25,14 +25,42 @@ namespace WallTrek.Services
             } 
         }
 
-        private System.Windows.Forms.Timer? pollTimer;
+        private DispatcherQueueTimer? pollTimer;
+        private readonly DispatcherQueue dispatcherQueue;
 
         public event EventHandler? AutoGenerateTriggered;
         public event EventHandler<string>? NextGenerateTimeUpdated;
 
-        private AutoGenerateService() { }
+        private AutoGenerateService() 
+        { 
+            dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+        }
 
-        public bool IsEnabled => pollTimer?.Enabled ?? false;
+        public void RefreshFromSettings()
+        {
+            var settings = Settings.Instance;
+            
+            if (settings.AutoGenerateEnabled && settings.AutoGenerateMinutes > 0)
+            {
+                // If there's a saved next generation time, restore from that
+                if (settings.NextAutoGenerateTime.HasValue && settings.NextAutoGenerateTime > DateTime.Now)
+                {
+                    StartFromSavedTime();
+                }
+                else
+                {
+                    // Start fresh with current settings
+                    Start(settings.AutoGenerateMinutes);
+                }
+            }
+            else
+            {
+                // Stop if disabled
+                Cancel();
+            }
+        }
+
+        public bool IsEnabled => pollTimer != null;
         public DateTime? NextGenerateTime => Settings.Instance.NextAutoGenerateTime;
 
         public void Start(int minutes)
@@ -70,8 +98,8 @@ namespace WallTrek.Services
         {
             Stop();
 
-            pollTimer = new System.Windows.Forms.Timer();
-            pollTimer.Interval = 1000; // Poll every second
+            pollTimer = dispatcherQueue.CreateTimer();
+            pollTimer.Interval = TimeSpan.FromSeconds(1); // Poll every second
             pollTimer.Tick += OnPollTimer_Tick;
             pollTimer.Start();
 
@@ -81,7 +109,6 @@ namespace WallTrek.Services
         public void Stop()
         {
             pollTimer?.Stop();
-            pollTimer?.Dispose();
             pollTimer = null;
 
             NextGenerateTimeUpdated?.Invoke(this, "");
@@ -94,7 +121,7 @@ namespace WallTrek.Services
             Settings.Instance.Save();
         }
 
-        private void OnPollTimer_Tick(object? sender, EventArgs e)
+        private void OnPollTimer_Tick(object? sender, object e)
         {
             var nextTime = Settings.Instance.NextAutoGenerateTime;
             
@@ -130,6 +157,5 @@ namespace WallTrek.Services
             string timeText = $"Next generation at: {nextTime.Value:MMM d, h:mm tt}";
             NextGenerateTimeUpdated?.Invoke(this, timeText);
         }
-
     }
 }

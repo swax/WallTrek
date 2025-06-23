@@ -1,4 +1,7 @@
 using Microsoft.Win32;
+using System;
+using System.IO;
+using System.Reflection;
 
 namespace WallTrek.Services
 {
@@ -30,7 +33,7 @@ namespace WallTrek.Services
 
                 if (enabled)
                 {
-                    var executablePath = Application.ExecutablePath;
+                    var executablePath = GetExecutablePath();
                     key.SetValue(ApplicationName, $"\"{executablePath}\"");
                 }
                 else
@@ -40,9 +43,27 @@ namespace WallTrek.Services
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to update startup settings: {ex.Message}", "Error", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // In WinUI, we can't use MessageBox, so we'll just ignore the error
+                // The Settings UI will show if the setting was actually applied
+                System.Diagnostics.Debug.WriteLine($"Failed to update startup settings: {ex.Message}");
             }
+        }
+
+        private static string GetExecutablePath()
+        {
+            // For WinUI applications, get the executable path differently
+            var assembly = Assembly.GetExecutingAssembly();
+            var location = assembly.Location;
+            
+            // If running from the build output, get the actual executable
+            if (location.EndsWith(".dll"))
+            {
+                var directory = Path.GetDirectoryName(location);
+                var fileName = Path.GetFileNameWithoutExtension(location) + ".exe";
+                return Path.Combine(directory!, fileName);
+            }
+            
+            return location;
         }
     }
 }
