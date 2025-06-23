@@ -41,6 +41,10 @@ namespace WallTrek.Views
             StartupManager.SetStartupEnabled(runOnStartup);
 
             settings.Save();
+            
+            // Refresh auto-generate service based on new settings
+            AutoGenerateService.Instance.RefreshFromSettings();
+            
             StatusTextBlock.Text = "Settings saved successfully!";
             
             // Navigate back to main view after saving

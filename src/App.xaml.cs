@@ -87,11 +87,8 @@ namespace WallTrek
             // Connect auto-generate events
             AutoGenerateService.Instance.AutoGenerateTriggered += OnAutoGenerateTriggered;
             
-            // Restore auto-generate timer if it was running
-            if (Settings.Instance.AutoGenerateEnabled && Settings.Instance.NextAutoGenerateTime.HasValue)
-            {
-                AutoGenerateService.Instance.StartFromSavedTime();
-            }
+            // Initialize auto-generate service based on current settings
+            AutoGenerateService.Instance.RefreshFromSettings();
         }
         
         private void OnAutoGenerateTriggered(object? sender, EventArgs e)
@@ -133,7 +130,7 @@ namespace WallTrek
             _canExecute = canExecute;
         }
 
-        public event EventHandler? CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
 
         public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
 

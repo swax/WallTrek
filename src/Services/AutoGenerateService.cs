@@ -36,6 +36,30 @@ namespace WallTrek.Services
             dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         }
 
+        public void RefreshFromSettings()
+        {
+            var settings = Settings.Instance;
+            
+            if (settings.AutoGenerateEnabled && settings.AutoGenerateMinutes > 0)
+            {
+                // If there's a saved next generation time, restore from that
+                if (settings.NextAutoGenerateTime.HasValue && settings.NextAutoGenerateTime > DateTime.Now)
+                {
+                    StartFromSavedTime();
+                }
+                else
+                {
+                    // Start fresh with current settings
+                    Start(settings.AutoGenerateMinutes);
+                }
+            }
+            else
+            {
+                // Stop if disabled
+                Cancel();
+            }
+        }
+
         public bool IsEnabled => pollTimer != null;
         public DateTime? NextGenerateTime => Settings.Instance.NextAutoGenerateTime;
 
