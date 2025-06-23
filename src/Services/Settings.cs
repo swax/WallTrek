@@ -17,6 +17,7 @@ namespace WallTrek.Services
         public DateTime? NextAutoGenerateTime { get; set; }
         public bool MinimizeToTray { get; set; } = true;
         public bool IsFirstRun { get; set; } = true;
+        public string? OutputDirectory { get; set; }
     }
 
     public class Settings
@@ -70,6 +71,12 @@ namespace WallTrek.Services
         {
             get => _model.IsFirstRun;
             set => _model.IsFirstRun = value;
+        }
+
+        public string OutputDirectory
+        {
+            get => _model.OutputDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "WallTrek");
+            set => _model.OutputDirectory = value;
         }
 
         public void Save()

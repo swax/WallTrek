@@ -18,6 +18,18 @@
             </StackPanel>
             
             <StackPanel Spacing="10">
+                <TextBlock Text="Output Directory:" FontWeight="SemiBold"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="OutputDirectoryTextBox" Grid.Column="0" PlaceholderText="Path where wallpapers will be saved" Width="350" HorizontalAlignment="Left"/>
+                    <Button x:Name="BrowseButton" Grid.Column="1" Content="Browse..." Click="BrowseButton_Click" Margin="10,0,0,0"/>
+                </Grid>
+            </StackPanel>
+            
+            <StackPanel Spacing="10">
                 <CheckBox x:Name="AutoGenerateCheckBox" Content="Enable Auto-Generate"/>
                 <StackPanel Orientation="Horizontal" Spacing="10">
                     <TextBlock Text="Auto-Generate Interval (minutes):" VerticalAlignment="Center"/>
@@ -35,7 +47,7 @@
                 <Button x:Name="CancelButton" Content="Cancel" Click="CancelButton_Click"/>
             </StackPanel>
             
-            <TextBlock x:Name="StatusTextBlock" Text="" Foreground="Green" Margin="0,10,0,0"/>
+            <TextBlock x:Name="StatusTextBlock" Text="" Foreground="LimeGreen" Margin="0,10,0,0"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

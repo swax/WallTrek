@@ -2,7 +2,10 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using System.IO;
 using WallTrek.Services;
+using Windows.Storage;
+using Windows.Storage.Pickers;
 
 namespace WallTrek.Views
 {
@@ -20,6 +23,7 @@ namespace WallTrek.Views
         {
             var settings = Settings.Instance;
             ApiKeyTextBox.Text = settings.ApiKey ?? string.Empty;
+            OutputDirectoryTextBox.Text = settings.OutputDirectory;
             AutoGenerateCheckBox.IsChecked = settings.AutoGenerateEnabled;
             AutoGenerateMinutesNumberBox.Value = settings.AutoGenerateMinutes > 0 ? settings.AutoGenerateMinutes : 60;
             MinimizeToTrayCheckBox.IsChecked = settings.MinimizeToTray;
@@ -32,6 +36,7 @@ namespace WallTrek.Views
         {
             var settings = Settings.Instance;
             settings.ApiKey = ApiKeyTextBox.Text;
+            settings.OutputDirectory = OutputDirectoryTextBox.Text;
             settings.AutoGenerateEnabled = AutoGenerateCheckBox.IsChecked ?? false;
             settings.AutoGenerateMinutes = (int)AutoGenerateMinutesNumberBox.Value;
             settings.MinimizeToTray = MinimizeToTrayCheckBox.IsChecked ?? true;
@@ -59,6 +64,24 @@ namespace WallTrek.Views
             
             // Navigate back to main view
             NavigateToMain?.Invoke(this, EventArgs.Empty);
+        }
+
+        private async void BrowseButton_Click(object sender, RoutedEventArgs e)
+        {
+            var picker = new FolderPicker();
+            picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+            picker.FileTypeFilter.Add("*");
+
+            // Get the current window handle for the picker
+            var window = ((App)Application.Current).GetMainWindow();
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+            var folder = await picker.PickSingleFolderAsync();
+            if (folder != null)
+            {
+                OutputDirectoryTextBox.Text = folder.Path;
+            }
         }
     }
 }

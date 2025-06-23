@@ -137,6 +137,11 @@ namespace WallTrek
         {
             trayIcon?.ShowNotification(title, message);
         }
+
+        public MainWindow? GetMainWindow()
+        {
+            return _window;
+        }
     }
     
     // Simple RelayCommand implementation

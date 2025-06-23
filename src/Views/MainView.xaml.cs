@@ -12,8 +12,6 @@ namespace WallTrek.Views
 {
     public sealed partial class MainView : UserControl
     {
-        private readonly string outputDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "WallTrek");
-
         public event EventHandler? NavigateToSettings;
 
         public MainView()
@@ -21,7 +19,7 @@ namespace WallTrek.Views
             this.InitializeComponent();
             
             // Create output directory
-            Directory.CreateDirectory(outputDirectory);
+            Directory.CreateDirectory(Settings.Instance.OutputDirectory);
             
             // Load saved prompt
             LoadSettings();
@@ -68,7 +66,7 @@ namespace WallTrek.Views
             if (string.IsNullOrEmpty(Settings.Instance.ApiKey))
             {
                 StatusTextBlock.Text = "Please set your OpenAI API key in Settings first.";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
                 NavigateToSettings?.Invoke(this, EventArgs.Empty);
                 return;
             }
@@ -76,7 +74,7 @@ namespace WallTrek.Views
             if (string.IsNullOrWhiteSpace(PromptTextBox.Text))
             {
                 StatusTextBlock.Text = "Please enter a prompt for your wallpaper.";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
                 return;
             }
 
@@ -85,15 +83,15 @@ namespace WallTrek.Views
                 GenerateButton.IsEnabled = false;
                 GenerationProgressBar.Visibility = Visibility.Visible;
                 StatusTextBlock.Text = "Generating wallpaper...";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Blue);
+                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.DodgerBlue);
 
-                var imageGenerator = new ImageGenerator(Settings.Instance.ApiKey, outputDirectory);
+                var imageGenerator = new ImageGenerator(Settings.Instance.ApiKey, Settings.Instance.OutputDirectory);
                 var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text);
                 
                 Wallpaper.Set(filePath);
 
                 StatusTextBlock.Text = "Wallpaper generated and set successfully!";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Green);
+                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
                 
                 // Show balloon tip notification
                 ((App)Application.Current).ShowBalloonTip("Wallpaper Generated", "New wallpaper has been generated and set as your background!");
@@ -107,7 +105,7 @@ namespace WallTrek.Views
             catch (Exception ex)
             {
                 StatusTextBlock.Text = $"Error: {ex.Message}";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
             }
             finally
             {
@@ -118,7 +116,7 @@ namespace WallTrek.Views
 
         private async void OpenFolderButton_Click(object sender, RoutedEventArgs e)
         {
-            await Launcher.LaunchFolderPathAsync(outputDirectory);
+            await Launcher.LaunchFolderPathAsync(Settings.Instance.OutputDirectory);
         }
 
         private void PromptTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
