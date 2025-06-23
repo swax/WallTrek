@@ -40,21 +40,30 @@ namespace WallTrek
 
         private void InitializeTrayIcon()
         {
-            // Create tray context menu
+            // Create tray context menu with commands instead of click events
             var contextMenu = new MenuFlyout();
 
-            var showItem = new MenuFlyoutItem { Text = "Show WallTrek" };
-            showItem.Click += ShowMenuItem_Click;
+            var showItem = new MenuFlyoutItem 
+            { 
+                Text = "Show WallTrek",
+                Command = ShowMainWindowCommand
+            };
             contextMenu.Items.Add(showItem);
 
-            var settingsItem = new MenuFlyoutItem { Text = "Settings" };
-            settingsItem.Click += SettingsMenuItem_Click;
+            var settingsItem = new MenuFlyoutItem 
+            { 
+                Text = "Settings",
+                Command = new RelayCommand(ShowSettings)
+            };
             contextMenu.Items.Add(settingsItem);
 
             contextMenu.Items.Add(new MenuFlyoutSeparator());
 
-            var quitItem = new MenuFlyoutItem { Text = "Quit" };
-            quitItem.Click += QuitMenuItem_Click;
+            var quitItem = new MenuFlyoutItem 
+            { 
+                Text = "Quit",
+                Command = new RelayCommand(QuitApplication)
+            };
             contextMenu.Items.Add(quitItem);
 
             // Create tray icon
@@ -101,12 +110,7 @@ namespace WallTrek
             _window?.Activate();
         }
         
-        private void ShowMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            ShowMainWindow();
-        }
-        
-        private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)
+        private void ShowSettings()
         {
             if (settingsWindow == null)
             {
@@ -116,7 +120,7 @@ namespace WallTrek
             settingsWindow.Activate();
         }
         
-        private void QuitMenuItem_Click(object sender, RoutedEventArgs e)
+        private void QuitApplication()
         {
             AutoGenerateService.Instance.Stop();
             trayIcon?.Dispose();
