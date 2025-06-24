@@ -17,5 +17,7 @@
                            Visibility="Collapsed"/>
         <views:PromptHistoryView x:Name="HistoryViewControl" 
                                 Visibility="Collapsed"/>
+        <views:RandomPromptSettingsView x:Name="RandomPromptSettingsViewControl" 
+                                       Visibility="Collapsed"/>
     </Grid>
 </Window>

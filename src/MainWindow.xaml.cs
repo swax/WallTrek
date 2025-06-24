@@ -7,6 +7,14 @@ using Windows.UI;
 
 namespace WallTrek
 {
+    public enum ViewType
+    {
+        Home,
+        Settings,
+        History,
+        RandomPromptSettings
+    }
+
     public sealed partial class MainWindow : Window
     {
         public MainWindow()
@@ -29,11 +37,13 @@ namespace WallTrek
             MainViewControl.NavigateToSettings += (s, e) => NavigateToSettings();
             MainViewControl.NavigateToHistory += (s, e) => NavigateToHistory();
             SettingsViewControl.NavigateToMain += (s, e) => NavigateToHome();
+            SettingsViewControl.NavigateToRandomPromptSettings += (s, e) => NavigateToRandomPromptSettings();
             HistoryViewControl.NavigateBack += (s, e) => NavigateToHome();
             HistoryViewControl.CopyPrompt += (s, prompt) => {
                 MainViewControl.SetPromptText(prompt);
                 NavigateToHome();
             };
+            RandomPromptSettingsViewControl.NavigateBack += (s, e) => NavigateToSettings();
         }
         
         private void AppWindow_Changed(object? sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs e)
@@ -59,27 +69,36 @@ namespace WallTrek
             MainViewControl.TriggerAutoGenerate();
         }
 
+        private void SetActiveView(ViewType viewType)
+        {
+            MainViewControl.Visibility = viewType == ViewType.Home ? Visibility.Visible : Visibility.Collapsed;
+            SettingsViewControl.Visibility = viewType == ViewType.Settings ? Visibility.Visible : Visibility.Collapsed;
+            HistoryViewControl.Visibility = viewType == ViewType.History ? Visibility.Visible : Visibility.Collapsed;
+            RandomPromptSettingsViewControl.Visibility = viewType == ViewType.RandomPromptSettings ? Visibility.Visible : Visibility.Collapsed;
+        }
+
 
         private void NavigateToHome()
         {
-            MainViewControl.Visibility = Visibility.Visible;
-            SettingsViewControl.Visibility = Visibility.Collapsed;
-            HistoryViewControl.Visibility = Visibility.Collapsed;
+            SetActiveView(ViewType.Home);
         }
 
         private void NavigateToSettings()
         {
-            MainViewControl.Visibility = Visibility.Collapsed;
-            SettingsViewControl.Visibility = Visibility.Visible;
-            HistoryViewControl.Visibility = Visibility.Collapsed;
+            SetActiveView(ViewType.Settings);
+            SettingsViewControl.ClearStatus();
         }
 
         private void NavigateToHistory()
         {
-            MainViewControl.Visibility = Visibility.Collapsed;
-            SettingsViewControl.Visibility = Visibility.Collapsed;
-            HistoryViewControl.Visibility = Visibility.Visible;
+            SetActiveView(ViewType.History);
             HistoryViewControl.RefreshHistory();
+        }
+
+        private void NavigateToRandomPromptSettings()
+        {
+            SetActiveView(ViewType.RandomPromptSettings);
+            RandomPromptSettingsViewControl.ClearStatus();
         }
     }
 }

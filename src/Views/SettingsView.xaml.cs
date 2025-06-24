@@ -12,11 +12,17 @@ namespace WallTrek.Views
     public sealed partial class SettingsView : UserControl
     {
         public event EventHandler? NavigateToMain;
+        public event EventHandler? NavigateToRandomPromptSettings;
 
         public SettingsView()
         {
             this.InitializeComponent();
             LoadSettingsToUI();
+        }
+
+        public void ClearStatus()
+        {
+            StatusTextBlock.Text = "";
         }
 
         private void LoadSettingsToUI()
@@ -81,6 +87,7 @@ namespace WallTrek.Views
             NavigateToMain?.Invoke(this, EventArgs.Empty);
         }
 
+
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             // Reload settings to discard changes
@@ -117,6 +124,11 @@ namespace WallTrek.Views
         private void UpdateAutoGenerateOptionsVisibility()
         {
             AutoGenerateOptionsPanel.Visibility = AutoGenerateCheckBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void RandomPromptSettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            NavigateToRandomPromptSettings?.Invoke(this, EventArgs.Empty);
         }
     }
 }

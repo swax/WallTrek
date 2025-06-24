@@ -16,11 +16,43 @@ namespace WallTrek.Services
         public string Source { get; set; } = "current";
     }
 
+    public class RandomPromptsSettings
+    {
+        public List<string> Categories { get; set; } = new()
+        {
+            "abstract geometric patterns and mathematical art",
+            "natural landscapes and organic forms", 
+            "futuristic cyberpunk and sci-fi environments",
+            "minimalist design and negative space",
+            "fantasy worlds and magical creatures",
+            "architectural marvels and urban scenes",
+            "cosmic and astronomical phenomena",
+            "vintage and retro aesthetic designs",
+            "surreal and dreamlike compositions",
+            "seasonal and weather-based imagery"
+        };
+
+        public List<string> Styles { get; set; } = new()
+        {
+            "oil painting", "watercolor", "digital art", "photography", "3D render",
+            "vector illustration", "pixel art", "paper cut-out", "neon lighting",
+            "pencil sketch", "abstract expressionism", "art nouveau", "bauhaus design"
+        };
+
+        public List<string> Moods { get; set; } = new()
+        {
+            "serene and calming", "energetic and vibrant", "mysterious and moody",
+            "bright and cheerful", "dramatic and intense", "peaceful and meditative",
+            "bold and striking", "subtle and elegant", "warm and cozy", "cool and refreshing"
+        };
+    }
+
     public class SettingsModel
     {
         public string? ApiKey { get; set; }
         public string? LastPrompt { get; set; }
         public AutoGenerateSettings AutoGenerate { get; set; } = new();
+        public RandomPromptsSettings RandomPrompts { get; set; } = new();
         public bool MinimizeToTray { get; set; } = true;
         public bool IsFirstRun { get; set; } = true;
         public string? OutputDirectory { get; set; }
@@ -89,6 +121,12 @@ namespace WallTrek.Services
         {
             get => _model.AutoGenerate.Source;
             set => _model.AutoGenerate.Source = value;
+        }
+
+        public RandomPromptsSettings RandomPrompts
+        {
+            get => _model.RandomPrompts;
+            set => _model.RandomPrompts = value;
         }
 
         public void Save()

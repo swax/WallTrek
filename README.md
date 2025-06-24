@@ -4,12 +4,16 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 
 ## Features
 
-- AI-powered wallpaper generation using OpenAI's DALL-E 3
-- System tray integration with minimal UI footprint
-- Automatic wallpaper generation at configurable intervals
-- Custom prompt support for personalized wallpapers
-- EXIF metadata preservation with original prompts
-- Automatic desktop wallpaper setting
+- **AI-powered wallpaper generation** using OpenAI's DALL-E 3
+- **Random prompt generation** using OpenAI's o3 model for creative variety
+- **Prompt history management** with search, favorites, and usage tracking
+- **System tray integration** with minimal UI footprint
+- **Automatic wallpaper generation** with configurable intervals and source modes
+- **Database persistence** for prompt and image history using SQLite
+- **Image management** - view, set as background, or delete generated images
+- **Windows startup integration** - optional run on system startup
+- **EXIF metadata preservation** with original prompts embedded in images
+- **Multi-view interface** for generation, history, and settings management
 
 ## Requirements
 
@@ -24,41 +28,58 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 3. Build the project: `dotnet build`
 4. Run the project: `dotnet run`
 
+**Note**: VS Code is supported, though for some XAML errors may need Visual Studio for more details.
+
 ### Configuration
 
-1. Right-click the system tray icon to access settings
-2. Enter your OpenAI API key
-3. Configure auto-generation interval (optional)
-4. Set custom prompts for wallpaper generation
+1. **Initial Setup**: Right-click the system tray icon to open the application
+2. **API Configuration**: Navigate to Settings and enter your OpenAI API key
+3. **Auto-Generation**: Configure generation interval and choose between:
+   - **Current Prompt**: Use your saved prompt for auto-generation
+   - **Random Prompts**: Generate new AI-created prompts automatically
+4. **Startup Options**: Enable "Run on Windows startup" for automatic launching
+5. **Prompt Management**: Use the Prompt History view to manage and favorite prompts
 
 ### Generated Content
 
-- Wallpapers are saved to `%USERPROFILE%\Pictures\WallTrek\`
-- Files include timestamp and prompt in the filename
-- Images contain EXIF metadata with the original generation prompt
-- Desktop wallpaper is automatically updated
+- **Image Storage**: Wallpapers saved to `%USERPROFILE%\Pictures\WallTrek\`
+- **File Naming**: Includes timestamp and prompt in filename for easy identification
+- **Metadata**: EXIF data contains original generation prompt for reference
+- **Database Tracking**: All prompts and images tracked in local SQLite database
+- **Auto-Wallpaper**: Desktop wallpaper automatically updated upon generation
+- **History Access**: View, search, and manage all generated content through the UI
 
 ## Architecture
 
-### Core Components
+### User Interface
 
-- **App.xaml.cs**: Application entry point with system tray integration
-- **MainWindow**: Primary UI for wallpaper generation
-- **SettingsWindow**: Configuration interface
+- **MainView**: Primary wallpaper generation interface
+- **PromptHistoryView**: Search, browse, and manage prompt history with favorites
+- **SettingsView**: API configuration, auto-generation, and startup settings
+- **System Tray**: Minimal footprint with quick access to all features
 
-### Services
+### Core Services
 
-- **ImageGenerator**: OpenAI DALL-E 3 API integration
-- **Settings**: JSON-based configuration management
-- **AutoGenerateService**: Timer-based automatic generation
-- **Wallpaper**: Windows desktop wallpaper integration
+- **ImageGenerator**: OpenAI DALL-E 3 API integration for wallpaper creation
+- **PromptGeneratorService**: AI-powered random prompt generation using OpenAI's o3
+- **DatabaseService**: SQLite persistence for prompt and image history
+- **AutoGenerateService**: Configurable timer-based automatic generation
+- **StartupManager**: Windows registry integration for startup functionality
+- **Wallpaper**: Desktop wallpaper integration via Win32 API
+
+### Data Storage
+
+- **Settings**: `%APPDATA%\WallTrek\settings.json` - Application configuration
+- **Database**: `%APPDATA%\WallTrek\walltrek.db` - Prompt and image history
+- **Images**: `%USERPROFILE%\Pictures\WallTrek\` - Generated wallpaper files
 
 ### Technical Stack
 
 - **.NET 9.0** with **WinUI 3** (Windows App SDK 1.7.250606001)
-- **OpenAI API** for image generation
+- **OpenAI API v2.1.0** for image and prompt generation
+- **SQLite** via Microsoft.Data.Sqlite for data persistence
 - **H.NotifyIcon.WinUI** for system tray functionality
-- **System.Drawing.Common** for image processing
+- **System.Drawing.Common** for image processing and metadata
 
 ## License
 
