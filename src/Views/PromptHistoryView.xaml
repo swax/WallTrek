@@ -2,7 +2,12 @@
 <UserControl
     x:Class="WallTrek.Views.PromptHistoryView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:WallTrek.Views">
+
+    <UserControl.Resources>
+        <local:FavoriteColorConverter x:Key="FavoriteColorConverter"/>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -63,13 +68,30 @@
                             <Expander.Header>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     
-                                    <StackPanel Grid.Column="0">
+                                    <Button Grid.Column="0" x:Name="FavoriteButton" 
+                                            Width="36" Height="32" 
+                                            Margin="0,0,10,0"
+                                            VerticalAlignment="Center"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            ToolTipService.ToolTip="Toggle favorite"
+                                            Click="FavoriteButton_Click"
+                                            Tag="{Binding}">
+                                        <FontIcon Glyph="&#xE735;" FontSize="16">
+                                            <FontIcon.Foreground>
+                                                <SolidColorBrush Color="{Binding IsFavorite, Converter={StaticResource FavoriteColorConverter}}"/>
+                                            </FontIcon.Foreground>
+                                        </FontIcon>
+                                    </Button>
+                                    
+                                    <StackPanel Grid.Column="1">
                                         <TextBlock Text="{Binding PromptText}" FontWeight="SemiBold" TextWrapping="Wrap" MaxLines="2"/>
                                         <TextBlock Margin="0,5,0,0" Opacity="0.7">
                                             <Run Text="Last used: "/>
@@ -80,11 +102,11 @@
                                         </TextBlock>
                                     </StackPanel>
                                     
-                                    <TextBlock Grid.Column="1" Text="{Binding ImagePaths.Count}" 
+                                    <TextBlock Grid.Column="2" Text="{Binding ImagePaths.Count}" 
                                                VerticalAlignment="Center" Margin="10,0,5,0" 
                                                FontWeight="SemiBold" Opacity="0.7"/>
                                     
-                                    <Button Grid.Column="2" x:Name="CopyButton" 
+                                    <Button Grid.Column="3" x:Name="CopyButton" 
                                             Width="36" Height="32" 
                                             Margin="0,0,5,0"
                                             VerticalAlignment="Center"
@@ -96,7 +118,7 @@
                                         <FontIcon Glyph="&#xE8C8;" FontSize="14"/>
                                     </Button>
                                     
-                                    <Button Grid.Column="3" x:Name="DeleteButton" 
+                                    <Button Grid.Column="4" x:Name="DeleteButton" 
                                             Width="36" Height="32" 
                                             Margin="0,0,5,0"
                                             VerticalAlignment="Center"

@@ -1,5 +1,7 @@
 using Microsoft.Data.Sqlite;
+using System.ComponentModel;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace WallTrek.Services
 {
@@ -32,7 +34,8 @@ namespace WallTrek.Services
                     PromptText TEXT NOT NULL UNIQUE,
                     FirstUsedDate DATETIME NOT NULL,
                     LastUsedDate DATETIME NOT NULL,
-                    UsageCount INTEGER NOT NULL DEFAULT 1
+                    UsageCount INTEGER NOT NULL DEFAULT 1,
+                    IsFavorite INTEGER NOT NULL DEFAULT 0
                 );
 
                 CREATE TABLE IF NOT EXISTS GeneratedImages (
@@ -48,6 +51,18 @@ namespace WallTrek.Services
             ";
             
             createTablesCommand.ExecuteNonQuery();
+            
+            // Handle migration for existing databases
+            try
+            {
+                var migrationCommand = connection.CreateCommand();
+                migrationCommand.CommandText = "ALTER TABLE Prompts ADD COLUMN IsFavorite INTEGER NOT NULL DEFAULT 0";
+                migrationCommand.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Column already exists, ignore the error
+            }
         }
 
         public async Task<int> AddOrUpdatePromptAsync(string promptText)
@@ -117,20 +132,20 @@ namespace WallTrek.Services
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT p.Id, p.PromptText, p.FirstUsedDate, p.LastUsedDate, p.UsageCount,
+                SELECT p.Id, p.PromptText, p.FirstUsedDate, p.LastUsedDate, p.UsageCount, p.IsFavorite,
                        GROUP_CONCAT(gi.ImagePath, '|') as ImagePaths
                 FROM Prompts p
                 LEFT JOIN GeneratedImages gi ON p.Id = gi.PromptId
-                GROUP BY p.Id, p.PromptText, p.FirstUsedDate, p.LastUsedDate, p.UsageCount
-                ORDER BY p.LastUsedDate DESC";
+                GROUP BY p.Id, p.PromptText, p.FirstUsedDate, p.LastUsedDate, p.UsageCount, p.IsFavorite
+                ORDER BY p.IsFavorite DESC, p.LastUsedDate DESC";
 
             var items = new List<PromptHistoryItem>();
             using var reader = await command.ExecuteReaderAsync();
             
             while (await reader.ReadAsync())
             {
-                var imagePaths = reader.IsDBNull(5) ? new List<string>() : 
-                    reader.GetString(5).Split('|').Where(s => !string.IsNullOrEmpty(s)).ToList();
+                var imagePaths = reader.IsDBNull(6) ? new List<string>() : 
+                    reader.GetString(6).Split('|').Where(s => !string.IsNullOrEmpty(s)).ToList();
 
                 items.Add(new PromptHistoryItem
                 {
@@ -139,6 +154,7 @@ namespace WallTrek.Services
                     FirstUsedDate = reader.GetDateTime(2),
                     LastUsedDate = reader.GetDateTime(3),
                     UsageCount = reader.GetInt32(4),
+                    IsFavorite = reader.GetInt32(5) == 1,
                     ImagePaths = imagePaths
                 });
             }
@@ -174,9 +190,21 @@ namespace WallTrek.Services
             deleteCommand.Parameters.AddWithValue("@imagePath", imagePath);
             await deleteCommand.ExecuteNonQueryAsync();
         }
+
+        public async Task SetFavoriteAsync(int promptId, bool isFavorite)
+        {
+            using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync();
+
+            var updateCommand = connection.CreateCommand();
+            updateCommand.CommandText = "UPDATE Prompts SET IsFavorite = @isFavorite WHERE Id = @promptId";
+            updateCommand.Parameters.AddWithValue("@promptId", promptId);
+            updateCommand.Parameters.AddWithValue("@isFavorite", isFavorite ? 1 : 0);
+            await updateCommand.ExecuteNonQueryAsync();
+        }
     }
 
-    public class PromptHistoryItem
+    public class PromptHistoryItem : INotifyPropertyChanged
     {
         public int Id { get; set; }
         public string PromptText { get; set; } = string.Empty;
@@ -184,6 +212,40 @@ namespace WallTrek.Services
         public DateTime LastUsedDate { get; set; }
         public int UsageCount { get; set; }
         public List<string> ImagePaths { get; set; } = new List<string>();
-        public bool IsExpanded { get; set; } = false;
+
+        private bool _isFavorite = false;
+        public bool IsFavorite
+        {
+            get => _isFavorite;
+            set
+            {
+                if (_isFavorite != value)
+                {
+                    _isFavorite = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private bool _isExpanded = false;
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set
+            {
+                if (_isExpanded != value)
+                {
+                    _isExpanded = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -236,6 +237,44 @@ namespace WallTrek.Views
             // Reset and restart the debounce timer
             searchDebounceTimer.Stop();
             searchDebounceTimer.Start();
+        }
+
+        private async void FavoriteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is PromptHistoryItem item)
+            {
+                try
+                {
+                    // Toggle the UI state first
+                    item.IsFavorite = !item.IsFavorite;
+                    
+                    // Update the database with the explicit new state
+                    await databaseService.SetFavoriteAsync(item.Id, item.IsFavorite);
+                }
+                catch (Exception ex)
+                {
+                    // Revert the UI state if database update failed
+                    item.IsFavorite = !item.IsFavorite;
+                    System.Diagnostics.Debug.WriteLine($"Error setting favorite: {ex.Message}");
+                }
+            }
+        }
+    }
+
+    public class FavoriteColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool isFavorite && isFavorite)
+            {
+                return Microsoft.UI.Colors.Gold;
+            }
+            return Microsoft.UI.Colors.Gray;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
         }
     }
 }
