@@ -184,5 +184,6 @@ namespace WallTrek.Services
         public DateTime LastUsedDate { get; set; }
         public int UsageCount { get; set; }
         public List<string> ImagePaths { get; set; } = new List<string>();
+        public bool IsExpanded { get; set; } = false;
     }
 }

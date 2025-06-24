@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using WallTrek.Services;
 using Windows.System;
 
@@ -14,11 +15,24 @@ namespace WallTrek.Views
         public event EventHandler? NavigateBack;
         public event EventHandler<string>? CopyPrompt;
         private readonly DatabaseService databaseService;
+        private List<PromptHistoryItem> allPrompts = new List<PromptHistoryItem>();
+        private DispatcherTimer searchDebounceTimer;
 
         public PromptHistoryView()
         {
             this.InitializeComponent();
             databaseService = new DatabaseService();
+            
+            // Initialize debounce timer
+            searchDebounceTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(500)
+            };
+            searchDebounceTimer.Tick += (s, e) =>
+            {
+                searchDebounceTimer.Stop();
+                ApplySearchFilter();
+            };
         }
 
         public void RefreshHistory()
@@ -30,14 +44,47 @@ namespace WallTrek.Views
         {
             try
             {
-                var history = await databaseService.GetPromptHistoryAsync();
-                PromptListView.ItemsSource = history;
+                // Store currently expanded IDs for efficient lookup
+                var expandedIds = new HashSet<int>(allPrompts.Where(p => p.IsExpanded).Select(p => p.Id));
+                
+                var newPrompts = await databaseService.GetPromptHistoryAsync();
+                
+                // Preserve expanded state from existing prompts
+                foreach (var newPrompt in newPrompts)
+                {
+                    newPrompt.IsExpanded = expandedIds.Contains(newPrompt.Id);
+                }
+                
+                allPrompts = newPrompts;
+                ApplySearchFilter();
             }
             catch (Exception ex)
             {
                 // Handle error - could show a message to user
                 System.Diagnostics.Debug.WriteLine($"Error loading prompt history: {ex.Message}");
             }
+        }
+
+        private void ApplySearchFilter()
+        {
+            var searchText = SearchTextBox?.Text?.Trim() ?? string.Empty;
+            
+            if (string.IsNullOrEmpty(searchText))
+            {
+                PromptListView.ItemsSource = allPrompts;
+                return;
+            }
+
+            var searchWords = searchText.ToLowerInvariant()
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var filteredPrompts = allPrompts.Where(prompt =>
+            {
+                var promptTextLower = prompt.PromptText.ToLowerInvariant();
+                return searchWords.All(word => promptTextLower.Contains(word));
+            }).ToList();
+
+            PromptListView.ItemsSource = filteredPrompts;
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
@@ -182,6 +229,13 @@ namespace WallTrek.Views
                     System.Diagnostics.Debug.WriteLine($"Error deleting image: {ex.Message}");
                 }
             }
+        }
+
+        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Reset and restart the debounce timer
+            searchDebounceTimer.Stop();
+            searchDebounceTimer.Start();
         }
     }
 }

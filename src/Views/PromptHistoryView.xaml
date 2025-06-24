@@ -10,16 +10,56 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="20,20,20,10">
-            <Button x:Name="BackButton" Content="← Back" Click="BackButton_Click" Margin="0,0,20,0"/>
-            <TextBlock Text="Prompt History" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center"/>
+        <StackPanel Grid.Row="0" Margin="20,20,20,10" Spacing="10">
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="BackButton" Content="← Back" Click="BackButton_Click" Margin="0,0,20,0"/>
+                <TextBlock Text="Prompt History" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </StackPanel>
+            
+            <TextBox x:Name="SearchTextBox" 
+                     PlaceholderText="Search prompts..." 
+                     Width="400" 
+                     HorizontalAlignment="Left"
+                     TextChanged="SearchTextBox_TextChanged">
+                <TextBox.Resources>
+                    <Style TargetType="TextBox">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="TextBox">
+                                    <Grid>
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="4">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <FontIcon Grid.Column="0" Glyph="&#xE721;" 
+                                                          Margin="8,0,4,0" 
+                                                          FontSize="16" 
+                                                          Foreground="{ThemeResource TextControlPlaceholderForeground}"/>
+                                                <ScrollViewer Grid.Column="1" x:Name="ContentElement" 
+                                                              Margin="4,8,8,8" 
+                                                              VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TextBox.Resources>
+            </TextBox>
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" Margin="20,0,20,20">
             <ListView x:Name="PromptListView" SelectionMode="None">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Expander x:Name="PromptExpander" HorizontalAlignment="Stretch" Margin="0,5">
+                        <Expander x:Name="PromptExpander" HorizontalAlignment="Stretch" Margin="0,5"
+                                  IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
                             <Expander.Header>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
