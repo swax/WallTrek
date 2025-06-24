@@ -9,11 +9,13 @@ namespace WallTrek.Services
     {
         private readonly string outputDirectory;
         private readonly ImageClient client;
+        private readonly DatabaseService databaseService;
 
         public ImageGenerator(string apiKey, string outputDirectory)
         {
             this.outputDirectory = outputDirectory;
             client = new ImageClient("dall-e-3", apiKey);
+            databaseService = new DatabaseService();
         }
 
         public async Task<string> GenerateAndSaveImage(string prompt)
@@ -61,6 +63,18 @@ namespace WallTrek.Services
                     }
                     bitmap.Save(filePath, ImageFormat.Png);
                 }
+            }
+
+            // Add to database after successful generation
+            try
+            {
+                var promptId = await databaseService.AddOrUpdatePromptAsync(prompt);
+                await databaseService.AddGeneratedImageAsync(promptId, filePath);
+            }
+            catch (Exception ex)
+            {
+                // Log database error but don't fail the image generation
+                System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
             }
 
             return filePath;

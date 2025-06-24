@@ -59,6 +59,10 @@
                     Content="Settings" 
                     Click="SettingsButton_Click"
                     MinWidth="100"/>
+            <Button x:Name="HistoryButton" 
+                    Content="Prompt History" 
+                    Click="HistoryButton_Click"
+                    MinWidth="120"/>
         </StackPanel>
         
         <!-- Status Text -->

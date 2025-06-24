@@ -13,6 +13,7 @@ namespace WallTrek.Views
     public sealed partial class MainView : UserControl
     {
         public event EventHandler? NavigateToSettings;
+        public event EventHandler? NavigateToHistory;
 
         public MainView()
         {
@@ -131,6 +132,11 @@ namespace WallTrek.Views
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             NavigateToSettings?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void HistoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            NavigateToHistory?.Invoke(this, EventArgs.Empty);
         }
     }
 }

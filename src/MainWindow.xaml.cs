@@ -27,7 +27,9 @@ namespace WallTrek
             
             // Connect view events
             MainViewControl.NavigateToSettings += (s, e) => NavigateToSettings();
+            MainViewControl.NavigateToHistory += (s, e) => NavigateToHistory();
             SettingsViewControl.NavigateToMain += (s, e) => NavigateToHome();
+            HistoryViewControl.NavigateBack += (s, e) => NavigateToHome();
         }
         
         private void AppWindow_Changed(object? sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs e)
@@ -58,12 +60,22 @@ namespace WallTrek
         {
             MainViewControl.Visibility = Visibility.Visible;
             SettingsViewControl.Visibility = Visibility.Collapsed;
+            HistoryViewControl.Visibility = Visibility.Collapsed;
         }
 
         private void NavigateToSettings()
         {
             MainViewControl.Visibility = Visibility.Collapsed;
             SettingsViewControl.Visibility = Visibility.Visible;
+            HistoryViewControl.Visibility = Visibility.Collapsed;
+        }
+
+        private void NavigateToHistory()
+        {
+            MainViewControl.Visibility = Visibility.Collapsed;
+            SettingsViewControl.Visibility = Visibility.Collapsed;
+            HistoryViewControl.Visibility = Visibility.Visible;
+            HistoryViewControl.RefreshHistory();
         }
     }
 }
