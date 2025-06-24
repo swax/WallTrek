@@ -25,8 +25,27 @@ namespace WallTrek.Views
             ApiKeyTextBox.Text = settings.ApiKey ?? string.Empty;
             OutputDirectoryTextBox.Text = settings.OutputDirectory;
             AutoGenerateCheckBox.IsChecked = settings.AutoGenerateEnabled;
-            AutoGenerateMinutesNumberBox.Value = settings.AutoGenerateMinutes > 0 ? settings.AutoGenerateMinutes : 60;
+            AutoGenerateHoursNumberBox.Value = settings.AutoGenerateHours > 0 ? settings.AutoGenerateHours : 6.0;
             MinimizeToTrayCheckBox.IsChecked = settings.MinimizeToTray;
+            
+            // Set auto-generate source dropdown
+            foreach (ComboBoxItem item in AutoGenerateSourceComboBox.Items)
+            {
+                if (item.Tag?.ToString() == settings.AutoGenerateSource)
+                {
+                    AutoGenerateSourceComboBox.SelectedItem = item;
+                    break;
+                }
+            }
+            
+            // Default to first item if nothing was selected
+            if (AutoGenerateSourceComboBox.SelectedItem == null)
+            {
+                AutoGenerateSourceComboBox.SelectedIndex = 0;
+            }
+            
+            // Show/hide auto-generate options based on checkbox state
+            UpdateAutoGenerateOptionsVisibility();
             
             // Load startup setting from both settings and registry to ensure sync
             RunOnStartupCheckBox.IsChecked = StartupManager.IsStartupEnabled();
@@ -38,8 +57,14 @@ namespace WallTrek.Views
             settings.ApiKey = ApiKeyTextBox.Text;
             settings.OutputDirectory = OutputDirectoryTextBox.Text;
             settings.AutoGenerateEnabled = AutoGenerateCheckBox.IsChecked ?? false;
-            settings.AutoGenerateMinutes = (int)AutoGenerateMinutesNumberBox.Value;
+            settings.AutoGenerateHours = AutoGenerateHoursNumberBox.Value;
             settings.MinimizeToTray = MinimizeToTrayCheckBox.IsChecked ?? true;
+            
+            // Save auto-generate source
+            if (AutoGenerateSourceComboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                settings.AutoGenerateSource = selectedItem.Tag?.ToString() ?? "current";
+            }
             
             // Handle startup setting - only update registry, no need to store in settings
             var runOnStartup = RunOnStartupCheckBox.IsChecked ?? false;
@@ -82,6 +107,16 @@ namespace WallTrek.Views
             {
                 OutputDirectoryTextBox.Text = folder.Path;
             }
+        }
+
+        private void AutoGenerateCheckBox_CheckChanged(object sender, RoutedEventArgs e)
+        {
+            UpdateAutoGenerateOptionsVisibility();
+        }
+
+        private void UpdateAutoGenerateOptionsVisibility()
+        {
+            AutoGenerateOptionsPanel.Visibility = AutoGenerateCheckBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         }
     }
 }

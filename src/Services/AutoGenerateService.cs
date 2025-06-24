@@ -40,7 +40,7 @@ namespace WallTrek.Services
         {
             var settings = Settings.Instance;
             
-            if (settings.AutoGenerateEnabled && settings.AutoGenerateMinutes > 0)
+            if (settings.AutoGenerateEnabled && settings.AutoGenerateHours > 0)
             {
                 // If there's a saved next generation time, restore from that
                 if (settings.NextAutoGenerateTime.HasValue && settings.NextAutoGenerateTime > DateTime.Now)
@@ -50,7 +50,7 @@ namespace WallTrek.Services
                 else
                 {
                     // Start fresh with current settings
-                    Start(settings.AutoGenerateMinutes);
+                    Start(settings.AutoGenerateHours);
                 }
             }
             else
@@ -63,16 +63,16 @@ namespace WallTrek.Services
         public bool IsEnabled => pollTimer != null;
         public DateTime? NextGenerateTime => Settings.Instance.NextAutoGenerateTime;
 
-        public void Start(int minutes)
+        public void Start(double hours)
         {
             Stop();
 
-            if (minutes <= 0)
+            if (hours <= 0)
             {
                 return;
             }
 
-            var nextTime = DateTime.Now.AddMinutes(minutes);
+            var nextTime = DateTime.Now.AddHours(hours);
             Settings.Instance.NextAutoGenerateTime = nextTime;
             Settings.Instance.Save();
 

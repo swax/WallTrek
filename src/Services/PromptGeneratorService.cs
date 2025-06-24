@@ -15,7 +15,7 @@ namespace WallTrek.Services
 
         public async Task<string> GenerateRandomPromptAsync()
         {
-            var chatClient = new ChatClient("gpt-3.5-turbo", apiKey);
+            var chatClient = new ChatClient("o3", apiKey);
             
             // Randomize the prompt generation approach
             var random = new Random();
@@ -59,12 +59,7 @@ namespace WallTrek.Services
                 new UserChatMessage($"Generate a creative desktop wallpaper prompt with {selectedCategory} theme, {selectedStyle} style, and {selectedMood} mood. Make it visually striking and unique.")
             };
 
-            var options = new ChatCompletionOptions
-            {
-                Temperature = 0.9f, // Higher temperature for more creativity
-            };
-
-            var response = await chatClient.CompleteChatAsync(messages, options);
+            var response = await chatClient.CompleteChatAsync(messages);
             return response.Value.Content[0].Text.Trim();
         }
     }

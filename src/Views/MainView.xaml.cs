@@ -44,12 +44,16 @@ namespace WallTrek.Views
         
         public async void TriggerAutoGenerate()
         {
-            // Use the last saved prompt for auto-generation
-            if (!string.IsNullOrWhiteSpace(Settings.Instance.LastPrompt))
+            var settings = Settings.Instance;
+            
+            if (settings.AutoGenerateSource == "random")
             {
-                PromptTextBox.Text = Settings.Instance.LastPrompt;
-                await GenerateWallpaper();
+                // Generate a random prompt first
+                await GenerateRandomPrompt();
             }
+            
+            // Generate wallpaper using whatever is in the prompt text box
+            await GenerateWallpaper();
         }
 
         private void LoadSettings()
@@ -98,10 +102,10 @@ namespace WallTrek.Views
                 // Show balloon tip notification
                 ((App)Application.Current).ShowBalloonTip("Wallpaper Generated", "New wallpaper has been generated and set as your background!");
                 
-                // Setup auto-generate timer if enabled and minutes > 0
-                if (Settings.Instance.AutoGenerateEnabled && Settings.Instance.AutoGenerateMinutes > 0)
+                // Setup auto-generate timer if enabled and hours > 0
+                if (Settings.Instance.AutoGenerateEnabled && Settings.Instance.AutoGenerateHours > 0)
                 {
-                    AutoGenerateService.Instance.Start(Settings.Instance.AutoGenerateMinutes);
+                    AutoGenerateService.Instance.Start(Settings.Instance.AutoGenerateHours);
                 }
             }
             catch (Exception ex)
@@ -161,7 +165,10 @@ namespace WallTrek.Views
 
             try
             {
+                // Disable UI controls during generation
                 RandomPromptButton.IsEnabled = false;
+                PromptTextBox.IsEnabled = false;
+                GenerationProgressBar.Visibility = Visibility.Visible;
                 SetStatus("Generating random prompt...", Microsoft.UI.Colors.DodgerBlue);
 
                 var promptGenerator = new PromptGeneratorService(Settings.Instance.ApiKey);
@@ -176,7 +183,10 @@ namespace WallTrek.Views
             }
             finally
             {
+                // Re-enable UI controls
                 RandomPromptButton.IsEnabled = true;
+                PromptTextBox.IsEnabled = true;
+                GenerationProgressBar.Visibility = Visibility.Collapsed;
             }
         }
     }

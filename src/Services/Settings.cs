@@ -8,13 +8,19 @@ namespace WallTrek.Services
     {
     }
 
+    public class AutoGenerateSettings
+    {
+        public bool Enabled { get; set; }
+        public double Hours { get; set; } = 6.0;
+        public DateTime? NextGenerateTime { get; set; }
+        public string Source { get; set; } = "current";
+    }
+
     public class SettingsModel
     {
         public string? ApiKey { get; set; }
         public string? LastPrompt { get; set; }
-        public bool AutoGenerateEnabled { get; set; }
-        public int AutoGenerateMinutes { get; set; }
-        public DateTime? NextAutoGenerateTime { get; set; }
+        public AutoGenerateSettings AutoGenerate { get; set; } = new();
         public bool MinimizeToTray { get; set; } = true;
         public bool IsFirstRun { get; set; } = true;
         public string? OutputDirectory { get; set; }
@@ -45,20 +51,20 @@ namespace WallTrek.Services
 
         public bool AutoGenerateEnabled
         {
-            get => _model.AutoGenerateEnabled;
-            set => _model.AutoGenerateEnabled = value;
+            get => _model.AutoGenerate.Enabled;
+            set => _model.AutoGenerate.Enabled = value;
         }
 
-        public int AutoGenerateMinutes
+        public double AutoGenerateHours
         {
-            get => _model.AutoGenerateMinutes;
-            set => _model.AutoGenerateMinutes = value;
+            get => _model.AutoGenerate.Hours;
+            set => _model.AutoGenerate.Hours = value;
         }
 
         public DateTime? NextAutoGenerateTime
         {
-            get => _model.NextAutoGenerateTime;
-            set => _model.NextAutoGenerateTime = value;
+            get => _model.AutoGenerate.NextGenerateTime;
+            set => _model.AutoGenerate.NextGenerateTime = value;
         }
 
         public bool MinimizeToTray
@@ -77,6 +83,12 @@ namespace WallTrek.Services
         {
             get => _model.OutputDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "WallTrek");
             set => _model.OutputDirectory = value;
+        }
+
+        public string AutoGenerateSource
+        {
+            get => _model.AutoGenerate.Source;
+            set => _model.AutoGenerate.Source = value;
         }
 
         public void Save()
