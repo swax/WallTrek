@@ -163,6 +163,17 @@ namespace WallTrek.Services
             deletePromptCommand.Parameters.AddWithValue("@promptId", promptId);
             await deletePromptCommand.ExecuteNonQueryAsync();
         }
+
+        public async Task DeleteImageAsync(string imagePath)
+        {
+            using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync();
+
+            var deleteCommand = connection.CreateCommand();
+            deleteCommand.CommandText = "DELETE FROM GeneratedImages WHERE ImagePath = @imagePath";
+            deleteCommand.Parameters.AddWithValue("@imagePath", imagePath);
+            await deleteCommand.ExecuteNonQueryAsync();
+        }
     }
 
     public class PromptHistoryItem

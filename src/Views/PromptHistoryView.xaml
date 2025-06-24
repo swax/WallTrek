@@ -78,12 +78,16 @@
                                     </ItemsRepeater.Layout>
                                     <ItemsRepeater.ItemTemplate>
                                         <DataTemplate>
-                                            <Border CornerRadius="8" BorderBrush="Gray" BorderThickness="1">
-                                                <Image Width="150" Height="100" Stretch="UniformToFill">
-                                                    <Image.Source>
-                                                        <BitmapImage UriSource="{Binding}"/>
-                                                    </Image.Source>
-                                                </Image>
+                                            <Border CornerRadius="8" BorderBrush="Gray" BorderThickness="1" 
+                                                    Background="Transparent">
+                                                <Button Background="Transparent" BorderThickness="0" 
+                                                        Padding="0" Click="ImageButton_Click" Tag="{Binding}">
+                                                    <Image Width="150" Height="100" Stretch="UniformToFill">
+                                                        <Image.Source>
+                                                            <BitmapImage UriSource="{Binding}"/>
+                                                        </Image.Source>
+                                                    </Image>
+                                                </Button>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsRepeater.ItemTemplate>
