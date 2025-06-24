@@ -52,7 +52,7 @@
                     Style="{StaticResource AccentButtonStyle}"
                     MinWidth="140"/>
             <Button x:Name="OpenFolderButton" 
-                    Content="Open Folder" 
+                    Content="Open Image Folder" 
                     Click="OpenFolderButton_Click"
                     MinWidth="100"/>
             <Button x:Name="SettingsButton" 

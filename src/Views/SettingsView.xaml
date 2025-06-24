@@ -29,12 +29,10 @@
                 </Grid>
             </StackPanel>
             
-            <StackPanel Spacing="10">
-                <CheckBox x:Name="AutoGenerateCheckBox" Content="Enable Auto-Generate"/>
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                    <TextBlock Text="Auto-Generate Interval (minutes):" VerticalAlignment="Center"/>
-                    <NumberBox x:Name="AutoGenerateMinutesNumberBox" Value="60" Minimum="1" Maximum="1440" Width="100"/>
-                </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <CheckBox x:Name="AutoGenerateCheckBox" Content="Auto-generate every" VerticalAlignment="Center"/>
+                <NumberBox x:Name="AutoGenerateMinutesNumberBox" Value="60" Minimum="1" Maximum="1440" Width="100" VerticalAlignment="Center"/>
+                <TextBlock Text="minutes" VerticalAlignment="Center"/>
             </StackPanel>
             
             <StackPanel Spacing="10">

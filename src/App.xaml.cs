@@ -17,6 +17,7 @@ using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using WallTrek.Services;
+using WallTrek.Utilities;
 using System.Windows.Input;
 using H.NotifyIcon;
 using System.Runtime.InteropServices;
@@ -34,8 +35,6 @@ namespace WallTrek
         {
             this.InitializeComponent();
             
-            // Set required environment variable for WindowsAppSDK SingleFile publishing
-            // Environment.SetEnvironmentVariable("MICROSOFT_WINDOWSAPPRUNTIME_BASE_DIRECTORY", AppContext.BaseDirectory);
             
             Settings.Instance.Load();
             ShowMainWindowCommand = new RelayCommand(ShowMainWindow);
@@ -44,9 +43,7 @@ namespace WallTrek
 
         private void InitializeTrayIcon()
         {
-            // Create tray context menu with commands instead of click events
-            // The menu shows in the bottom right corner of the screen and not over the icon
-            // The experimental/preview version of h.NotifyIcon does support it
+            // Create tray context menu
             var contextMenu = new MenuFlyout();
 
             var showItem = new MenuFlyoutItem 
@@ -142,24 +139,5 @@ namespace WallTrek
         {
             return _window;
         }
-    }
-    
-    // Simple RelayCommand implementation
-    public class RelayCommand : ICommand
-    {
-        private readonly Action _execute;
-        private readonly Func<bool>? _canExecute;
-
-        public RelayCommand(Action execute, Func<bool>? canExecute = null)
-        {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-            _canExecute = canExecute;
-        }
-
-        public event EventHandler? CanExecuteChanged { add { } remove { } }
-
-        public bool CanExecute(object? parameter) => _canExecute?.Invoke() ?? true;
-
-        public void Execute(object? parameter) => _execute();
     }
 }
