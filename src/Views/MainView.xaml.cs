@@ -15,6 +15,11 @@ namespace WallTrek.Views
         public event EventHandler? NavigateToSettings;
         public event EventHandler? NavigateToHistory;
 
+        public void SetPromptText(string prompt)
+        {
+            PromptTextBox.Text = prompt;
+        }
+
         public MainView()
         {
             this.InitializeComponent();

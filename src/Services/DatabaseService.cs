@@ -145,6 +145,24 @@ namespace WallTrek.Services
 
             return items;
         }
+
+        public async Task DeletePromptAsync(int promptId)
+        {
+            using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync();
+
+            // Delete associated images first
+            var deleteImagesCommand = connection.CreateCommand();
+            deleteImagesCommand.CommandText = "DELETE FROM GeneratedImages WHERE PromptId = @promptId";
+            deleteImagesCommand.Parameters.AddWithValue("@promptId", promptId);
+            await deleteImagesCommand.ExecuteNonQueryAsync();
+
+            // Delete the prompt
+            var deletePromptCommand = connection.CreateCommand();
+            deletePromptCommand.CommandText = "DELETE FROM Prompts WHERE Id = @promptId";
+            deletePromptCommand.Parameters.AddWithValue("@promptId", promptId);
+            await deletePromptCommand.ExecuteNonQueryAsync();
+        }
     }
 
     public class PromptHistoryItem

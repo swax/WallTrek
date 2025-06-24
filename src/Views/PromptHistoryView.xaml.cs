@@ -9,6 +9,7 @@ namespace WallTrek.Views
     public sealed partial class PromptHistoryView : UserControl
     {
         public event EventHandler? NavigateBack;
+        public event EventHandler<string>? CopyPrompt;
         private readonly DatabaseService databaseService;
 
         public PromptHistoryView()
@@ -39,6 +40,44 @@ namespace WallTrek.Views
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             NavigateBack?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void CopyButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is PromptHistoryItem item)
+            {
+                CopyPrompt?.Invoke(this, item.PromptText);
+            }
+        }
+
+        private async void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is PromptHistoryItem item)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Delete Prompt",
+                    Content = "This will delete the prompt from history. The generated images will still exist in your image folder.\n\nAre you sure you want to continue?",
+                    PrimaryButtonText = "Delete",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot
+                };
+
+                var result = await dialog.ShowAsync();
+                if (result == ContentDialogResult.Primary)
+                {
+                    try
+                    {
+                        await databaseService.DeletePromptAsync(item.Id);
+                        LoadPromptHistory(); // Refresh the list
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error deleting prompt: {ex.Message}");
+                    }
+                }
+            }
         }
     }
 }

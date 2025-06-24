@@ -30,6 +30,10 @@ namespace WallTrek
             MainViewControl.NavigateToHistory += (s, e) => NavigateToHistory();
             SettingsViewControl.NavigateToMain += (s, e) => NavigateToHome();
             HistoryViewControl.NavigateBack += (s, e) => NavigateToHome();
+            HistoryViewControl.CopyPrompt += (s, prompt) => {
+                MainViewControl.SetPromptText(prompt);
+                NavigateToHome();
+            };
         }
         
         private void AppWindow_Changed(object? sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs e)
