@@ -71,16 +71,14 @@ namespace WallTrek.Views
 
             if (string.IsNullOrEmpty(Settings.Instance.ApiKey))
             {
-                StatusTextBlock.Text = "Please set your OpenAI API key in Settings first.";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
+                SetStatus("Please set your OpenAI API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
                 NavigateToSettings?.Invoke(this, EventArgs.Empty);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(PromptTextBox.Text))
             {
-                StatusTextBlock.Text = "Please enter a prompt for your wallpaper.";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
+                SetStatus("Please enter a prompt for your wallpaper.", Microsoft.UI.Colors.OrangeRed);
                 return;
             }
 
@@ -88,16 +86,14 @@ namespace WallTrek.Views
             {
                 GenerateButton.IsEnabled = false;
                 GenerationProgressBar.Visibility = Visibility.Visible;
-                StatusTextBlock.Text = "Generating wallpaper...";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.DodgerBlue);
+                SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
 
                 var imageGenerator = new ImageGenerator(Settings.Instance.ApiKey, Settings.Instance.OutputDirectory);
                 var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text);
                 
                 Wallpaper.Set(filePath);
 
-                StatusTextBlock.Text = "Wallpaper generated and set successfully!";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
+                SetStatus("Wallpaper generated and set successfully!", Microsoft.UI.Colors.LimeGreen);
                 
                 // Show balloon tip notification
                 ((App)Application.Current).ShowBalloonTip("Wallpaper Generated", "New wallpaper has been generated and set as your background!");
@@ -110,8 +106,7 @@ namespace WallTrek.Views
             }
             catch (Exception ex)
             {
-                StatusTextBlock.Text = $"Error: {ex.Message}";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
+                SetStatus($"Error: {ex.Message}", Microsoft.UI.Colors.OrangeRed);
             }
             finally
             {
@@ -142,6 +137,47 @@ namespace WallTrek.Views
         private void HistoryButton_Click(object sender, RoutedEventArgs e)
         {
             NavigateToHistory?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void SetStatus(string message, Windows.UI.Color color)
+        {
+            StatusTextBlock.Text = message;
+            StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(color);
+        }
+
+        private async void RandomPromptButton_Click(object sender, RoutedEventArgs e)
+        {
+            await GenerateRandomPrompt();
+        }
+
+        private async Task GenerateRandomPrompt()
+        {
+            if (string.IsNullOrEmpty(Settings.Instance.ApiKey))
+            {
+                SetStatus("Please set your OpenAI API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
+                NavigateToSettings?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+
+            try
+            {
+                RandomPromptButton.IsEnabled = false;
+                SetStatus("Generating random prompt...", Microsoft.UI.Colors.DodgerBlue);
+
+                var promptGenerator = new PromptGeneratorService(Settings.Instance.ApiKey);
+                var randomPrompt = await promptGenerator.GenerateRandomPromptAsync();
+
+                PromptTextBox.Text = randomPrompt;
+                SetStatus("Random prompt generated!", Microsoft.UI.Colors.LimeGreen);
+            }
+            catch (Exception ex)
+            {
+                SetStatus($"Error generating random prompt: {ex.Message}", Microsoft.UI.Colors.OrangeRed);
+            }
+            finally
+            {
+                RandomPromptButton.IsEnabled = true;
+            }
         }
     }
 }
