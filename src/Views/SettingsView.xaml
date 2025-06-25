@@ -33,7 +33,7 @@
                 <CheckBox x:Name="AutoGenerateCheckBox" Content="Auto-generate wallpapers" VerticalAlignment="Center" Checked="AutoGenerateCheckBox_CheckChanged" Unchecked="AutoGenerateCheckBox_CheckChanged"/>
                 <StackPanel x:Name="AutoGenerateOptionsPanel" Orientation="Horizontal" Spacing="10" Visibility="Collapsed">
                     <TextBlock Text="Every" VerticalAlignment="Center"/>
-                    <NumberBox x:Name="AutoGenerateHoursNumberBox" Value="6" Minimum="0.1" Maximum="10000" Width="100" VerticalAlignment="Center" SmallChange="0.5" LargeChange="1"/>
+                    <NumberBox x:Name="AutoGenerateHoursNumberBox" Value="6" Minimum="0.01" Maximum="10000" Width="100" VerticalAlignment="Center" SmallChange="0.5" LargeChange="1"/>
                     <TextBlock Text="hours using" VerticalAlignment="Center"/>
                     <ComboBox x:Name="AutoGenerateSourceComboBox" Width="160" VerticalAlignment="Center">
                         <ComboBoxItem Content="Current prompt" Tag="current"/>

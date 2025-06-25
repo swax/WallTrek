@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using WallTrek.Services;
 using Windows.System;
@@ -14,6 +15,7 @@ namespace WallTrek.Views
     {
         public event EventHandler? NavigateToSettings;
         public event EventHandler? NavigateToHistory;
+        private CancellationTokenSource? _cancellationTokenSource;
 
         public void SetPromptText(string prompt)
         {
@@ -66,6 +68,11 @@ namespace WallTrek.Views
         {
             await GenerateWallpaper();
         }
+
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        {
+            _cancellationTokenSource?.Cancel();
+        }
         
         private async Task GenerateWallpaper()
         {
@@ -86,14 +93,15 @@ namespace WallTrek.Views
                 return;
             }
 
+            _cancellationTokenSource = new CancellationTokenSource();
+
             try
             {
-                GenerateButton.IsEnabled = false;
-                GenerationProgressBar.Visibility = Visibility.Visible;
+                SetGeneratingState(true);
                 SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
 
                 var imageGenerator = new ImageGenerator(Settings.Instance.ApiKey, Settings.Instance.OutputDirectory);
-                var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text);
+                var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text, _cancellationTokenSource.Token);
                 
                 Wallpaper.Set(filePath);
 
@@ -101,12 +109,10 @@ namespace WallTrek.Views
                 
                 // Show balloon tip notification
                 ((App)Application.Current).ShowBalloonTip("Wallpaper Generated", "New wallpaper has been generated and set as your background!");
-                
-                // Setup auto-generate timer if enabled and hours > 0
-                if (Settings.Instance.AutoGenerateEnabled && Settings.Instance.AutoGenerateHours > 0)
-                {
-                    AutoGenerateService.Instance.Start(Settings.Instance.AutoGenerateHours);
-                }
+            }
+            catch (OperationCanceledException)
+            {
+                SetStatus("Wallpaper generation cancelled.", Microsoft.UI.Colors.Orange);
             }
             catch (Exception ex)
             {
@@ -114,8 +120,9 @@ namespace WallTrek.Views
             }
             finally
             {
-                GenerationProgressBar.Visibility = Visibility.Collapsed;
-                GenerateButton.IsEnabled = true;
+                SetGeneratingState(false);
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = null;
             }
         }
 
@@ -149,6 +156,15 @@ namespace WallTrek.Views
             StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(color);
         }
 
+        private void SetGeneratingState(bool generating)
+        {
+            GenerateButton.IsEnabled = !generating;
+            CancelButton.Visibility = generating ? Visibility.Visible : Visibility.Collapsed;
+            RandomPromptButton.IsEnabled = !generating;
+            PromptTextBox.IsEnabled = !generating;
+            GenerationProgressBar.Visibility = generating ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         private async void RandomPromptButton_Click(object sender, RoutedEventArgs e)
         {
             await GenerateRandomPrompt();
@@ -163,19 +179,22 @@ namespace WallTrek.Views
                 return;
             }
 
+            _cancellationTokenSource = new CancellationTokenSource();
+
             try
             {
-                // Disable UI controls during generation
-                RandomPromptButton.IsEnabled = false;
-                PromptTextBox.IsEnabled = false;
-                GenerationProgressBar.Visibility = Visibility.Visible;
+                SetGeneratingState(true);
                 SetStatus("Generating random prompt...", Microsoft.UI.Colors.DodgerBlue);
 
                 var promptGenerator = new PromptGeneratorService(Settings.Instance.ApiKey);
-                var randomPrompt = await promptGenerator.GenerateRandomPromptAsync();
+                var randomPrompt = await promptGenerator.GenerateRandomPromptAsync(_cancellationTokenSource.Token);
 
                 PromptTextBox.Text = randomPrompt;
                 SetStatus("Random prompt generated!", Microsoft.UI.Colors.LimeGreen);
+            }
+            catch (OperationCanceledException)
+            {
+                SetStatus("Random prompt generation cancelled.", Microsoft.UI.Colors.Orange);
             }
             catch (Exception ex)
             {
@@ -183,10 +202,9 @@ namespace WallTrek.Views
             }
             finally
             {
-                // Re-enable UI controls
-                RandomPromptButton.IsEnabled = true;
-                PromptTextBox.IsEnabled = true;
-                GenerationProgressBar.Visibility = Visibility.Collapsed;
+                SetGeneratingState(false);
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = null;
             }
         }
     }

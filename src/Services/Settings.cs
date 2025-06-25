@@ -134,7 +134,12 @@ namespace WallTrek.Services
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
-                string jsonString = JsonSerializer.Serialize(_model, SettingsJsonContext.Default.SettingsModel);
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    TypeInfoResolver = SettingsJsonContext.Default
+                };
+                string jsonString = JsonSerializer.Serialize(_model, options);
                 File.WriteAllText(SettingsPath, jsonString);
             }
             catch (Exception ex)

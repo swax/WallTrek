@@ -1,5 +1,6 @@
 using OpenAI.Chat;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace WallTrek.Services
@@ -13,7 +14,7 @@ namespace WallTrek.Services
             this.apiKey = apiKey;
         }
 
-        public async Task<string> GenerateRandomPromptAsync()
+        public async Task<string> GenerateRandomPromptAsync(CancellationToken cancellationToken = default)
         {
             var chatClient = new ChatClient("o3", apiKey);
             
@@ -44,7 +45,7 @@ namespace WallTrek.Services
                 new UserChatMessage($"Generate a creative desktop wallpaper prompt with {selectedCategory} theme, {selectedStyle} style, and {selectedMood} mood. Make it visually striking and unique.")
             };
 
-            var response = await chatClient.CompleteChatAsync(messages);
+            var response = await chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
             return response.Value.Content[0].Text.Trim();
         }
     }

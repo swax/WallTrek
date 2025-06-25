@@ -42,10 +42,18 @@ namespace WallTrek.Services
             
             if (settings.AutoGenerateEnabled && settings.AutoGenerateHours > 0)
             {
-                // If there's a saved next generation time, restore from that
-                if (settings.NextAutoGenerateTime.HasValue && settings.NextAutoGenerateTime > DateTime.Now)
+                // If there's a saved next generation time, check if it's in the future or past
+                if (settings.NextAutoGenerateTime.HasValue)
                 {
-                    StartFromSavedTime();
+                    if (settings.NextAutoGenerateTime > DateTime.Now)
+                    {
+                        StartFromSavedTime();
+                    }
+                    else
+                    {
+                        // Time has passed, trigger immediate generation and start new cycle
+                        TriggerGenerationAndRestart();
+                    }
                 }
                 else
                 {
@@ -133,14 +141,25 @@ namespace WallTrek.Services
 
             if (DateTime.Now >= nextTime.Value)
             {
-                Settings.Instance.NextAutoGenerateTime = null;
-                Settings.Instance.Save();
-                Stop();
-                AutoGenerateTriggered?.Invoke(this, EventArgs.Empty);
+                TriggerGenerationAndRestart();
             }
             else
             {
                 UpdateNextGenerateTime();
+            }
+        }
+
+        private void TriggerGenerationAndRestart()
+        {
+            Settings.Instance.NextAutoGenerateTime = null;
+            Settings.Instance.Save();
+            Stop();
+            AutoGenerateTriggered?.Invoke(this, EventArgs.Empty);
+            
+            // Restart timer if auto-generate is still enabled
+            if (Settings.Instance.AutoGenerateEnabled && Settings.Instance.AutoGenerateHours > 0)
+            {
+                Start(Settings.Instance.AutoGenerateHours);
             }
         }
 

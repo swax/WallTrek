@@ -18,7 +18,7 @@ namespace WallTrek.Services
             databaseService = new DatabaseService();
         }
 
-        public async Task<string> GenerateAndSaveImage(string prompt)
+        public async Task<string> GenerateAndSaveImage(string prompt, CancellationToken cancellationToken = default)
         {
             const int maxFileNamePromptLength = 75;
             var sanitizedPrompt = string.Join("_", prompt.Split(Path.GetInvalidFileNameChars()));
@@ -35,7 +35,7 @@ namespace WallTrek.Services
                 ResponseFormat = GeneratedImageFormat.Bytes
             };
 
-            GeneratedImage image = await Task.Run(() => client.GenerateImage(prompt, options));
+            GeneratedImage image = await client.GenerateImageAsync(prompt, options, cancellationToken);
             BinaryData bytes = image.ImageBytes;
 
             var fileName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss} ({sanitizedPrompt}).png";

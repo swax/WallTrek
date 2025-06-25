@@ -36,7 +36,7 @@
             </StackPanel>
             <TextBox x:Name="PromptTextBox" 
                      PlaceholderText="Enter a description for your AI-generated wallpaper..."
-                     Height="80" 
+                     Height="120" 
                      TextWrapping="Wrap" 
                      AcceptsReturn="True"
                      KeyDown="PromptTextBox_KeyDown"/>
@@ -58,6 +58,15 @@
                     Click="GenerateButton_Click" 
                     Style="{StaticResource AccentButtonStyle}"
                     MinWidth="140"/>
+            <Button x:Name="CancelButton" 
+                    Content="Cancel" 
+                    Click="CancelButton_Click" 
+                    Visibility="Collapsed"
+                    MinWidth="100"/>
+            <Button x:Name="HistoryButton" 
+                    Content="Prompt History" 
+                    Click="HistoryButton_Click"
+                    MinWidth="120"/>
             <Button x:Name="OpenFolderButton" 
                     Content="Open Image Folder" 
                     Click="OpenFolderButton_Click"
@@ -66,10 +75,6 @@
                     Content="Settings" 
                     Click="SettingsButton_Click"
                     MinWidth="100"/>
-            <Button x:Name="HistoryButton" 
-                    Content="Prompt History" 
-                    Click="HistoryButton_Click"
-                    MinWidth="120"/>
         </StackPanel>
         
         <!-- Status Text -->
