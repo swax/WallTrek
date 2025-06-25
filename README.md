@@ -2,6 +2,8 @@
 
 WallTrek is a WinUI 3 application that generates AI-powered wallpapers using OpenAI's DALL-E 3 API. The application runs in the system tray and can automatically generate and set new wallpapers at specified intervals.
 
+![Screenshot](assets/walltrek_screenshot.png)
+
 ## Features
 
 - **AI-powered wallpaper generation** using OpenAI's DALL-E 3
