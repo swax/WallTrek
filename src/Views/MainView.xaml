@@ -62,7 +62,9 @@
                     Content="Cancel" 
                     Click="CancelButton_Click" 
                     Visibility="Collapsed"
-                    MinWidth="100"/>
+                    MinWidth="100"
+                    Background="Red"
+                    Foreground="White"/>
             <Button x:Name="HistoryButton" 
                     Content="Prompt History" 
                     Click="HistoryButton_Click"

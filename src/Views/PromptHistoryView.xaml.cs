@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -102,6 +103,14 @@ namespace WallTrek.Views
         }
 
         private void ImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is string imagePath)
+            {
+                ShowFullScreenImage(imagePath);
+            }
+        }
+
+        private void ImageButton_RightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
         {
             if (sender is Button button && button.Tag is string imagePath)
             {
@@ -258,6 +267,39 @@ namespace WallTrek.Views
                     System.Diagnostics.Debug.WriteLine($"Error setting favorite: {ex.Message}");
                 }
             }
+        }
+
+        private void ShowFullScreenImage(string imagePath)
+        {
+            try
+            {
+                if (File.Exists(imagePath))
+                {
+                    var bitmap = new BitmapImage(new Uri(imagePath));
+                    FullScreenImage.Source = bitmap;
+                    FullScreenOverlay.Visibility = Visibility.Visible;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error showing fullscreen image: {ex.Message}");
+            }
+        }
+
+        private void HideFullScreenImage()
+        {
+            FullScreenOverlay.Visibility = Visibility.Collapsed;
+            FullScreenImage.Source = null;
+        }
+
+        private void FullScreenOverlay_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            HideFullScreenImage();
+        }
+
+        private void FullScreenImage_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            HideFullScreenImage();
         }
     }
 
