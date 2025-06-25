@@ -35,10 +35,7 @@ namespace WallTrek
         {
             this.InitializeComponent();
             
-            
-            Settings.Instance.Load();
             ShowMainWindowCommand = new RelayCommand(ShowMainWindow);
-            InitializeTrayIcon();
         }
 
         private void InitializeTrayIcon()
@@ -80,7 +77,10 @@ namespace WallTrek
         }
 
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
-        {
+        {             
+            Settings.Instance.Load();
+            InitializeTrayIcon();
+
             _window = new MainWindow();
             
             // Show window normally on first run, otherwise start minimized to tray

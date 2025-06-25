@@ -18,6 +18,7 @@
     <!-- App Options -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 
     <!-- Assembly Information -->
     <AssemblyTitle>WallTrek</AssemblyTitle>
@@ -30,7 +31,26 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
-    <!-- Include generated XAML files for C# Dev Kit IntelliSense -->
+  <!-- Release/Publish Options -->
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <Platform>x64</Platform>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <PublishReadyToRun>True</PublishReadyToRun> <!-- ReadyToRun compilation for faster startup -->
+    <PublishSingleFile>False</PublishSingleFile> <!-- Bundles app into one executable -->
+    <PublishTrimmed>False</PublishTrimmed> <!-- Trims output to used code, but can result in issues -->
+    <SelfContained>True</SelfContained> <!-- Include .Net runtinue -->
+    <WindowsAppSDKSelfContained>True</WindowsAppSDKSelfContained> <!-- Include Windows App SDK plus a million language folders -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="assets\walltrek.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Include generated XAML files for C# Dev Kit IntelliSense -->
   <ItemGroup Condition="'$(DesignTimeBuild)' == 'true'">
     <Compile Include="obj/Debug/net9.0-windows10.0.19041.0/src/**/*.cs">
         <AutoGen>True</AutoGen>
@@ -50,14 +70,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="H.NotifyIcon.WinUI" Version="2.3.0" />
+    <PackageReference Include="OpenAI" Version="2.1.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.6" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
-    <PackageReference Include="OpenAI" Version="2.1.0" />
     <PackageReference Include="System.Drawing.Common" Version="9.0.6" />
-    <PackageReference Include="H.NotifyIcon.WinUI" Version="2.3.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="assets\walltrek.ico" />
   </ItemGroup>
 </Project>

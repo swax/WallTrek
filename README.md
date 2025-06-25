@@ -81,6 +81,16 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 - **H.NotifyIcon.WinUI** for system tray functionality
 - **System.Drawing.Common** for image processing and metadata
 
+## Packaging
+
+Build for distribution: Self-Contained (~80 MB includes .NET 9 and Windows App SDK)
+
+```bash
+dotnet publish -c Release -r win-x64
+```
+
+Output will be in `bin/Release/net9.0-windows10.0.19041.0/win-x64/publish/`
+
 ## License
 
 This project is open source. MIT license.
