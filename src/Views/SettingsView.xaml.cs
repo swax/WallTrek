@@ -60,6 +60,8 @@ namespace WallTrek.Views
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
             var settings = Settings.Instance;
+            var previousHours = settings.AutoGenerateHours;
+            
             settings.ApiKey = ApiKeyTextBox.Text;
             settings.OutputDirectory = OutputDirectoryTextBox.Text;
             settings.AutoGenerateEnabled = AutoGenerateCheckBox.IsChecked ?? false;
@@ -79,7 +81,16 @@ namespace WallTrek.Views
             settings.Save();
             
             // Refresh auto-generate service based on new settings
-            AutoGenerateService.Instance.RefreshFromSettings();
+            // If hours changed and auto-generate is enabled, restart to recalculate next generation time
+            if (settings.AutoGenerateEnabled && settings.AutoGenerateHours > 0 && 
+                Math.Abs(previousHours - settings.AutoGenerateHours) > 0.001)
+            {
+                AutoGenerateService.Instance.Start(settings.AutoGenerateHours);
+            }
+            else
+            {
+                AutoGenerateService.Instance.RefreshFromSettings();
+            }
             
             StatusTextBlock.Text = "Settings saved successfully!";
             
