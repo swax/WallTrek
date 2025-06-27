@@ -25,6 +25,14 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 
 ## Installation
 
+### Option 1: Download Pre-built Release (Recommended)
+
+1. Download the latest release from [Releases](https://github.com/swax/WallTrek/releases)
+2. Unzip the contents to your desired location
+3. Run `WallTrek.exe`
+
+### Option 2: Build from Source
+
 1. Clone the repository
 2. Restore NuGet packages: `dotnet restore`
 3. Build the project: `dotnet build`
