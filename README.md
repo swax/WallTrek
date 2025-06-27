@@ -55,19 +55,19 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 
 ### User Interface
 
-- **MainView**: Primary wallpaper generation interface
-- **PromptHistoryView**: Search, browse, and manage prompt history with favorites
-- **SettingsView**: API configuration, auto-generation, and startup settings
+- **Views/MainView**: Primary wallpaper generation interface
+- **Views/PromptHistoryView**: Search, browse, and manage prompt history with favorites
+- **Views/SettingsView**: API configuration, auto-generation, and startup settings
 - **System Tray**: Minimal footprint with quick access to all features
 
 ### Core Services
 
-- **ImageGenerator**: OpenAI DALL-E 3 API integration for wallpaper creation
-- **PromptGeneratorService**: AI-powered random prompt generation using OpenAI's o3
-- **DatabaseService**: SQLite persistence for prompt and image history
-- **AutoGenerateService**: Configurable timer-based automatic generation
-- **StartupManager**: Windows registry integration for startup functionality
-- **Wallpaper**: Desktop wallpaper integration via Win32 API
+- **Services/ImageGenerator**: OpenAI DALL-E 3 API integration for wallpaper creation
+- **Services/PromptGeneratorService**: AI-powered random prompt generation using OpenAI's o3
+- **Services/DatabaseService**: SQLite persistence for prompt and image history
+- **Services/AutoGenerateService**: Configurable timer-based automatic generation
+- **Services/StartupManager**: Windows registry integration for startup functionality
+- **Services/Wallpaper**: Desktop wallpaper integration via Win32 API
 
 ### Data Storage
 

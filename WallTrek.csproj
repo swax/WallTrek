@@ -14,11 +14,6 @@
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    
-    <!-- App Options -->
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <EnableDefaultPageItems>false</EnableDefaultPageItems>
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 
     <!-- Assembly Information -->
     <AssemblyTitle>WallTrek</AssemblyTitle>
@@ -52,21 +47,11 @@
 
   <!-- Include generated XAML files for C# Dev Kit IntelliSense -->
   <ItemGroup Condition="'$(DesignTimeBuild)' == 'true'">
-    <Compile Include="obj/Debug/net9.0-windows10.0.19041.0/src/**/*.cs">
+    <Compile Include="$(IntermediateOutputPath)**/*.cs">
         <AutoGen>True</AutoGen>
         <DesignTime>True</DesignTime>
         <DependentUpon>%(Filename).xaml</DependentUpon>
     </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="src\**\*.cs" />
-    <ApplicationDefinition Include="src\App.xaml">
-        <Generator>MSBuild:Compile</Generator>
-    </ApplicationDefinition>
-    <Page Include="src\**\*.xaml" Exclude="src\App.xaml">
-        <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
 
   <ItemGroup>

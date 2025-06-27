@@ -34,19 +34,19 @@ dotnet.exe restore
 
 - **App.xaml.cs**: Main application entry point with system tray integration using H.NotifyIcon
 - **MainWindow**: Host window with navigation between MainView, PromptHistoryView, and SettingsView
-- **MainView**: Primary UI for wallpaper generation with prompt input and status display
-- **PromptHistoryView**: Comprehensive prompt history management with search, favorites, and image management
-- **SettingsView**: Configuration UI for API keys, auto-generation settings, and startup options
+- **Views/MainView**: Primary UI for wallpaper generation with prompt input and status display
+- **Views/PromptHistoryView**: Comprehensive prompt history management with search, favorites, and image management
+- **Views/SettingsView**: Configuration UI for API keys, auto-generation settings, and startup options
 
 ### Services Layer
 
-- **ImageGenerator**: Handles OpenAI DALL-E 3 API integration and image generation
-- **DatabaseService**: SQLite database management for prompt history and image tracking
-- **PromptGeneratorService**: AI-powered random prompt generation using OpenAI's o3 model
-- **Settings**: Singleton service for application configuration persistence (JSON-based)
-- **AutoGenerateService**: Timer-based service with support for current prompt or random generation modes
-- **StartupManager**: Windows registry integration for "Run on startup" functionality
-- **Wallpaper**: Windows system integration for setting desktop wallpapers via Win32 API
+- **Services/ImageGenerator**: Handles OpenAI DALL-E 3 API integration and image generation
+- **Services/DatabaseService**: SQLite database management for prompt history and image tracking
+- **Services/PromptGeneratorService**: AI-powered random prompt generation using OpenAI's o3 model
+- **Services/Settings**: Singleton service for application configuration persistence (JSON-based)
+- **Services/AutoGenerateService**: Timer-based service with support for current prompt or random generation modes
+- **Services/StartupManager**: Windows registry integration for "Run on startup" functionality
+- **Services/Wallpaper**: Windows system integration for setting desktop wallpapers via Win32 API
 
 ### Database Schema
 
@@ -86,7 +86,7 @@ dotnet.exe restore
 
 ### Development Notes
 
-- **MVVM Implementation**: Custom `RelayCommand` with enhanced data binding patterns
+- **MVVM Implementation**: Custom `Utilities/RelayCommand` with enhanced data binding patterns
 - **Database Management**: Automatic schema creation and migration handling
 - **UI State Management**: Expandable prompt cards with image collections in history view
 - **Search Functionality**: Debounced text search across prompt history
