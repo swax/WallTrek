@@ -56,6 +56,11 @@ namespace WallTrek.Services
         public bool MinimizeToTray { get; set; } = true;
         public bool IsFirstRun { get; set; } = true;
         public string? OutputDirectory { get; set; }
+        public string? DeviantArtClientId { get; set; }
+        public string? DeviantArtClientSecret { get; set; }
+        public string? DeviantArtAccessToken { get; set; }
+        public string? DeviantArtRefreshToken { get; set; }
+        public DateTime? DeviantArtTokenExpiry { get; set; }
     }
 
     public class Settings
@@ -127,6 +132,36 @@ namespace WallTrek.Services
         {
             get => _model.RandomPrompts;
             set => _model.RandomPrompts = value;
+        }
+
+        public string? DeviantArtClientId
+        {
+            get => _model.DeviantArtClientId;
+            set => _model.DeviantArtClientId = value;
+        }
+
+        public string? DeviantArtClientSecret
+        {
+            get => _model.DeviantArtClientSecret;
+            set => _model.DeviantArtClientSecret = value;
+        }
+
+        public string? DeviantArtAccessToken
+        {
+            get => _model.DeviantArtAccessToken;
+            set => _model.DeviantArtAccessToken = value;
+        }
+
+        public string? DeviantArtRefreshToken
+        {
+            get => _model.DeviantArtRefreshToken;
+            set => _model.DeviantArtRefreshToken = value;
+        }
+
+        public DateTime? DeviantArtTokenExpiry
+        {
+            get => _model.DeviantArtTokenExpiry;
+            set => _model.DeviantArtTokenExpiry = value;
         }
 
         public void Save()

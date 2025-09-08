@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using WallTrek.Services;
+using WallTrek.Services.DeviantArt;
 using Windows.System;
 
 namespace WallTrek.Views
@@ -17,6 +18,7 @@ namespace WallTrek.Views
         public event EventHandler? NavigateBack;
         public event EventHandler<string>? CopyPrompt;
         private readonly DatabaseService databaseService;
+        private readonly DeviantArtUploadService deviantArtUploadService;
         private List<PromptHistoryItem> allPrompts = new List<PromptHistoryItem>();
         private DispatcherTimer searchDebounceTimer;
 
@@ -24,6 +26,7 @@ namespace WallTrek.Views
         {
             this.InitializeComponent();
             databaseService = new DatabaseService();
+            deviantArtUploadService = new DeviantArtUploadService();
             
             // Initialize debounce timer
             searchDebounceTimer = new DispatcherTimer
@@ -104,47 +107,15 @@ namespace WallTrek.Views
 
         private void ImageButton_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is string imagePath)
+            if (sender is Button button && button.Tag is ImageHistoryItem imageItem)
             {
-                ShowFullScreenImage(imagePath);
+                ShowFullScreenImage(imageItem.ImagePath);
             }
         }
 
         private void ImageButton_RightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is string imagePath)
-            {
-                var menuFlyout = new MenuFlyout();
-
-                // Set as background option
-                var setBackgroundItem = new MenuFlyoutItem
-                {
-                    Text = "Set as Background",
-                    Icon = new FontIcon { Glyph = "\uE91B" }
-                };
-                setBackgroundItem.Click += (s, args) => SetAsBackground(imagePath);
-                menuFlyout.Items.Add(setBackgroundItem);
-
-                // Open image option
-                var openImageItem = new MenuFlyoutItem
-                {
-                    Text = "Open Image",
-                    Icon = new FontIcon { Glyph = "\uE8A7" }
-                };
-                openImageItem.Click += (s, args) => OpenImage(imagePath);
-                menuFlyout.Items.Add(openImageItem);
-
-                // Delete image option
-                var deleteImageItem = new MenuFlyoutItem
-                {
-                    Text = "Delete Image",
-                    Icon = new FontIcon { Glyph = "\uE74D", Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.OrangeRed) }
-                };
-                deleteImageItem.Click += (s, args) => DeleteImage(imagePath);
-                menuFlyout.Items.Add(deleteImageItem);
-
-                menuFlyout.ShowAt(button);
-            }
+            // This method is now handled by the XAML ContextFlyout
         }
 
         private async void DeleteButton_Click(object sender, RoutedEventArgs e)
@@ -241,6 +212,70 @@ namespace WallTrek.Views
             }
         }
 
+        private async void UploadToDeviantArt_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageHistoryItem imageItem)
+            {
+                imageItem.IsUploading = true;
+                
+                try
+                {
+                    var promptItem = FindPromptItemForImage(imageItem);
+                    await deviantArtUploadService.UploadImageAsync(imageItem, promptItem?.PromptText, this.XamlRoot, LoadPromptHistory);
+                }
+                finally
+                {
+                    imageItem.IsUploading = false;
+                }
+            }
+        }
+
+        private async void ViewOnDeviantArt_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageHistoryItem imageItem)
+            {
+                if (!string.IsNullOrEmpty(imageItem.DeviantArtUrl))
+                {
+                    try
+                    {
+                        await Launcher.LaunchUriAsync(new Uri(imageItem.DeviantArtUrl));
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error opening DeviantArt URL: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        private async void OpenInExplorer_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageHistoryItem imageItem)
+            {
+                try
+                {
+                    var folderPath = Path.GetDirectoryName(imageItem.ImagePath);
+                    if (Directory.Exists(folderPath))
+                    {
+                        await Launcher.LaunchUriAsync(new Uri($"file:///{folderPath.Replace('\\', '/')}"));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error opening explorer: {ex.Message}");
+                }
+            }
+        }
+
+
+        private PromptHistoryItem? FindPromptItemForImage(ImageHistoryItem imageItem)
+        {
+            // Find the prompt that contains this image
+            return allPrompts.FirstOrDefault(prompt => 
+                prompt.ImageItems.Any(img => img.ImagePath == imageItem.ImagePath));
+        }
+
+
         private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             // Reset and restart the debounce timer
@@ -301,6 +336,17 @@ namespace WallTrek.Views
         {
             HideFullScreenImage();
         }
+
+        private void ImageContextMenu_Opening(object sender, object e)
+        {
+            // Context menu opening event - could be used for dynamic menu updates if needed
+        }
+
+        private void ImageButton_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Event handler for when image buttons are loaded - currently unused but available for future enhancements
+        }
+
     }
 
     public class FavoriteColorConverter : IValueConverter
@@ -317,6 +363,64 @@ namespace WallTrek.Views
         public object ConvertBack(object value, Type targetType, object parameter, string language)
         {
             throw new NotImplementedException();
+        }
+    }
+
+    public class BooleanNegationConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool boolValue)
+            {
+                return !boolValue;
+            }
+            return true;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool boolValue)
+            {
+                return !boolValue;
+            }
+            return false;
+        }
+    }
+
+    public class BooleanToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool boolValue)
+            {
+                bool shouldShow = boolValue;
+                
+                // Check if we should invert the logic
+                if (parameter?.ToString()?.ToLowerInvariant() == "invert")
+                {
+                    shouldShow = !boolValue;
+                }
+                
+                return shouldShow ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            if (value is Visibility visibility)
+            {
+                bool isVisible = visibility == Visibility.Visible;
+                
+                // Check if we should invert the logic
+                if (parameter?.ToString()?.ToLowerInvariant() == "invert")
+                {
+                    return !isVisible;
+                }
+                
+                return isVisible;
+            }
+            return false;
         }
     }
 }

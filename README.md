@@ -2,13 +2,16 @@
 
 WallTrek is a WinUI 3 application that generates AI-powered wallpapers using OpenAI's DALL-E 3 API. The application runs in the system tray and can automatically generate and set new wallpapers at specified intervals.
 
+[Example Generated Wallpapers](https://www.deviantart.com/swaxtastic/gallery/all)
+
 ![Screenshot](assets/walltrek_screenshot.png)
 
 ## Features
 
 - **AI-powered wallpaper generation** using OpenAI's DALL-E 3
-- **Random prompt generation** using OpenAI's o3 model for creative variety
+- **Random prompt generation** using OpenAI's gpt-5 model for creative variety
 - **Prompt history management** with search, favorites, and usage tracking
+- **DeviantArt integration** - upload and share generated wallpapers with auto-generated titles and tags
 - **System tray integration** with minimal UI footprint
 - **Automatic wallpaper generation** with configurable intervals and source modes
 - **Database persistence** for prompt and image history using SQLite
@@ -22,6 +25,7 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 - Windows 10/11
 - .NET 9.0 Runtime
 - OpenAI API key
+- DeviantArt API credentials (optional, for upload functionality)
 
 ## Installation
 
@@ -44,11 +48,13 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 
 1. **Initial Setup**: Right-click the system tray icon to open the application
 2. **API Configuration**: Navigate to Settings and enter your OpenAI API key
-3. **Auto-Generation**: Configure generation interval and choose between:
+3. **DeviantArt Setup** (Optional): Configure DeviantArt Client ID and Secret for upload functionality
+4. **Auto-Generation**: Configure generation interval and choose between:
    - **Current Prompt**: Use your saved prompt for auto-generation
    - **Random Prompts**: Generate new AI-created prompts automatically
-4. **Startup Options**: Enable "Run on Windows startup" for automatic launching
-5. **Prompt Management**: Use the Prompt History view to manage and favorite prompts
+5. **Startup Options**: Enable "Run on Windows startup" for automatic launching
+6. **Prompt Management**: Use the Prompt History view to manage and favorite prompts
+7. **Image Sharing**: Right-click images in history to upload to DeviantArt with AI-generated titles and tags
 
 ### Generated Content
 
@@ -71,7 +77,9 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 ### Core Services
 
 - **Services/ImageGenerator**: OpenAI DALL-E 3 API integration for wallpaper creation
-- **Services/PromptGeneratorService**: AI-powered random prompt generation using OpenAI's o3
+- **Services/PromptGeneratorService**: AI-powered random prompt generation using OpenAI's gpt-5
+- **Services/TitleService**: AI-powered title and tag generation for DeviantArt uploads
+- **Services/DeviantArt**: OAuth authentication and upload functionality for DeviantArt integration
 - **Services/DatabaseService**: SQLite persistence for prompt and image history
 - **Services/AutoGenerateService**: Configurable timer-based automatic generation
 - **Services/StartupManager**: Windows registry integration for startup functionality

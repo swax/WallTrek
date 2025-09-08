@@ -43,6 +43,8 @@ namespace WallTrek.Services
                     PromptId INTEGER NOT NULL,
                     ImagePath TEXT NOT NULL,
                     GeneratedDate DATETIME NOT NULL,
+                    IsUploadedToDeviantArt INTEGER NOT NULL DEFAULT 0,
+                    DeviantArtUrl TEXT NULL,
                     FOREIGN KEY (PromptId) REFERENCES Prompts (Id)
                 );
 
@@ -57,6 +59,29 @@ namespace WallTrek.Services
             {
                 var migrationCommand = connection.CreateCommand();
                 migrationCommand.CommandText = "ALTER TABLE Prompts ADD COLUMN IsFavorite INTEGER NOT NULL DEFAULT 0";
+                migrationCommand.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Column already exists, ignore the error
+            }
+            
+            // Add DeviantArt columns to GeneratedImages if they don't exist
+            try
+            {
+                var migrationCommand = connection.CreateCommand();
+                migrationCommand.CommandText = "ALTER TABLE GeneratedImages ADD COLUMN IsUploadedToDeviantArt INTEGER NOT NULL DEFAULT 0";
+                migrationCommand.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Column already exists, ignore the error
+            }
+            
+            try
+            {
+                var migrationCommand = connection.CreateCommand();
+                migrationCommand.CommandText = "ALTER TABLE GeneratedImages ADD COLUMN DeviantArtUrl TEXT NULL";
                 migrationCommand.ExecuteNonQuery();
             }
             catch
@@ -133,7 +158,9 @@ namespace WallTrek.Services
             var command = connection.CreateCommand();
             command.CommandText = @"
                 SELECT p.Id, p.PromptText, p.FirstUsedDate, p.LastUsedDate, p.UsageCount, p.IsFavorite,
-                       GROUP_CONCAT(gi.ImagePath, '|') as ImagePaths
+                       GROUP_CONCAT(gi.ImagePath, '|') as ImagePaths,
+                       GROUP_CONCAT(COALESCE(gi.IsUploadedToDeviantArt, 0), '|') as UploadStatuses,
+                       GROUP_CONCAT(gi.DeviantArtUrl, '|') as DeviantArtUrls
                 FROM Prompts p
                 LEFT JOIN GeneratedImages gi ON p.Id = gi.PromptId
                 GROUP BY p.Id, p.PromptText, p.FirstUsedDate, p.LastUsedDate, p.UsageCount, p.IsFavorite
@@ -146,6 +173,27 @@ namespace WallTrek.Services
             {
                 var imagePaths = reader.IsDBNull(6) ? new List<string>() : 
                     reader.GetString(6).Split('|').Where(s => !string.IsNullOrEmpty(s)).ToList();
+                
+                var uploadStatuses = reader.IsDBNull(7) ? new List<bool>() :
+                    reader.GetString(7).Split('|').Select(s => s == "1").ToList();
+                    
+                var deviantArtUrls = reader.IsDBNull(8) ? new List<string?>() :
+                    reader.GetString(8).Split('|').Select(s => string.IsNullOrEmpty(s) ? null : s).ToList();
+
+                // Ensure all lists have the same length
+                while (uploadStatuses.Count < imagePaths.Count) uploadStatuses.Add(false);
+                while (deviantArtUrls.Count < imagePaths.Count) deviantArtUrls.Add(null);
+
+                var imageItems = new List<ImageHistoryItem>();
+                for (int i = 0; i < imagePaths.Count; i++)
+                {
+                    imageItems.Add(new ImageHistoryItem
+                    {
+                        ImagePath = imagePaths[i],
+                        IsUploadedToDeviantArt = i < uploadStatuses.Count ? uploadStatuses[i] : false,
+                        DeviantArtUrl = i < deviantArtUrls.Count ? deviantArtUrls[i] : null
+                    });
+                }
 
                 items.Add(new PromptHistoryItem
                 {
@@ -155,7 +203,8 @@ namespace WallTrek.Services
                     LastUsedDate = reader.GetDateTime(3),
                     UsageCount = reader.GetInt32(4),
                     IsFavorite = reader.GetInt32(5) == 1,
-                    ImagePaths = imagePaths
+                    ImagePaths = imagePaths, // Keep for backward compatibility
+                    ImageItems = imageItems
                 });
             }
 
@@ -202,6 +251,47 @@ namespace WallTrek.Services
             updateCommand.Parameters.AddWithValue("@isFavorite", isFavorite ? 1 : 0);
             await updateCommand.ExecuteNonQueryAsync();
         }
+
+        public async Task SetDeviantArtUploadAsync(string imagePath, bool isUploaded, string? deviantArtUrl = null)
+        {
+            using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync();
+
+            var updateCommand = connection.CreateCommand();
+            updateCommand.CommandText = "UPDATE GeneratedImages SET IsUploadedToDeviantArt = @isUploaded, DeviantArtUrl = @url WHERE ImagePath = @imagePath";
+            updateCommand.Parameters.AddWithValue("@imagePath", imagePath);
+            updateCommand.Parameters.AddWithValue("@isUploaded", isUploaded ? 1 : 0);
+            updateCommand.Parameters.AddWithValue("@url", deviantArtUrl ?? (object)DBNull.Value);
+            await updateCommand.ExecuteNonQueryAsync();
+        }
+    }
+
+    public class ImageHistoryItem : INotifyPropertyChanged
+    {
+        public string ImagePath { get; set; } = string.Empty;
+        public bool IsUploadedToDeviantArt { get; set; }
+        public string? DeviantArtUrl { get; set; }
+
+        private bool _isUploading = false;
+        public bool IsUploading
+        {
+            get => _isUploading;
+            set
+            {
+                if (_isUploading != value)
+                {
+                    _isUploading = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
     public class PromptHistoryItem : INotifyPropertyChanged
@@ -211,7 +301,8 @@ namespace WallTrek.Services
         public DateTime FirstUsedDate { get; set; }
         public DateTime LastUsedDate { get; set; }
         public int UsageCount { get; set; }
-        public List<string> ImagePaths { get; set; } = new List<string>();
+        public List<string> ImagePaths { get; set; } = new List<string>(); // Keep for backward compatibility
+        public List<ImageHistoryItem> ImageItems { get; set; } = new List<ImageHistoryItem>();
 
         private bool _isFavorite = false;
         public bool IsFavorite

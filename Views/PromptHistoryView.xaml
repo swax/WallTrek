@@ -7,6 +7,8 @@
 
     <UserControl.Resources>
         <local:FavoriteColorConverter x:Key="FavoriteColorConverter"/>
+        <local:BooleanNegationConverter x:Key="BooleanNegationConverter"/>
+        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </UserControl.Resources>
 
     <Grid>
@@ -102,7 +104,7 @@
                                         </TextBlock>
                                     </StackPanel>
                                     
-                                    <TextBlock Grid.Column="2" Text="{Binding ImagePaths.Count}" 
+                                    <TextBlock Grid.Column="2" Text="{Binding ImageItems.Count}" 
                                                VerticalAlignment="Center" Margin="10,0,5,0" 
                                                FontWeight="SemiBold" Opacity="0.7"/>
                                     
@@ -134,7 +136,7 @@
                             
                             <ScrollViewer HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" 
                                           VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled">
-                                <ItemsRepeater ItemsSource="{Binding ImagePaths}">
+                                <ItemsRepeater ItemsSource="{Binding ImageItems}">
                                     <ItemsRepeater.Layout>
                                         <StackLayout Orientation="Horizontal" Spacing="10"/>
                                     </ItemsRepeater.Layout>
@@ -142,14 +144,64 @@
                                         <DataTemplate>
                                             <Border CornerRadius="8" BorderBrush="Gray" BorderThickness="1" 
                                                     Background="Transparent">
-                                                <Button Background="Transparent" BorderThickness="0" 
-                                                        Padding="0" Click="ImageButton_Click" RightTapped="ImageButton_RightTapped" Tag="{Binding}">
-                                                    <Image Width="150" Height="100" Stretch="UniformToFill">
-                                                        <Image.Source>
-                                                            <BitmapImage UriSource="{Binding}"/>
-                                                        </Image.Source>
-                                                    </Image>
-                                                </Button>
+                                                <Grid>
+                                                    <Button Background="Transparent" BorderThickness="0" 
+                                                            Padding="0" Click="ImageButton_Click" RightTapped="ImageButton_RightTapped" Tag="{Binding}"
+                                                            Loaded="ImageButton_Loaded">
+                                                        <Button.ContextFlyout>
+                                                            <MenuFlyout Opening="ImageContextMenu_Opening">
+                                                                <MenuFlyoutItem x:Name="UploadToDeviantArtItem" 
+                                                                              Text="Upload to DeviantArt" 
+                                                                              Click="UploadToDeviantArt_Click"
+                                                                              Tag="{Binding}"
+                                                                              IsEnabled="{Binding IsUploading, Converter={StaticResource BooleanNegationConverter}}"
+                                                                              Visibility="{Binding IsUploadedToDeviantArt, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
+                                                                <MenuFlyoutItem x:Name="ViewOnDeviantArtItem" 
+                                                                              Text="View on DeviantArt" 
+                                                                              Click="ViewOnDeviantArt_Click"
+                                                                              Tag="{Binding}"
+                                                                              Visibility="{Binding IsUploadedToDeviantArt, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                                <MenuFlyoutSeparator Visibility="{Binding IsUploadedToDeviantArt, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                                <MenuFlyoutItem Text="Open in file explorer" 
+                                                                              Click="OpenInExplorer_Click"
+                                                                              Tag="{Binding}"/>
+                                                            </MenuFlyout>
+                                                        </Button.ContextFlyout>
+                                                        <Image Width="150" Height="100" Stretch="UniformToFill">
+                                                            <Image.Source>
+                                                                <BitmapImage UriSource="{Binding ImagePath}"/>
+                                                            </Image.Source>
+                                                        </Image>
+                                                    </Button>
+                                                    <!-- Upload indicator -->
+                                                    <Border Background="LimeGreen" 
+                                                            CornerRadius="12" 
+                                                            Width="24" Height="24" 
+                                                            HorizontalAlignment="Right" 
+                                                            VerticalAlignment="Top" 
+                                                            Margin="0,5,5,0"
+                                                            Visibility="{Binding IsUploadedToDeviantArt, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                        <FontIcon Glyph="&#xE72E;" 
+                                                                FontSize="12" 
+                                                                Foreground="White" 
+                                                                HorizontalAlignment="Center" 
+                                                                VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <!-- Upload loading indicator -->
+                                                    <Border Background="Orange" 
+                                                            CornerRadius="12" 
+                                                            Width="24" Height="24" 
+                                                            HorizontalAlignment="Right" 
+                                                            VerticalAlignment="Top" 
+                                                            Margin="0,5,5,0"
+                                                            Visibility="{Binding IsUploading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                        <FontIcon Glyph="&#xE916;" 
+                                                                FontSize="12" 
+                                                                Foreground="White" 
+                                                                HorizontalAlignment="Center" 
+                                                                VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsRepeater.ItemTemplate>

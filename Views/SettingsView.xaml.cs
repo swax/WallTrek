@@ -29,6 +29,8 @@ namespace WallTrek.Views
         {
             var settings = Settings.Instance;
             ApiKeyTextBox.Text = settings.ApiKey ?? string.Empty;
+            DeviantArtClientIdTextBox.Text = settings.DeviantArtClientId ?? string.Empty;
+            DeviantArtClientSecretPasswordBox.Password = settings.DeviantArtClientSecret ?? string.Empty;
             OutputDirectoryTextBox.Text = settings.OutputDirectory;
             AutoGenerateCheckBox.IsChecked = settings.AutoGenerateEnabled;
             AutoGenerateHoursNumberBox.Value = settings.AutoGenerateHours > 0 ? settings.AutoGenerateHours : 6.0;
@@ -63,6 +65,8 @@ namespace WallTrek.Views
             var previousHours = settings.AutoGenerateHours;
             
             settings.ApiKey = ApiKeyTextBox.Text;
+            settings.DeviantArtClientId = DeviantArtClientIdTextBox.Text;
+            settings.DeviantArtClientSecret = DeviantArtClientSecretPasswordBox.Password;
             settings.OutputDirectory = OutputDirectoryTextBox.Text;
             settings.AutoGenerateEnabled = AutoGenerateCheckBox.IsChecked ?? false;
             settings.AutoGenerateHours = AutoGenerateHoursNumberBox.Value;
@@ -140,6 +144,17 @@ namespace WallTrek.Views
         private void RandomPromptSettingsButton_Click(object sender, RoutedEventArgs e)
         {
             NavigateToRandomPromptSettings?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void ClearTokensButton_Click(object sender, RoutedEventArgs e)
+        {
+            var settings = Settings.Instance;
+            settings.DeviantArtAccessToken = null;
+            settings.DeviantArtRefreshToken = null;
+            settings.DeviantArtTokenExpiry = null;
+            settings.Save();
+            
+            StatusTextBlock.Text = "DeviantArt tokens cleared successfully!";
         }
     }
 }

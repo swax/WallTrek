@@ -16,7 +16,7 @@ namespace WallTrek.Services
 
         public async Task<string> GenerateRandomPromptAsync(CancellationToken cancellationToken = default)
         {
-            var chatClient = new ChatClient("o3", apiKey);
+            var chatClient = new ChatClient("gpt-5", apiKey);
             
             // Get settings from the Settings service
             var settings = Settings.Instance;

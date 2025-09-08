@@ -18,6 +18,17 @@
             </StackPanel>
             
             <StackPanel Spacing="10">
+                <TextBlock Text="DeviantArt API Settings:" FontWeight="SemiBold"/>
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Client ID:" FontSize="14"/>
+                    <TextBox x:Name="DeviantArtClientIdTextBox" PlaceholderText="Enter your DeviantArt client ID" Width="400" HorizontalAlignment="Left"/>
+                    <TextBlock Text="Client Secret:" FontSize="14"/>
+                    <PasswordBox x:Name="DeviantArtClientSecretPasswordBox" PlaceholderText="Enter your DeviantArt client secret" Width="400" HorizontalAlignment="Left"/>
+                    <Button x:Name="ClearTokensButton" Content="Clear Tokens" Click="ClearTokensButton_Click" HorizontalAlignment="Left" Margin="0,8,0,0"/>
+                </StackPanel>
+            </StackPanel>
+            
+            <StackPanel Spacing="10">
                 <TextBlock Text="Output Directory:" FontWeight="SemiBold"/>
                 <Grid>
                     <Grid.ColumnDefinitions>
