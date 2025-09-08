@@ -150,6 +150,14 @@
                                                             Loaded="ImageButton_Loaded">
                                                         <Button.ContextFlyout>
                                                             <MenuFlyout Opening="ImageContextMenu_Opening">
+                                                                <MenuFlyoutItem Text="Set as Background" 
+                                                                              Click="SetAsBackground_Click"
+                                                                              Tag="{Binding}">
+                                                                    <MenuFlyoutItem.Icon>
+                                                                        <FontIcon Glyph="&#xE91B;"/>
+                                                                    </MenuFlyoutItem.Icon>
+                                                                </MenuFlyoutItem>
+                                                                <MenuFlyoutSeparator/>
                                                                 <MenuFlyoutItem x:Name="UploadToDeviantArtItem" 
                                                                               Text="Upload to DeviantArt" 
                                                                               Click="UploadToDeviantArt_Click"
@@ -162,6 +170,13 @@
                                                                               Tag="{Binding}"
                                                                               Visibility="{Binding IsUploadedToDeviantArt, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                                                                 <MenuFlyoutSeparator Visibility="{Binding IsUploadedToDeviantArt, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                                <MenuFlyoutItem Text="Open Image" 
+                                                                              Click="OpenImage_Click"
+                                                                              Tag="{Binding}">
+                                                                    <MenuFlyoutItem.Icon>
+                                                                        <FontIcon Glyph="&#xE8A7;"/>
+                                                                    </MenuFlyoutItem.Icon>
+                                                                </MenuFlyoutItem>
                                                                 <MenuFlyoutItem Text="Open in file explorer" 
                                                                               Click="OpenInExplorer_Click"
                                                                               Tag="{Binding}"/>

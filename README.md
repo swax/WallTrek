@@ -20,6 +20,10 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 - **EXIF metadata preservation** with original prompts embedded in images
 - **Multi-view interface** for generation, history, and settings management
 
+## Why DeviantArt Integration?
+
+DeviantArt was chosen as the sharing platform because it supports API uploads with tags and prompts, allows full-resolution downloads, offers strong search and community features, and clearly permits AI-generated art. This makes it an ideal platform for sharing and discovering AI-generated wallpapers within a supportive creative community.
+
 ## Requirements
 
 - Windows 10/11
@@ -71,7 +75,7 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 
 - **Views/MainView**: Primary wallpaper generation interface
 - **Views/PromptHistoryView**: Search, browse, and manage prompt history with favorites
-- **Views/SettingsView**: API configuration, auto-generation, and startup settings
+- **Views/SettingsView**: Tabbed settings interface with General, API, and Random Prompt configuration
 - **System Tray**: Minimal footprint with quick access to all features
 
 ### Core Services

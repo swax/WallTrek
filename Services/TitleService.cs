@@ -30,13 +30,13 @@ namespace WallTrek.Services
             var chatClient = new ChatClient(Model, apiKey);
 
             var systemPrompt =
-                "You are a creative assistant that generates titles and tags for AI-generated images. Create short titles that capture the essence of the image description. The titles should be suitable for art sharing platforms like DeviantArt.";
+                "You are a creative assistant that generates titles and tags for AI-generated images. Create a short title that captures the essence of the image description. The title should be suitable for art sharing platforms like DeviantArt.";
 
             var messages = new ChatMessage[]
             {
                 new SystemChatMessage(systemPrompt),
                 new UserChatMessage(
-                    $"Generate a DeviantArt-friendly short title and tags that cover style, mood, colors, subjects, and artistic elements for the description: {imageDescription}")
+                    $"Generate a DeviantArt-friendly short title and tags that cover the style, mood, colors, subjects, and artistic elements for an image with this description: {imageDescription}. Thanks!")
             };
 
             // JSON Schema describing the object we want back

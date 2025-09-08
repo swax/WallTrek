@@ -36,7 +36,7 @@ dotnet.exe restore
 - **MainWindow**: Host window with navigation between MainView, PromptHistoryView, and SettingsView
 - **Views/MainView**: Primary UI for wallpaper generation with prompt input and status display
 - **Views/PromptHistoryView**: Comprehensive prompt history management with search, favorites, image management, and DeviantArt upload functionality
-- **Views/SettingsView**: Configuration UI for API keys, DeviantArt credentials, auto-generation settings, and startup options
+- **Views/SettingsView**: Tabbed configuration UI with General, API, and Random Prompt tabs for comprehensive settings management
 
 ### Services Layer
 

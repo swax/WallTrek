@@ -248,6 +248,22 @@ namespace WallTrek.Views
             }
         }
 
+        private void SetAsBackground_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageHistoryItem imageItem)
+            {
+                SetAsBackground(imageItem.ImagePath);
+            }
+        }
+
+        private void OpenImage_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageHistoryItem imageItem)
+            {
+                OpenImage(imageItem.ImagePath);
+            }
+        }
+
         private async void OpenInExplorer_Click(object sender, RoutedEventArgs e)
         {
             if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageHistoryItem imageItem)

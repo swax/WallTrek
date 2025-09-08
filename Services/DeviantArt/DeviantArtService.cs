@@ -94,7 +94,7 @@ namespace WallTrek.Services.DeviantArt
                       $"?response_type=code" +
                       $"&client_id={Uri.EscapeDataString(clientId)}" +
                       $"&redirect_uri={Uri.EscapeDataString(RedirectUri)}" +
-                      $"&scope=stash%20publish" +
+                      $"&scope={Uri.EscapeDataString("stash publish browse gallery")}" +
                       $"&state={state}";
             return url;
         }
@@ -246,6 +246,67 @@ namespace WallTrek.Services.DeviantArt
             return new FormUrlEncodedContent(parameters.Select(p => new KeyValuePair<string, string>(p.key, p.value)));
         }
 
+        private async Task<string?> GetGalleryFolderIdAsync(string folderName)
+        {
+            try
+            {
+                var url = "https://www.deviantart.com/api/v1/oauth2/gallery/folders?limit=50";
+                using var req = new HttpRequestMessage(HttpMethod.Get, url);
+                req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                var res = await httpClient.SendAsync(req);
+                if (!res.IsSuccessStatusCode) return null;
+
+                var json = JsonSerializer.Deserialize<JsonElement>(await res.Content.ReadAsStringAsync());
+                if (json.TryGetProperty("results", out var results))
+                {
+                    foreach (var item in results.EnumerateArray())
+                    {
+                        if (item.TryGetProperty("name", out var nameEl) &&
+                            string.Equals(nameEl.GetString(), folderName, StringComparison.OrdinalIgnoreCase) &&
+                            item.TryGetProperty("folderid", out var idEl))
+                        {
+                            return idEl.GetString(); // UUID
+                        }
+                    }
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task<string?> CreateGalleryFolderAsync(string folderName, string? parentFolderId = null)
+        {
+            try
+            {
+                using var content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string,string>("folder", folderName),
+                    new KeyValuePair<string,string>("access_token", accessToken!)
+                });
+
+                var res = await httpClient.PostAsync("https://www.deviantart.com/api/v1/oauth2/gallery/folders/create", content);
+                if (!res.IsSuccessStatusCode) return null;
+
+                var json = JsonSerializer.Deserialize<JsonElement>(await res.Content.ReadAsStringAsync());
+                return json.TryGetProperty("folderid", out var idEl) ? idEl.GetString() : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private async Task<string?> GetOrCreateFolderAsync(string name)
+        {
+            var id = await GetGalleryFolderIdAsync(name);
+            if (!string.IsNullOrEmpty(id)) return id;
+            return await CreateGalleryFolderAsync(name);
+        }
+
         private async Task<DeviantArtUploadResult> UploadToDeviantArtAsync(string imagePath, string title, string description, string[] tags)
         {
             try
@@ -267,7 +328,7 @@ namespace WallTrek.Services.DeviantArt
                 submitContent.Add(new StringContent("false"), "noai");
                 submitContent.Add(new StringContent("true"), "is_ai_generated");
                 // Add tags - always include walltrek tag
-                var allTags = new List<string> { "walltrek", "dalle3" };
+                var allTags = new List<string> { "walltrek", "dalle3", "wallpaper" };
                 allTags.AddRange(tags);
                 
                 foreach (var tag in allTags)
@@ -332,6 +393,17 @@ namespace WallTrek.Services.DeviantArt
                 }
                 var itemId = itemIdElement.GetInt64();
 
+                // Get or create the WallTrek album (gallery folder)
+                var wallTrekFolderId = await GetOrCreateFolderAsync("WallTrek");
+                if (string.IsNullOrEmpty(wallTrekFolderId))
+                {
+                    return new DeviantArtUploadResult
+                    {
+                        Success = false,
+                        ErrorMessage = "Could not find or create the 'WallTrek' gallery folder."
+                    };
+                }
+
                 // Step 2: Publish the stash item
                 using var publishContent = new MultipartFormDataContent();
                 publishContent.Add(new StringContent(accessToken!), "access_token");
@@ -339,6 +411,16 @@ namespace WallTrek.Services.DeviantArt
                 publishContent.Add(new StringContent("false"), "is_mature");
                 publishContent.Add(new StringContent("true"), "agree_submission");
                 publishContent.Add(new StringContent("true"), "agree_tos");
+
+                // prevent auto-adding to Featured
+                // publishContent.Add(new StringContent("false"), "feature");
+
+                // Add the album assignment
+                publishContent.Add(new StringContent(wallTrekFolderId), "galleryids[]");
+                
+                // Mirror flags from stash/submit
+                publishContent.Add(new StringContent("true"), "is_ai_generated");
+                publishContent.Add(new StringContent("false"), "noai");
 
                 var publishResponse = await httpClient.PostAsync("https://www.deviantart.com/api/v1/oauth2/stash/publish", publishContent);
                 var publishResponseContent = await publishResponse.Content.ReadAsStringAsync();

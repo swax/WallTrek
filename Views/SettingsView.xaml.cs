@@ -3,6 +3,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
 using WallTrek.Services;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -12,7 +14,6 @@ namespace WallTrek.Views
     public sealed partial class SettingsView : UserControl
     {
         public event EventHandler? NavigateToMain;
-        public event EventHandler? NavigateToRandomPromptSettings;
 
         public SettingsView()
         {
@@ -57,10 +58,21 @@ namespace WallTrek.Views
             
             // Load startup setting from both settings and registry to ensure sync
             RunOnStartupCheckBox.IsChecked = StartupManager.IsStartupEnabled();
+            
+            // Load random prompt settings JSON
+            LoadRandomPromptSettingsToUI();
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
+            // First try to save random prompt settings
+            if (!TryParseAndSaveRandomPromptSettings(out string errorMessage))
+            {
+                StatusTextBlock.Text = errorMessage;
+                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                return;
+            }
+            
             var settings = Settings.Instance;
             var previousHours = settings.AutoGenerateHours;
             
@@ -97,6 +109,7 @@ namespace WallTrek.Views
             }
             
             StatusTextBlock.Text = "Settings saved successfully!";
+            StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
             
             // Navigate back to main view after saving
             NavigateToMain?.Invoke(this, EventArgs.Empty);
@@ -141,10 +154,6 @@ namespace WallTrek.Views
             AutoGenerateOptionsPanel.Visibility = AutoGenerateCheckBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void RandomPromptSettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            NavigateToRandomPromptSettings?.Invoke(this, EventArgs.Empty);
-        }
 
         private void ClearTokensButton_Click(object sender, RoutedEventArgs e)
         {
@@ -155,6 +164,104 @@ namespace WallTrek.Views
             settings.Save();
             
             StatusTextBlock.Text = "DeviantArt tokens cleared successfully!";
+        }
+        
+        private void LoadRandomPromptSettingsToUI()
+        {
+            var settings = Settings.Instance;
+            var randomPrompts = settings.RandomPrompts;
+            
+            // Serialize the RandomPromptsSettings to JSON
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            
+            string json = JsonSerializer.Serialize(randomPrompts, options);
+            JsonTextBox.Text = json;
+        }
+        
+        private bool TryParseAndSaveRandomPromptSettings(out string errorMessage)
+        {
+            errorMessage = "";
+            
+            try
+            {
+                string jsonText = JsonTextBox.Text;
+                if (string.IsNullOrWhiteSpace(jsonText))
+                {
+                    errorMessage = "JSON cannot be empty";
+                    return false;
+                }
+                
+                var newSettings = JsonSerializer.Deserialize<RandomPromptsSettings>(jsonText);
+                
+                if (newSettings == null)
+                {
+                    errorMessage = "Failed to deserialize JSON";
+                    return false;
+                }
+                
+                // Validate that all required properties exist and are not null
+                if (newSettings.Categories == null)
+                {
+                    errorMessage = "Categories array is required";
+                    return false;
+                }
+                
+                if (newSettings.Styles == null)
+                {
+                    errorMessage = "Styles array is required";
+                    return false;
+                }
+                
+                if (newSettings.Moods == null)
+                {
+                    errorMessage = "Moods array is required";
+                    return false;
+                }
+                
+                // Update the settings with the parsed JSON
+                var settings = Settings.Instance;
+                settings.RandomPrompts.Categories.Clear();
+                settings.RandomPrompts.Categories.AddRange(newSettings.Categories.Where(c => !string.IsNullOrWhiteSpace(c)));
+                
+                settings.RandomPrompts.Styles.Clear();
+                settings.RandomPrompts.Styles.AddRange(newSettings.Styles.Where(s => !string.IsNullOrWhiteSpace(s)));
+                
+                settings.RandomPrompts.Moods.Clear();
+                settings.RandomPrompts.Moods.AddRange(newSettings.Moods.Where(m => !string.IsNullOrWhiteSpace(m)));
+                
+                return true;
+            }
+            catch (JsonException ex)
+            {
+                errorMessage = $"Invalid JSON: {ex.Message}";
+                return false;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error parsing JSON: {ex.Message}";
+                return false;
+            }
+        }
+        
+        private void RestoreDefaultsButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Create a new RandomPromptsSettings to get the default values
+            var defaultSettings = new RandomPromptsSettings();
+            
+            // Serialize to JSON and display
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            
+            string json = JsonSerializer.Serialize(defaultSettings, options);
+            JsonTextBox.Text = json;
+            
+            StatusTextBlock.Text = "Default settings restored. Click 'Save Settings' to apply.";
+            StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
         }
     }
 }
