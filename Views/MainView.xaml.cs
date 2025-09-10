@@ -62,6 +62,23 @@ namespace WallTrek.Views
         {
             var settings = Settings.Instance;
             PromptTextBox.Text = settings.LastPrompt ?? "";
+            
+            // Set the LLM selection dropdown
+            var selectedModel = settings.SelectedLlmModel;
+            foreach (ComboBoxItem item in LlmSelectionComboBox.Items)
+            {
+                if (item.Tag?.ToString() == selectedModel)
+                {
+                    LlmSelectionComboBox.SelectedItem = item;
+                    break;
+                }
+            }
+            
+            // Set default if nothing was selected
+            if (LlmSelectionComboBox.SelectedItem == null && LlmSelectionComboBox.Items.Count > 0)
+            {
+                LlmSelectionComboBox.SelectedIndex = 0;
+            }
         }
 
         private async void GenerateButton_Click(object sender, RoutedEventArgs e)
@@ -205,6 +222,19 @@ namespace WallTrek.Views
                 SetGeneratingState(false);
                 _cancellationTokenSource?.Dispose();
                 _cancellationTokenSource = null;
+            }
+        }
+
+        private void LlmSelectionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (LlmSelectionComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag != null)
+            {
+                var selectedModel = selectedItem.Tag.ToString();
+                if (selectedModel != null)
+                {
+                    Settings.Instance.SelectedLlmModel = selectedModel;
+                    Settings.Instance.Save();
+                }
             }
         }
     }

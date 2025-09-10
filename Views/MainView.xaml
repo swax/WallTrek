@@ -33,6 +33,14 @@
                         Click="RandomPromptButton_Click"
                         FontSize="12"
                         Padding="8,4"/>
+                <TextBlock Text="LLM:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="20,0,0,0"/>
+                <ComboBox x:Name="LlmSelectionComboBox"
+                          SelectionChanged="LlmSelectionComboBox_SelectionChanged"
+                          MinWidth="120">
+                    <ComboBoxItem Content="OpenAI GPT-5" Tag="gpt-5"/>
+                    <ComboBoxItem Content="OpenAI GPT-4o" Tag="gpt-4o"/>
+                    <ComboBoxItem Content="OpenAI o3" Tag="o3-mini"/>
+                </ComboBox>
             </StackPanel>
             <TextBox x:Name="PromptTextBox" 
                      PlaceholderText="Enter a description for your AI-generated wallpaper..."

@@ -16,8 +16,6 @@ namespace WallTrek.Services
     {
         private readonly string apiKey;
 
-        private const string Model = "gpt-5";
-
         public TitleService(string apiKey)
         {
             this.apiKey = apiKey;
@@ -27,7 +25,8 @@ namespace WallTrek.Services
             string imageDescription,
             CancellationToken cancellationToken = default)
         {
-            var chatClient = new ChatClient(Model, apiKey);
+            var settings = Settings.Instance;
+            var chatClient = new ChatClient(settings.SelectedLlmModel, apiKey);
 
             var systemPrompt =
                 "You are a creative assistant that generates titles and tags for AI-generated images. Create a short title that captures the essence of the image description. The title should be suitable for art sharing platforms like DeviantArt.";

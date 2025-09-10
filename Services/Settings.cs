@@ -61,6 +61,7 @@ namespace WallTrek.Services
         public string? DeviantArtAccessToken { get; set; }
         public string? DeviantArtRefreshToken { get; set; }
         public DateTime? DeviantArtTokenExpiry { get; set; }
+        public string SelectedLlmModel { get; set; } = "gpt-5";
     }
 
     public class Settings
@@ -162,6 +163,12 @@ namespace WallTrek.Services
         {
             get => _model.DeviantArtTokenExpiry;
             set => _model.DeviantArtTokenExpiry = value;
+        }
+
+        public string SelectedLlmModel
+        {
+            get => _model.SelectedLlmModel;
+            set => _model.SelectedLlmModel = value;
         }
 
         public void Save()
