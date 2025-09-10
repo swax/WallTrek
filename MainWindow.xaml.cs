@@ -65,6 +65,28 @@ namespace WallTrek
             // Delegate to the MainView
             MainViewControl.TriggerAutoGenerate();
         }
+        
+        public void TriggerImFeelingLucky()
+        {
+            // Navigate to home view first to show the action
+            NavigateToHome();
+            
+            // Call the MainView's TriggerAutoGenerate which will:
+            // 1. Generate a random prompt (since we're forcing random mode)
+            // 2. Generate wallpaper using that prompt
+            var originalAutoGenerateSource = Settings.Instance.AutoGenerateSource;
+            Settings.Instance.AutoGenerateSource = "random";
+            
+            try
+            {
+                MainViewControl.TriggerAutoGenerate();
+            }
+            finally
+            {
+                // Restore original setting
+                Settings.Instance.AutoGenerateSource = originalAutoGenerateSource;
+            }
+        }
 
         private void SetActiveView(ViewType viewType)
         {

@@ -30,12 +30,14 @@ namespace WallTrek
         private TaskbarIcon? trayIcon;
         
         public ICommand ShowMainWindowCommand { get; private set; }
+        public ICommand ImFeelingLuckyCommand { get; private set; }
 
         public App()
         {
             this.InitializeComponent();
             
             ShowMainWindowCommand = new RelayCommand(ShowMainWindow);
+            ImFeelingLuckyCommand = new RelayCommand(ImFeelingLucky);
         }
 
         private void InitializeTrayIcon()
@@ -49,6 +51,13 @@ namespace WallTrek
                 Command = ShowMainWindowCommand
             };
             contextMenu.Items.Add(showItem);
+
+            var luckyItem = new MenuFlyoutItem 
+            { 
+                Text = "I'm Feeling Lucky",
+                Command = ImFeelingLuckyCommand
+            };
+            contextMenu.Items.Add(luckyItem);
 
             contextMenu.Items.Add(new MenuFlyoutSeparator());
 
@@ -103,6 +112,14 @@ namespace WallTrek
             if (_window != null)
             {
                 _window.DispatcherQueue.TryEnqueue(() => _window.TriggerAutoGenerate());
+            }
+        }
+        
+        private void ImFeelingLucky()
+        {
+            if (_window != null)
+            {
+                _window.DispatcherQueue.TryEnqueue(() => _window.TriggerImFeelingLucky());
             }
         }
         
