@@ -50,6 +50,7 @@ namespace WallTrek.Services
     public class SettingsModel
     {
         public string? ApiKey { get; set; }
+        public string? AnthropicApiKey { get; set; }
         public string? LastPrompt { get; set; }
         public AutoGenerateSettings AutoGenerate { get; set; } = new();
         public RandomPromptsSettings RandomPrompts { get; set; } = new();
@@ -169,6 +170,12 @@ namespace WallTrek.Services
         {
             get => _model.SelectedLlmModel;
             set => _model.SelectedLlmModel = value;
+        }
+
+        public string? AnthropicApiKey
+        {
+            get => _model.AnthropicApiKey;
+            set => _model.AnthropicApiKey = value;
         }
 
         public void Save()

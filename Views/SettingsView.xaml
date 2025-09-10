@@ -66,6 +66,11 @@
                         </StackPanel>
                         
                         <StackPanel Spacing="10">
+                            <TextBlock Text="Anthropic API Key:" FontWeight="SemiBold"/>
+                            <TextBox x:Name="AnthropicApiKeyTextBox" PlaceholderText="Enter your Anthropic API key" Width="400" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                        
+                        <StackPanel Spacing="10">
                             <TextBlock Text="DeviantArt API Settings:" FontWeight="SemiBold"/>
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Client ID:" FontSize="14"/>

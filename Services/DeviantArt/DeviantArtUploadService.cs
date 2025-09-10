@@ -14,7 +14,7 @@ namespace WallTrek.Services.DeviantArt
         public DeviantArtUploadService()
         {
             databaseService = new DatabaseService();
-            titleService = new TitleService(Settings.Instance.ApiKey ?? "");
+            titleService = new TitleService();
             authService = new DeviantArtAuthService();
         }
 

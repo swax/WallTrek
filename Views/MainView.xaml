@@ -36,10 +36,13 @@
                 <TextBlock Text="LLM:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="20,0,0,0"/>
                 <ComboBox x:Name="LlmSelectionComboBox"
                           SelectionChanged="LlmSelectionComboBox_SelectionChanged"
-                          MinWidth="120">
+                          MinWidth="150">
                     <ComboBoxItem Content="OpenAI GPT-5" Tag="gpt-5"/>
                     <ComboBoxItem Content="OpenAI GPT-4o" Tag="gpt-4o"/>
                     <ComboBoxItem Content="OpenAI o3" Tag="o3-mini"/>
+                    <ComboBoxItem Content="Claude Opus 4.1" Tag="claude-opus-4-1"/>
+                    <ComboBoxItem Content="Claude Sonnet 4.0" Tag="claude-sonnet-4-0"/>
+                    <ComboBoxItem Content="Claude 3.5 Haiku" Tag="claude-3-5-haiku-latest"/>
                 </ComboBox>
             </StackPanel>
             <TextBox x:Name="PromptTextBox" 

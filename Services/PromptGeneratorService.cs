@@ -1,4 +1,3 @@
-using OpenAI.Chat;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,18 +6,17 @@ namespace WallTrek.Services
 {
     public class PromptGeneratorService
     {
-        private readonly string apiKey;
-
-        public PromptGeneratorService(string apiKey)
-        {
-            this.apiKey = apiKey;
-        }
-
         public async Task<string> GenerateRandomPromptAsync(CancellationToken cancellationToken = default)
         {
             var settings = Settings.Instance;
-            var chatClient = new ChatClient(settings.SelectedLlmModel, apiKey);
             var randomPrompts = settings.RandomPrompts;
+            
+            // Create LLM service based on selected model
+            var llmService = LlmServiceFactory.CreateService(
+                settings.SelectedLlmModel,
+                settings.ApiKey ?? string.Empty,
+                settings.AnthropicApiKey ?? string.Empty
+            );
             
             // Randomize the prompt generation approach
             var random = new Random();
@@ -37,14 +35,9 @@ namespace WallTrek.Services
 
             var systemPrompt = $"You are a creative assistant that generates diverse desktop wallpaper descriptions. Create a unique wallpaper prompt taking inspiration from {selectedCategory} in a {selectedStyle} style with a {selectedMood} atmosphere. Be creative and avoid generic descriptions. Include specific details about colors, composition, and visual elements. Keep it short and concise to like sentence or two.";
 
-            var messages = new ChatMessage[]
-            {
-                new SystemChatMessage(systemPrompt),
-                new UserChatMessage($"Generate a creative desktop wallpaper prompt with {selectedCategory} theme, {selectedStyle} style, and {selectedMood} mood. Make it visually striking and unique.")
-            };
+            var userPrompt = $"Generate a creative desktop wallpaper prompt with {selectedCategory} theme, {selectedStyle} style, and {selectedMood} mood. Make it visually striking and unique.";
 
-            var response = await chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
-            return response.Value.Content[0].Text.Trim();
+            return await llmService.GenerateTextAsync(systemPrompt, userPrompt, cancellationToken);
         }
     }
 }

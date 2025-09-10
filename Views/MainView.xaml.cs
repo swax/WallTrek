@@ -203,7 +203,7 @@ namespace WallTrek.Views
                 SetGeneratingState(true);
                 SetStatus("Generating random prompt...", Microsoft.UI.Colors.DodgerBlue);
 
-                var promptGenerator = new PromptGeneratorService(Settings.Instance.ApiKey);
+                var promptGenerator = new PromptGeneratorService();
                 var randomPrompt = await promptGenerator.GenerateRandomPromptAsync(_cancellationTokenSource.Token);
 
                 PromptTextBox.Text = randomPrompt;
