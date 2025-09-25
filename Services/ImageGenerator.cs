@@ -18,8 +18,12 @@ namespace WallTrek.Services
             databaseService = new DatabaseService();
         }
 
-        public async Task<string> GenerateAndSaveImage(string prompt, CancellationToken cancellationToken = default)
+        public async Task<string> GenerateAndSaveImage(string prompt, string llmModel, string imgModel, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(llmModel))
+                throw new ArgumentException("LLM model cannot be null or empty", nameof(llmModel));
+            if (string.IsNullOrEmpty(imgModel))
+                throw new ArgumentException("Image model cannot be null or empty", nameof(imgModel));
             const int maxFileNamePromptLength = 75;
             var sanitizedPrompt = string.Join("_", prompt.Split(Path.GetInvalidFileNameChars()));
             if (sanitizedPrompt.Length > maxFileNamePromptLength)
@@ -69,7 +73,7 @@ namespace WallTrek.Services
             try
             {
                 var promptId = await databaseService.AddOrUpdatePromptAsync(prompt);
-                await databaseService.AddGeneratedImageAsync(promptId, filePath);
+                await databaseService.AddGeneratedImageAsync(promptId, filePath, llmModel, imgModel);
             }
             catch (Exception ex)
             {

@@ -144,7 +144,24 @@ namespace WallTrek.Views
                 SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
 
                 var imageGenerator = ImageGenerationServiceFactory.CreateService(Settings.Instance.SelectedImageModel, Settings.Instance.OutputDirectory);
-                var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text, _cancellationTokenSource.Token);
+                
+                // Get current model selections from UI
+                var currentLlmModel = (LlmSelectionComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+                var currentImgModel = (ImageModelSelectionComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+                
+                if (string.IsNullOrEmpty(currentLlmModel))
+                {
+                    SetStatus("Please select an LLM model.", Microsoft.UI.Colors.OrangeRed);
+                    return;
+                }
+                
+                if (string.IsNullOrEmpty(currentImgModel))
+                {
+                    SetStatus("Please select an image model.", Microsoft.UI.Colors.OrangeRed);
+                    return;
+                }
+                
+                var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text, currentLlmModel, currentImgModel, _cancellationTokenSource.Token);
                 
                 Wallpaper.Set(filePath);
 

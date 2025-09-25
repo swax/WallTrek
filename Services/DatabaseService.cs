@@ -45,6 +45,8 @@ namespace WallTrek.Services
                     GeneratedDate DATETIME NOT NULL,
                     IsUploadedToDeviantArt INTEGER NOT NULL DEFAULT 0,
                     DeviantArtUrl TEXT NULL,
+                    LlmModel TEXT NOT NULL DEFAULT 'gpt5',
+                    ImgModel TEXT NOT NULL DEFAULT 'dalle3',
                     FOREIGN KEY (PromptId) REFERENCES Prompts (Id)
                 );
 
@@ -55,33 +57,19 @@ namespace WallTrek.Services
             createTablesCommand.ExecuteNonQuery();
             
             // Handle migration for existing databases
+            AddColumnIfNotExists(connection, "Prompts", "IsFavorite", "INTEGER NOT NULL DEFAULT 0");
+            AddColumnIfNotExists(connection, "GeneratedImages", "IsUploadedToDeviantArt", "INTEGER NOT NULL DEFAULT 0");
+            AddColumnIfNotExists(connection, "GeneratedImages", "DeviantArtUrl", "TEXT NULL");
+            AddColumnIfNotExists(connection, "GeneratedImages", "LlmModel", "TEXT NOT NULL DEFAULT ''");
+            AddColumnIfNotExists(connection, "GeneratedImages", "ImgModel", "TEXT NOT NULL DEFAULT ''");
+        }
+
+        private void AddColumnIfNotExists(SqliteConnection connection, string tableName, string columnName, string columnDefinition)
+        {
             try
             {
                 var migrationCommand = connection.CreateCommand();
-                migrationCommand.CommandText = "ALTER TABLE Prompts ADD COLUMN IsFavorite INTEGER NOT NULL DEFAULT 0";
-                migrationCommand.ExecuteNonQuery();
-            }
-            catch
-            {
-                // Column already exists, ignore the error
-            }
-            
-            // Add DeviantArt columns to GeneratedImages if they don't exist
-            try
-            {
-                var migrationCommand = connection.CreateCommand();
-                migrationCommand.CommandText = "ALTER TABLE GeneratedImages ADD COLUMN IsUploadedToDeviantArt INTEGER NOT NULL DEFAULT 0";
-                migrationCommand.ExecuteNonQuery();
-            }
-            catch
-            {
-                // Column already exists, ignore the error
-            }
-            
-            try
-            {
-                var migrationCommand = connection.CreateCommand();
-                migrationCommand.CommandText = "ALTER TABLE GeneratedImages ADD COLUMN DeviantArtUrl TEXT NULL";
+                migrationCommand.CommandText = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnDefinition}";
                 migrationCommand.ExecuteNonQuery();
             }
             catch
@@ -134,18 +122,20 @@ namespace WallTrek.Services
             }
         }
 
-        public async Task AddGeneratedImageAsync(int promptId, string imagePath)
+        public async Task AddGeneratedImageAsync(int promptId, string imagePath, string llmModel, string imgModel)
         {
             using var connection = new SqliteConnection(connectionString);
             await connection.OpenAsync();
 
             var insertCommand = connection.CreateCommand();
             insertCommand.CommandText = @"
-                INSERT INTO GeneratedImages (PromptId, ImagePath, GeneratedDate) 
-                VALUES (@promptId, @imagePath, @generatedDate)";
+                INSERT INTO GeneratedImages (PromptId, ImagePath, GeneratedDate, LlmModel, ImgModel) 
+                VALUES (@promptId, @imagePath, @generatedDate, @llmModel, @imgModel)";
             insertCommand.Parameters.AddWithValue("@promptId", promptId);
             insertCommand.Parameters.AddWithValue("@imagePath", imagePath);
             insertCommand.Parameters.AddWithValue("@generatedDate", DateTime.Now);
+            insertCommand.Parameters.AddWithValue("@llmModel", llmModel);
+            insertCommand.Parameters.AddWithValue("@imgModel", imgModel);
 
             await insertCommand.ExecuteNonQueryAsync();
         }
@@ -160,7 +150,9 @@ namespace WallTrek.Services
                 SELECT p.Id, p.PromptText, p.FirstUsedDate, p.LastUsedDate, p.UsageCount, p.IsFavorite,
                        GROUP_CONCAT(gi.ImagePath, '|') as ImagePaths,
                        GROUP_CONCAT(COALESCE(gi.IsUploadedToDeviantArt, 0), '|') as UploadStatuses,
-                       GROUP_CONCAT(gi.DeviantArtUrl, '|') as DeviantArtUrls
+                       GROUP_CONCAT(gi.DeviantArtUrl, '|') as DeviantArtUrls,
+                       GROUP_CONCAT(gi.LlmModel, '|') as LlmModels,
+                       GROUP_CONCAT(gi.ImgModel, '|') as ImgModels
                 FROM Prompts p
                 LEFT JOIN GeneratedImages gi ON p.Id = gi.PromptId
                 GROUP BY p.Id, p.PromptText, p.FirstUsedDate, p.LastUsedDate, p.UsageCount, p.IsFavorite
@@ -180,9 +172,17 @@ namespace WallTrek.Services
                 var deviantArtUrls = reader.IsDBNull(8) ? new List<string?>() :
                     reader.GetString(8).Split('|').Select(s => string.IsNullOrEmpty(s) ? null : s).ToList();
 
+                var llmModels = reader.IsDBNull(9) ? new List<string>() :
+                    reader.GetString(9).Split('|').Where(s => !string.IsNullOrEmpty(s)).ToList();
+
+                var imgModels = reader.IsDBNull(10) ? new List<string>() :
+                    reader.GetString(10).Split('|').Where(s => !string.IsNullOrEmpty(s)).ToList();
+
                 // Ensure all lists have the same length
                 while (uploadStatuses.Count < imagePaths.Count) uploadStatuses.Add(false);
                 while (deviantArtUrls.Count < imagePaths.Count) deviantArtUrls.Add(null);
+                while (llmModels.Count < imagePaths.Count) llmModels.Add(string.Empty);
+                while (imgModels.Count < imagePaths.Count) imgModels.Add(string.Empty);
 
                 var imageItems = new List<ImageHistoryItem>();
                 for (int i = 0; i < imagePaths.Count; i++)
@@ -191,7 +191,9 @@ namespace WallTrek.Services
                     {
                         ImagePath = imagePaths[i],
                         IsUploadedToDeviantArt = i < uploadStatuses.Count ? uploadStatuses[i] : false,
-                        DeviantArtUrl = i < deviantArtUrls.Count ? deviantArtUrls[i] : null
+                        DeviantArtUrl = i < deviantArtUrls.Count ? deviantArtUrls[i] : null,
+                        LlmModel = i < llmModels.Count ? llmModels[i] : string.Empty,
+                        ImgModel = i < imgModels.Count ? imgModels[i] : string.Empty
                     });
                 }
 
@@ -271,6 +273,8 @@ namespace WallTrek.Services
         public string ImagePath { get; set; } = string.Empty;
         public bool IsUploadedToDeviantArt { get; set; }
         public string? DeviantArtUrl { get; set; }
+        public string LlmModel { get; set; } = string.Empty;
+        public string ImgModel { get; set; } = string.Empty;
 
         private bool _isUploading = false;
         public bool IsUploading

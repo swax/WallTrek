@@ -148,6 +148,19 @@
                                                     <Button Background="Transparent" BorderThickness="0" 
                                                             Padding="0" Click="ImageButton_Click" RightTapped="ImageButton_RightTapped" Tag="{Binding}"
                                                             Loaded="ImageButton_Loaded">
+                                                        <ToolTipService.ToolTip>
+                                                            <StackPanel>
+                                                                <TextBlock FontWeight="SemiBold">Generation Models:</TextBlock>
+                                                                <TextBlock>
+                                                                    <Run Text="LLM: "/>
+                                                                    <Run Text="{Binding LlmModel}" FontWeight="SemiBold"/>
+                                                                </TextBlock>
+                                                                <TextBlock>
+                                                                    <Run Text="Image: "/>
+                                                                    <Run Text="{Binding ImgModel}" FontWeight="SemiBold"/>
+                                                                </TextBlock>
+                                                            </StackPanel>
+                                                        </ToolTipService.ToolTip>
                                                         <Button.ContextFlyout>
                                                             <MenuFlyout Opening="ImageContextMenu_Opening">
                                                                 <MenuFlyoutItem Text="Set as Background" 

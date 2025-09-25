@@ -41,7 +41,7 @@ namespace WallTrek.Services.DeviantArt
                 var tags = titleResult.Tags;
                 var description = CreateDescription(promptText);
 
-                var result = await deviantArtService.UploadImageAsync(imageItem.ImagePath, title, description, tags);
+                var result = await deviantArtService.UploadImageAsync(imageItem.ImagePath, title, description, tags, imageItem.LlmModel, imageItem.ImgModel);
                 
                 if (result.Success)
                 {

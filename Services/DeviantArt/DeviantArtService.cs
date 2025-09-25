@@ -40,7 +40,7 @@ namespace WallTrek.Services.DeviantArt
             return client;
         }
 
-        public async Task<DeviantArtUploadResult> UploadImageAsync(string imagePath, string title, string description, string[] tags)
+        public async Task<DeviantArtUploadResult> UploadImageAsync(string imagePath, string title, string description, string[] tags, string? llmModel = null, string? imgModel = null)
         {
             try
             {
@@ -75,7 +75,7 @@ namespace WallTrek.Services.DeviantArt
                 }
 
                 // Upload the image
-                return await UploadToDeviantArtAsync(imagePath, title, description, tags);
+                return await UploadToDeviantArtAsync(imagePath, title, description, tags, llmModel, imgModel);
             }
             catch (Exception ex)
             {
@@ -307,7 +307,7 @@ namespace WallTrek.Services.DeviantArt
             return await CreateGalleryFolderAsync(name);
         }
 
-        private async Task<DeviantArtUploadResult> UploadToDeviantArtAsync(string imagePath, string title, string description, string[] tags)
+        private async Task<DeviantArtUploadResult> UploadToDeviantArtAsync(string imagePath, string title, string description, string[] tags, string? llmModel = null, string? imgModel = null)
         {
             try
             {
@@ -331,9 +331,24 @@ namespace WallTrek.Services.DeviantArt
                 var allTags = new List<string> { "walltrek", "wallpaper" };
                 allTags.AddRange(tags);
                 
+                // Add model tags if provided
+                if (!string.IsNullOrEmpty(llmModel))
+                {
+                    allTags.Add(llmModel);
+                }
+                if (!string.IsNullOrEmpty(imgModel))
+                {
+                    allTags.Add(imgModel);
+                }
+                
+                // Sanitize tags and add them
                 foreach (var tag in allTags)
                 {
-                    submitContent.Add(new StringContent(tag), "tags[]");
+                    var sanitizedTag = SanitizeTag(tag);
+                    if (!string.IsNullOrEmpty(sanitizedTag))
+                    {
+                        submitContent.Add(new StringContent(sanitizedTag), "tags[]");
+                    }
                 }
 
                 // Set authorization header (don't clear default headers since we set Accept/User-Agent in CreateHttpClient)
@@ -483,6 +498,26 @@ namespace WallTrek.Services.DeviantArt
                 ".webp" => "image/webp",
                 _ => "application/octet-stream"
             };
+        }
+
+        private static string SanitizeTag(string tag)
+        {
+            if (string.IsNullOrEmpty(tag))
+                return string.Empty;
+
+            var result = new StringBuilder(tag.Length);
+            foreach (char c in tag)
+            {
+                if (char.IsLetterOrDigit(c))
+                {
+                    result.Append(c);
+                }
+                else
+                {
+                    result.Append('_');
+                }
+            }
+            return result.ToString();
         }
 
         public void Dispose()
