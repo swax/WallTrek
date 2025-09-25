@@ -63,6 +63,8 @@ namespace WallTrek.Services
         public string? DeviantArtRefreshToken { get; set; }
         public DateTime? DeviantArtTokenExpiry { get; set; }
         public string SelectedLlmModel { get; set; } = "gpt-5";
+        public string SelectedImageModel { get; set; } = "dalle-3";
+        public string? GoogleApiKey { get; set; }
     }
 
     public class Settings
@@ -176,6 +178,18 @@ namespace WallTrek.Services
         {
             get => _model.AnthropicApiKey;
             set => _model.AnthropicApiKey = value;
+        }
+
+        public string SelectedImageModel
+        {
+            get => _model.SelectedImageModel;
+            set => _model.SelectedImageModel = value;
+        }
+
+        public string? GoogleApiKey
+        {
+            get => _model.GoogleApiKey;
+            set => _model.GoogleApiKey = value;
         }
 
         public void Save()

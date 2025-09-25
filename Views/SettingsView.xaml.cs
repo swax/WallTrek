@@ -31,6 +31,7 @@ namespace WallTrek.Views
             var settings = Settings.Instance;
             ApiKeyTextBox.Text = settings.ApiKey ?? string.Empty;
             AnthropicApiKeyTextBox.Text = settings.AnthropicApiKey ?? string.Empty;
+            GoogleApiKeyTextBox.Text = settings.GoogleApiKey ?? string.Empty;
             DeviantArtClientIdTextBox.Text = settings.DeviantArtClientId ?? string.Empty;
             DeviantArtClientSecretPasswordBox.Password = settings.DeviantArtClientSecret ?? string.Empty;
             OutputDirectoryTextBox.Text = settings.OutputDirectory;
@@ -79,6 +80,7 @@ namespace WallTrek.Views
             
             settings.ApiKey = ApiKeyTextBox.Text;
             settings.AnthropicApiKey = AnthropicApiKeyTextBox.Text;
+            settings.GoogleApiKey = GoogleApiKeyTextBox.Text;
             settings.DeviantArtClientId = DeviantArtClientIdTextBox.Text;
             settings.DeviantArtClientSecret = DeviantArtClientSecretPasswordBox.Password;
             settings.OutputDirectory = OutputDirectoryTextBox.Text;

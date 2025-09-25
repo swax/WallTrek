@@ -328,7 +328,7 @@ namespace WallTrek.Services.DeviantArt
                 submitContent.Add(new StringContent("false"), "noai");
                 submitContent.Add(new StringContent("true"), "is_ai_generated");
                 // Add tags - always include walltrek tag
-                var allTags = new List<string> { "walltrek", "dalle3", "wallpaper" };
+                var allTags = new List<string> { "walltrek", "wallpaper" };
                 allTags.AddRange(tags);
                 
                 foreach (var tag in allTags)

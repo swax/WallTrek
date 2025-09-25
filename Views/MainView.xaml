@@ -44,6 +44,14 @@
                     <ComboBoxItem Content="Claude Sonnet 4.0" Tag="claude-sonnet-4-0"/>
                     <ComboBoxItem Content="Claude 3.5 Haiku" Tag="claude-3-5-haiku-latest"/>
                 </ComboBox>
+                <TextBlock Text="Image Model:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="20,0,0,0"/>
+                <ComboBox x:Name="ImageModelSelectionComboBox"
+                          SelectionChanged="ImageModelSelectionComboBox_SelectionChanged"
+                          MinWidth="150">
+                    <ComboBoxItem Content="OpenAI DALL-E 3" Tag="dalle-3"/>
+                    <ComboBoxItem Content="Google Imagen 4.0" Tag="imagen-4.0-generate-001"/>
+                    <ComboBoxItem Content="Google Imagen 4.0 Ultra" Tag="imagen-4.0-ultra-generate-001"/>
+                </ComboBox>
             </StackPanel>
             <TextBox x:Name="PromptTextBox" 
                      PlaceholderText="Enter a description for your AI-generated wallpaper..."

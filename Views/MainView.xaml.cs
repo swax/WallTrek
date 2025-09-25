@@ -79,6 +79,23 @@ namespace WallTrek.Views
             {
                 LlmSelectionComboBox.SelectedIndex = 0;
             }
+            
+            // Set the Image Model selection dropdown
+            var selectedImageModel = settings.SelectedImageModel;
+            foreach (ComboBoxItem item in ImageModelSelectionComboBox.Items)
+            {
+                if (item.Tag?.ToString() == selectedImageModel)
+                {
+                    ImageModelSelectionComboBox.SelectedItem = item;
+                    break;
+                }
+            }
+            
+            // Set default if nothing was selected
+            if (ImageModelSelectionComboBox.SelectedItem == null && ImageModelSelectionComboBox.Items.Count > 0)
+            {
+                ImageModelSelectionComboBox.SelectedIndex = 0;
+            }
         }
 
         private async void GenerateButton_Click(object sender, RoutedEventArgs e)
@@ -97,7 +114,16 @@ namespace WallTrek.Views
             Settings.Instance.LastPrompt = PromptTextBox.Text;
             Settings.Instance.Save();
 
-            if (string.IsNullOrEmpty(Settings.Instance.ApiKey))
+            var selectedImageModel = Settings.Instance.SelectedImageModel;
+            
+            // Check if required API key is available based on selected image model
+            if (selectedImageModel.StartsWith("imagen") && string.IsNullOrEmpty(Settings.Instance.GoogleApiKey))
+            {
+                SetStatus("Please set your Google API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
+                NavigateToSettings?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+            else if (selectedImageModel == "dalle-3" && string.IsNullOrEmpty(Settings.Instance.ApiKey))
             {
                 SetStatus("Please set your OpenAI API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
                 NavigateToSettings?.Invoke(this, EventArgs.Empty);
@@ -117,7 +143,7 @@ namespace WallTrek.Views
                 SetGeneratingState(true);
                 SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
 
-                var imageGenerator = new ImageGenerator(Settings.Instance.ApiKey, Settings.Instance.OutputDirectory);
+                var imageGenerator = ImageGenerationServiceFactory.CreateService(Settings.Instance.SelectedImageModel, Settings.Instance.OutputDirectory);
                 var filePath = await imageGenerator.GenerateAndSaveImage(PromptTextBox.Text, _cancellationTokenSource.Token);
                 
                 Wallpaper.Set(filePath);
@@ -233,6 +259,19 @@ namespace WallTrek.Views
                 if (selectedModel != null)
                 {
                     Settings.Instance.SelectedLlmModel = selectedModel;
+                    Settings.Instance.Save();
+                }
+            }
+        }
+
+        private void ImageModelSelectionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ImageModelSelectionComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag != null)
+            {
+                var selectedModel = selectedItem.Tag.ToString();
+                if (selectedModel != null)
+                {
+                    Settings.Instance.SelectedImageModel = selectedModel;
                     Settings.Instance.Save();
                 }
             }

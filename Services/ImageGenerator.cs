@@ -5,7 +5,7 @@ using System.Text;
 
 namespace WallTrek.Services
 {
-    public class ImageGenerator
+    public class ImageGenerator : IImageGenerationService
     {
         private readonly string outputDirectory;
         private readonly ImageClient client;
