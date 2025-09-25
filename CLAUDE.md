@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-WallTrek is a WinUI 3 application that generates AI-powered wallpapers using OpenAI's DALL-E 3 API. The application runs with a system tray icon and can automatically generate wallpapers at specified intervals.
+WallTrek is a WinUI 3 application that generates AI-powered wallpapers using multiple AI providers (OpenAI DALL-E 3, Google Imagen). The application runs with a system tray icon and can automatically generate wallpapers at specified intervals with customizable random prompt elements.
 
 ## Build and Development Commands
 
@@ -36,27 +36,39 @@ dotnet.exe restore
 - **MainWindow**: Host window with navigation between MainView, PromptHistoryView, and SettingsView
 - **Views/MainView**: Primary UI for wallpaper generation with prompt input and status display
 - **Views/PromptHistoryView**: Comprehensive prompt history management with search, favorites, image management, and DeviantArt upload functionality
-- **Views/SettingsView**: Tabbed configuration UI with General, API, and Random Prompt tabs for comprehensive settings management
+- **Views/SettingsView**: Tabbed configuration UI with General, API (supporting multiple providers), and Random Prompt tabs for comprehensive settings management
 
 ### Services Layer
 
-- **Services/ImageGenerator**: Handles OpenAI DALL-E 3 API integration and image generation
-- **Services/DatabaseService**: SQLite database management for prompt history and image tracking
-- **Services/PromptGeneratorService**: AI-powered random prompt generation using OpenAI's gpt-5 model
-- **Services/TitleService**: AI-powered title and tag generation for DeviantArt uploads using OpenAI's gpt-5 model
-- **Services/DeviantArt/DeviantArtService**: Core DeviantArt API integration with OAuth authentication and upload functionality
-- **Services/DeviantArt/DeviantArtAuthService**: User authentication flow handling with dialog-based authorization code exchange
-- **Services/DeviantArt/DeviantArtUploadService**: High-level upload orchestration with error handling and UI feedback
+#### Core Services
+- **Services/ImageGenerator**: Primary image generation service with multi-provider support
+- **Services/DatabaseService**: SQLite database management for prompt history and image tracking with LLM/image model metadata
+- **Services/PromptGeneratorService**: AI-powered random prompt generation with customizable elements at key level
+- **Services/TitleService**: AI-powered title and tag generation for DeviantArt uploads
 - **Services/Settings**: Singleton service for application configuration persistence (JSON-based)
 - **Services/AutoGenerateService**: Timer-based service with support for current prompt or random generation modes
 - **Services/StartupManager**: Windows registry integration for "Run on startup" functionality
 - **Services/Wallpaper**: Windows system integration for setting desktop wallpapers via Win32 API
 
+#### AI Provider Services
+- **Services/IImageGenerationService**: Interface for image generation providers
+- **Services/ImageGenerationServiceFactory**: Factory for creating appropriate image generation service instances
+- **Services/GoogleImagenService**: Google Imagen API integration for image generation
+- **Services/ILlmService**: Interface for LLM providers
+- **Services/LlmServiceFactory**: Factory for creating appropriate LLM service instances
+- **Services/OpenAILlmService**: OpenAI API integration for text generation
+- **Services/AnthropicLlmService**: Anthropic API integration for text generation and image descriptions
+
+#### DeviantArt Integration
+- **Services/DeviantArt/DeviantArtService**: Core DeviantArt API integration with OAuth authentication and upload functionality
+- **Services/DeviantArt/DeviantArtAuthService**: User authentication flow handling with dialog-based authorization code exchange
+- **Services/DeviantArt/DeviantArtUploadService**: High-level upload orchestration with error handling and UI feedback
+
 ### Database Schema
 
 - **Database Location**: `%APPDATA%\WallTrek\walltrek.db`
 - **Prompts Table**: Stores prompt text, usage count, favorite status, and timestamps
-- **GeneratedImages Table**: Tracks generated images with relationships to prompts, metadata, and DeviantArt upload status
+- **GeneratedImages Table**: Tracks generated images with relationships to prompts, metadata, LLM/image model information, and DeviantArt upload status
 
 ### Key Technical Details
 
@@ -68,7 +80,9 @@ dotnet.exe restore
 
 ### Dependencies
 
-- **OpenAI**: OpenAI API client (v2.1.0) for DALL-E 3 image generation and gpt-5 prompt generation
+- **OpenAI**: OpenAI API client (v2.1.0) for DALL-E 3 image generation and GPT model text generation
+- **Anthropic.SDK**: Anthropic API client for Claude model text generation and image descriptions
+- **Google AI**: Google Generative AI client for Imagen image generation
 - **Microsoft.Data.Sqlite**: SQLite database integration for data persistence
 - **System.Drawing.Common**: Image processing and metadata handling
 - **H.NotifyIcon.WinUI**: System tray integration for WinUI 3
@@ -84,11 +98,12 @@ dotnet.exe restore
 1. App starts minimized to system tray with optional Windows startup integration
 2. Database initializes and loads prompt/image history
 3. User can navigate between main generation, prompt history, and settings views
-4. Auto-generation supports both current prompt and random AI-generated prompts
-5. All prompts and generated images are tracked in the database with favorites support
-6. Generated images include EXIF metadata with original prompt and are automatically set as wallpaper
-7. Images can be uploaded to DeviantArt with AI-generated titles and tags via right-click context menu
-8. DeviantArt OAuth flow handles user authorization with browser-based authentication
+4. Auto-generation supports both current prompt and random AI-generated prompts with customizable elements
+5. Users can select from multiple AI providers (OpenAI, Google, Anthropic) for different services
+6. All prompts and generated images are tracked in the database with favorites support and model metadata
+7. Generated images include EXIF metadata with original prompt and are automatically set as wallpaper
+8. Images can be uploaded to DeviantArt with AI-generated titles and tags via right-click context menu or "I'm feeling lucky" command
+9. DeviantArt OAuth flow handles user authorization with browser-based authentication
 
 ### Development Notes
 

@@ -1,6 +1,6 @@
 # WallTrek
 
-WallTrek is a WinUI 3 application that generates AI-powered wallpapers using OpenAI's DALL-E 3 API. The application runs in the system tray and can automatically generate and set new wallpapers at specified intervals.
+WallTrek is a WinUI 3 application that generates AI-powered wallpapers using multiple AI providers (OpenAI DALL-E 3, Google Imagen). The application runs in the system tray and can automatically generate and set new wallpapers at specified intervals with customizable random prompt elements.
 
 [Example Generated Wallpapers](https://www.deviantart.com/swaxtastic/gallery/all)
 
@@ -8,13 +8,14 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using Ope
 
 ## Features
 
-- **AI-powered wallpaper generation** using OpenAI's DALL-E 3
-- **Random prompt generation** using OpenAI's gpt-5 model for creative variety
-- **Prompt history management** with search, favorites, and usage tracking
-- **DeviantArt integration** - upload and share generated wallpapers with auto-generated titles and tags
+- **Multi-provider AI support** - Choose between OpenAI DALL-E 3 and Google Imagen for image generation
+- **Flexible LLM integration** - Use OpenAI GPT models or Anthropic Claude for text generation and image descriptions
+- **Customizable random prompts** - Configure random elements at the key level for varied prompt generation
+- **Prompt history management** with search, favorites, usage tracking, and model metadata
+- **DeviantArt integration** - upload and share generated wallpapers with auto-generated titles and tags, including "I'm feeling lucky" quick upload
 - **System tray integration** with minimal UI footprint
 - **Automatic wallpaper generation** with configurable intervals and source modes
-- **Database persistence** for prompt and image history using SQLite
+- **Database persistence** for prompt and image history using SQLite with model tracking
 - **Image management** - view, set as background, or delete generated images
 - **Windows startup integration** - optional run on system startup
 - **EXIF metadata preservation** with original prompts embedded in images
@@ -28,7 +29,10 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
 
 - Windows 10/11
 - .NET 9.0 Runtime
-- OpenAI API key
+- At least one AI provider API key:
+  - OpenAI API key (for DALL-E 3 and GPT models)
+  - Google AI API key (for Imagen image generation)
+  - Anthropic API key (for Claude models and image descriptions)
 - DeviantArt API credentials (optional, for upload functionality)
 
 ## Installation
@@ -51,14 +55,18 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
 ### Configuration
 
 1. **Initial Setup**: Right-click the system tray icon to open the application
-2. **API Configuration**: Navigate to Settings and enter your OpenAI API key
-3. **DeviantArt Setup** (Optional): Configure DeviantArt Client ID and Secret for upload functionality
-4. **Auto-Generation**: Configure generation interval and choose between:
+2. **API Configuration**: Navigate to Settings → API tab and configure your preferred AI providers:
+   - **OpenAI**: Enter API key and select GPT model for text generation
+   - **Google AI**: Enter API key for Imagen image generation
+   - **Anthropic**: Enter API key for Claude models and image descriptions
+3. **Provider Selection**: Choose your preferred image generation and LLM services in the main interface
+4. **DeviantArt Setup** (Optional): Configure DeviantArt Client ID and Secret for upload functionality
+5. **Auto-Generation**: Configure generation interval and choose between:
    - **Current Prompt**: Use your saved prompt for auto-generation
-   - **Random Prompts**: Generate new AI-created prompts automatically
-5. **Startup Options**: Enable "Run on Windows startup" for automatic launching
-6. **Prompt Management**: Use the Prompt History view to manage and favorite prompts
-7. **Image Sharing**: Right-click images in history to upload to DeviantArt with AI-generated titles and tags
+   - **Random Prompts**: Generate new AI-created prompts automatically with customizable elements
+6. **Startup Options**: Enable "Run on Windows startup" for automatic launching
+7. **Prompt Management**: Use the Prompt History view to manage and favorite prompts with model metadata
+8. **Image Sharing**: Right-click images in history to upload to DeviantArt with AI-generated titles and tags, or use "I'm feeling lucky" for quick uploads
 
 ### Generated Content
 
@@ -80,11 +88,16 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
 
 ### Core Services
 
-- **Services/ImageGenerator**: OpenAI DALL-E 3 API integration for wallpaper creation
-- **Services/PromptGeneratorService**: AI-powered random prompt generation using OpenAI's gpt-5
+- **Services/ImageGenerator**: Multi-provider image generation with factory pattern support
+- **Services/ImageGenerationServiceFactory**: Creates appropriate image generation service instances
+- **Services/GoogleImagenService**: Google Imagen API integration for image generation
+- **Services/LlmServiceFactory**: Creates appropriate LLM service instances
+- **Services/OpenAILlmService**: OpenAI GPT API integration for text generation
+- **Services/AnthropicLlmService**: Anthropic Claude API integration for text generation and image descriptions
+- **Services/PromptGeneratorService**: AI-powered random prompt generation with customizable elements
 - **Services/TitleService**: AI-powered title and tag generation for DeviantArt uploads
 - **Services/DeviantArt**: OAuth authentication and upload functionality for DeviantArt integration
-- **Services/DatabaseService**: SQLite persistence for prompt and image history
+- **Services/DatabaseService**: SQLite persistence for prompt and image history with model metadata
 - **Services/AutoGenerateService**: Configurable timer-based automatic generation
 - **Services/StartupManager**: Windows registry integration for startup functionality
 - **Services/Wallpaper**: Desktop wallpaper integration via Win32 API
@@ -98,7 +111,9 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
 ### Technical Stack
 
 - **.NET 9.0** with **WinUI 3** (Windows App SDK 1.7.250606001)
-- **OpenAI API v2.1.0** for image and prompt generation
+- **OpenAI API v2.1.0** for DALL-E 3 image generation and GPT text generation
+- **Anthropic SDK** for Claude model text generation and image descriptions
+- **Google Generative AI** for Imagen image generation
 - **SQLite** via Microsoft.Data.Sqlite for data persistence
 - **H.NotifyIcon.WinUI** for system tray functionality
 - **System.Drawing.Common** for image processing and metadata
