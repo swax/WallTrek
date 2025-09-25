@@ -16,35 +16,36 @@ namespace WallTrek.Services
         public string Source { get; set; } = "current";
     }
 
-    public class RandomPromptsSettings
+    public class RandomPromptsSettings : Dictionary<string, string[]>
     {
-        public List<string> Categories { get; set; } = new()
+        public RandomPromptsSettings()
         {
-            "abstract geometric patterns and mathematical art",
-            "natural landscapes and organic forms", 
-            "futuristic cyberpunk and sci-fi environments",
-            "minimalist design and negative space",
-            "fantasy worlds and magical creatures",
-            "architectural marvels and urban scenes",
-            "cosmic and astronomical phenomena",
-            "vintage and retro aesthetic designs",
-            "surreal and dreamlike compositions",
-            "seasonal and weather-based imagery"
-        };
-
-        public List<string> Styles { get; set; } = new()
-        {
-            "oil painting", "watercolor", "digital art", "photography", "3D render",
-            "vector illustration", "pixel art", "paper cut-out", "neon lighting",
-            "pencil sketch", "abstract expressionism", "art nouveau", "bauhaus design"
-        };
-
-        public List<string> Moods { get; set; } = new()
-        {
-            "serene and calming", "energetic and vibrant", "mysterious and moody",
-            "bright and cheerful", "dramatic and intense", "peaceful and meditative",
-            "bold and striking", "subtle and elegant", "warm and cozy", "cool and refreshing"
-        };
+            this["Category"] = new[]
+            {
+                "abstract geometric patterns and mathematical art",
+                "natural landscapes and organic forms",
+                "futuristic cyberpunk and sci-fi environments",
+                "minimalist design and negative space",
+                "fantasy worlds and magical creatures",
+                "architectural marvels and urban scenes",
+                "cosmic and astronomical phenomena",
+                "vintage and retro aesthetic designs",
+                "surreal and dreamlike compositions",
+                "seasonal and weather-based imagery"
+            };
+            this["Style"] = new[]
+            {
+                "oil painting", "watercolor", "digital art", "photography", "3D render",
+                "vector illustration", "pixel art", "paper cut-out", "neon lighting",
+                "pencil sketch", "abstract expressionism", "art nouveau", "bauhaus design"
+            };
+            this["Mood"] = new[]
+            {
+                "serene and calming", "energetic and vibrant", "mysterious and moody",
+                "bright and cheerful", "dramatic and intense", "peaceful and meditative",
+                "bold and striking", "subtle and elegant", "warm and cozy", "cool and refreshing"
+            };
+        }
     }
 
     public class SettingsModel

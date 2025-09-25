@@ -20,22 +20,26 @@ namespace WallTrek.Services
             
             // Randomize the prompt generation approach
             var random = new Random();
-            
-            var selectedCategory = randomPrompts.Categories.Count > 0 
-                ? randomPrompts.Categories[random.Next(randomPrompts.Categories.Count)]
-                : "abstract art";
-                
-            var selectedStyle = randomPrompts.Styles.Count > 0 
-                ? randomPrompts.Styles[random.Next(randomPrompts.Styles.Count)]
-                : "digital art";
-                
-            var selectedMood = randomPrompts.Moods.Count > 0 
-                ? randomPrompts.Moods[random.Next(randomPrompts.Moods.Count)]
-                : "vibrant";
+            var selectedProperties = new Dictionary<string, string>();
 
-            var systemPrompt = $"You are a creative assistant that generates diverse desktop wallpaper descriptions. Create a unique wallpaper prompt taking inspiration from {selectedCategory} in a {selectedStyle} style with a {selectedMood} atmosphere. Be creative and avoid generic descriptions. Include specific details about colors, composition, and visual elements. Keep it short and concise to like sentence or two.";
+            // Build selections from all available prompt categories
+            foreach (var category in randomPrompts)
+            {
+                if (category.Value?.Length > 0)
+                {
+                    var selectedValue = category.Value[random.Next(category.Value.Length)];
+                    selectedProperties[category.Key] = selectedValue;
+                }
+            }
 
-            var userPrompt = $"Generate a creative desktop wallpaper prompt with {selectedCategory} theme, {selectedStyle} style, and {selectedMood} mood. Make it visually striking and unique.";
+            // Build the selections string
+            var selections = selectedProperties.Count > 0
+                ? string.Join(", ", selectedProperties.Select(kvp => $"{kvp.Key}: {kvp.Value}"))
+                : "abstract art, digital art, vibrant";
+
+            var systemPrompt = $"You are a creative assistant that generates diverse desktop wallpaper descriptions. Create a unique wallpaper prompt taking inspiration from these properties: {selections}. Be creative and avoid generic descriptions. Include specific details about colors, composition, and visual elements. Keep it short and concise to like sentence or two.";
+
+            var userPrompt = $"Generate a creative desktop wallpaper prompt incorporating these elements: {selections}. Make it visually striking and unique.";
 
             return await llmService.GenerateTextAsync(systemPrompt, userPrompt, cancellationToken);
         }

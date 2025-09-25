@@ -174,13 +174,14 @@ namespace WallTrek.Views
         {
             var settings = Settings.Instance;
             var randomPrompts = settings.RandomPrompts;
-            
-            // Serialize the RandomPromptsSettings to JSON
+
+            // Serialize the RandomPromptsSettings to JSON with better formatting
             var options = new JsonSerializerOptions
             {
-                WriteIndented = true
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
-            
+
             string json = JsonSerializer.Serialize(randomPrompts, options);
             JsonTextBox.Text = json;
         }
@@ -188,7 +189,7 @@ namespace WallTrek.Views
         private bool TryParseAndSaveRandomPromptSettings(out string errorMessage)
         {
             errorMessage = "";
-            
+
             try
             {
                 string jsonText = JsonTextBox.Text;
@@ -197,45 +198,58 @@ namespace WallTrek.Views
                     errorMessage = "JSON cannot be empty";
                     return false;
                 }
-                
+
                 var newSettings = JsonSerializer.Deserialize<RandomPromptsSettings>(jsonText);
-                
+
                 if (newSettings == null)
                 {
                     errorMessage = "Failed to deserialize JSON";
                     return false;
                 }
-                
-                // Validate that all required properties exist and are not null
-                if (newSettings.Categories == null)
+
+                // Validate that newSettings dictionary is not empty
+                if (newSettings.Count == 0)
                 {
-                    errorMessage = "Categories array is required";
+                    errorMessage = "At least one category is required";
                     return false;
                 }
-                
-                if (newSettings.Styles == null)
+
+                // Validate that each category has at least one non-empty value
+                foreach (var category in newSettings)
                 {
-                    errorMessage = "Styles array is required";
-                    return false;
+                    if (string.IsNullOrWhiteSpace(category.Key))
+                    {
+                        errorMessage = "Category keys cannot be empty";
+                        return false;
+                    }
+
+                    if (category.Value == null || category.Value.Length == 0)
+                    {
+                        errorMessage = $"Category '{category.Key}' must have at least one value";
+                        return false;
+                    }
+
+                    if (category.Value.All(v => string.IsNullOrWhiteSpace(v)))
+                    {
+                        errorMessage = $"Category '{category.Key}' must have at least one non-empty value";
+                        return false;
+                    }
                 }
-                
-                if (newSettings.Moods == null)
-                {
-                    errorMessage = "Moods array is required";
-                    return false;
-                }
-                
+
                 // Update the settings with the parsed JSON
                 var settings = Settings.Instance;
-                settings.RandomPrompts.Categories.Clear();
-                settings.RandomPrompts.Categories.AddRange(newSettings.Categories.Where(c => !string.IsNullOrWhiteSpace(c)));
-                
-                settings.RandomPrompts.Styles.Clear();
-                settings.RandomPrompts.Styles.AddRange(newSettings.Styles.Where(s => !string.IsNullOrWhiteSpace(s)));
-                
-                settings.RandomPrompts.Moods.Clear();
-                settings.RandomPrompts.Moods.AddRange(newSettings.Moods.Where(m => !string.IsNullOrWhiteSpace(m)));
-                
+                settings.RandomPrompts.Clear();
+
+                foreach (var category in newSettings)
+                {
+                    // Filter out empty values
+                    var validValues = category.Value.Where(v => !string.IsNullOrWhiteSpace(v)).ToArray();
+                    if (validValues.Length > 0)
+                    {
+                        settings.RandomPrompts[category.Key] = validValues;
+                    }
+                }
+
                 return true;
             }
             catch (JsonException ex)
@@ -254,16 +268,17 @@ namespace WallTrek.Views
         {
             // Create a new RandomPromptsSettings to get the default values
             var defaultSettings = new RandomPromptsSettings();
-            
-            // Serialize to JSON and display
+
+            // Serialize to JSON and display with better formatting
             var options = new JsonSerializerOptions
             {
-                WriteIndented = true
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
-            
+
             string json = JsonSerializer.Serialize(defaultSettings, options);
             JsonTextBox.Text = json;
-            
+
             StatusTextBlock.Text = "Default settings restored. Click 'Save Settings' to apply.";
             StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
         }

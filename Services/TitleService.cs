@@ -28,7 +28,7 @@ namespace WallTrek.Services
             var systemPrompt =
                 "You are a creative assistant that generates titles and tags for AI-generated images. Create a short title that captures the essence of the image description. The title should be suitable for art sharing platforms like DeviantArt.";
 
-            var userPrompt = $"Generate a DeviantArt-friendly short title and tags that cover the style, mood, colors, subjects, and artistic elements for an image with this description: {imageDescription}. Thanks!";
+            var userPrompt = $"Generate a DeviantArt-friendly short title and tags that cover the style, mood, colors, subjects, and artistic elements for an image with this description: {imageDescription}. No more than 15 tags. Thanks!";
 
             // JSON Schema describing the object we want back
             var jsonSchema = """
