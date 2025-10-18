@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using WallTrek.Services;
+using WallTrek.Utilities;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 
@@ -32,6 +33,7 @@ namespace WallTrek.Views
             ApiKeyTextBox.Text = settings.ApiKey ?? string.Empty;
             AnthropicApiKeyTextBox.Text = settings.AnthropicApiKey ?? string.Empty;
             GoogleApiKeyTextBox.Text = settings.GoogleApiKey ?? string.Empty;
+            StabilityApiKeyTextBox.Text = settings.StabilityApiKey ?? string.Empty;
             DeviantArtClientIdTextBox.Text = settings.DeviantArtClientId ?? string.Empty;
             DeviantArtClientSecretPasswordBox.Password = settings.DeviantArtClientSecret ?? string.Empty;
             OutputDirectoryTextBox.Text = settings.OutputDirectory;
@@ -81,6 +83,7 @@ namespace WallTrek.Views
             settings.ApiKey = ApiKeyTextBox.Text;
             settings.AnthropicApiKey = AnthropicApiKeyTextBox.Text;
             settings.GoogleApiKey = GoogleApiKeyTextBox.Text;
+            settings.StabilityApiKey = StabilityApiKeyTextBox.Text;
             settings.DeviantArtClientId = DeviantArtClientIdTextBox.Text;
             settings.DeviantArtClientSecret = DeviantArtClientSecretPasswordBox.Password;
             settings.OutputDirectory = OutputDirectoryTextBox.Text;

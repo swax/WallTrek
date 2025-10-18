@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WallTrek.Services
+namespace WallTrek.Services.TextGen
 {
     public interface ILlmService
     {

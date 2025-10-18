@@ -1,8 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using WallTrek.Services;
 
-namespace WallTrek.Services
+namespace WallTrek.Services.TextGen
 {
     public class TitleResult
     {

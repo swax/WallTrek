@@ -1,6 +1,6 @@
 using System;
 
-namespace WallTrek.Services
+namespace WallTrek.Services.TextGen
 {
     public static class LlmServiceFactory
     {

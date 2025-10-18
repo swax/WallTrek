@@ -66,6 +66,7 @@ namespace WallTrek.Services
         public string SelectedLlmModel { get; set; } = "gpt-5";
         public string SelectedImageModel { get; set; } = "dalle-3";
         public string? GoogleApiKey { get; set; }
+        public string? StabilityApiKey { get; set; }
     }
 
     public class Settings
@@ -191,6 +192,12 @@ namespace WallTrek.Services
         {
             get => _model.GoogleApiKey;
             set => _model.GoogleApiKey = value;
+        }
+
+        public string? StabilityApiKey
+        {
+            get => _model.StabilityApiKey;
+            set => _model.StabilityApiKey = value;
         }
 
         public void Save()

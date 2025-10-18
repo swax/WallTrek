@@ -11,7 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Tool = Anthropic.SDK.Common.Tool;
 
-namespace WallTrek.Services
+namespace WallTrek.Services.TextGen
 {
     public class AnthropicLlmService : ILlmService
     {

@@ -2,8 +2,9 @@ using OpenAI.Images;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text;
+using WallTrek.Services;
 
-namespace WallTrek.Services
+namespace WallTrek.Services.ImageGen
 {
     public class ImageGenerator : IImageGenerationService
     {

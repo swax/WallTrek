@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Reflection;
 
-namespace WallTrek.Services
+namespace WallTrek.Utilities
 {
     public static class StartupManager
     {

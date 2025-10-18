@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace WallTrek.Services
+namespace WallTrek.Utilities
 {
     public static class Win32Helper
     {

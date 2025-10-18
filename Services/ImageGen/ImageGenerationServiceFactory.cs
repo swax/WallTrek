@@ -1,4 +1,6 @@
-namespace WallTrek.Services
+using WallTrek.Services;
+
+namespace WallTrek.Services.ImageGen
 {
     public static class ImageGenerationServiceFactory
     {

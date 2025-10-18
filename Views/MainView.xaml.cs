@@ -7,6 +7,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using WallTrek.Services;
+using WallTrek.Services.ImageGen;
+using WallTrek.Services.TextGen;
 using Windows.System;
 
 namespace WallTrek.Views

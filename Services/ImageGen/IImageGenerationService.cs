@@ -1,4 +1,4 @@
-namespace WallTrek.Services
+namespace WallTrek.Services.ImageGen
 {
     public interface IImageGenerationService
     {
