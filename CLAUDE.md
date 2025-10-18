@@ -41,23 +41,26 @@ dotnet.exe restore
 ### Services Layer
 
 #### Core Services
-- **Services/ImageGenerator**: Primary image generation service with multi-provider support
+- **Services/FileService**: Image file persistence with EXIF metadata handling
 - **Services/DatabaseService**: SQLite database management for prompt history and image tracking with LLM/image model metadata
-- **Services/PromptGeneratorService**: AI-powered random prompt generation with customizable elements at key level
-- **Services/TitleService**: AI-powered title and tag generation for DeviantArt uploads
 - **Services/Settings**: Singleton service for application configuration persistence (JSON-based)
 - **Services/AutoGenerateService**: Timer-based service with support for current prompt or random generation modes
-- **Services/StartupManager**: Windows registry integration for "Run on startup" functionality
+- **Utilities/StartupManager**: Windows registry integration for "Run on startup" functionality
 - **Services/Wallpaper**: Windows system integration for setting desktop wallpapers via Win32 API
 
-#### AI Provider Services
-- **Services/IImageGenerationService**: Interface for image generation providers
-- **Services/ImageGenerationServiceFactory**: Factory for creating appropriate image generation service instances
-- **Services/GoogleImagenService**: Google Imagen API integration for image generation
-- **Services/ILlmService**: Interface for LLM providers
-- **Services/LlmServiceFactory**: Factory for creating appropriate LLM service instances
-- **Services/OpenAILlmService**: OpenAI API integration for text generation
-- **Services/AnthropicLlmService**: Anthropic API integration for text generation and image descriptions
+#### Image Generation Services
+- **Services/ImageGen/IImageGenerationService**: Interface for image generation providers
+- **Services/ImageGen/ImageGenerationServiceFactory**: Factory for creating appropriate image generation service instances
+- **Services/ImageGen/OpenAiImageGenerator**: OpenAI DALL-E 3 image generation implementation (returns MemoryStream)
+- **Services/ImageGen/GoogleImagenService**: Google Imagen API integration for image generation (returns MemoryStream)
+
+#### Text Generation Services
+- **Services/TextGen/ILlmService**: Interface for LLM providers
+- **Services/TextGen/LlmServiceFactory**: Factory for creating appropriate LLM service instances
+- **Services/TextGen/OpenAILlmService**: OpenAI API integration for text generation
+- **Services/TextGen/AnthropicLlmService**: Anthropic API integration for text generation and image descriptions
+- **Services/TextGen/PromptGeneratorService**: AI-powered random prompt generation with customizable elements at key level
+- **Services/TextGen/TitleService**: AI-powered title and tag generation for DeviantArt uploads
 
 #### DeviantArt Integration
 - **Services/DeviantArt/DeviantArtService**: Core DeviantArt API integration with OAuth authentication and upload functionality
@@ -113,3 +116,4 @@ dotnet.exe restore
 - **Search Functionality**: Debounced text search across prompt history
 - **Error Handling**: Comprehensive error handling across all services with user feedback
 - **Thread Safety**: UI operations use proper dispatcher for background service integration
+- **Service Architecture**: Clear separation of concerns with image generation services returning MemoryStreams, FileService handling file persistence with EXIF metadata, and DatabaseService managing data persistence - orchestrated in MainView as: generate → save → register

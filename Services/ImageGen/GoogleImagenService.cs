@@ -1,41 +1,24 @@
-using System.Drawing;
 using System.Drawing.Imaging;
 using System.Text;
 using System.Text.Json;
-using WallTrek.Services;
 
 namespace WallTrek.Services.ImageGen
 {
     public class GoogleImagenService : IImageGenerationService
     {
         private readonly string apiKey;
-        private readonly string outputDirectory;
-        private readonly DatabaseService databaseService;
         private readonly HttpClient httpClient;
         private const string ModelId = "models/imagen-4.0-ultra-generate-001";
         private const string BaseUrl = "https://generativelanguage.googleapis.com/v1beta";
 
-        public GoogleImagenService(string apiKey, string outputDirectory)
+        public GoogleImagenService(string apiKey)
         {
             this.apiKey = apiKey ?? throw new ArgumentNullException(nameof(apiKey));
-            this.outputDirectory = outputDirectory ?? throw new ArgumentNullException(nameof(outputDirectory));
-            this.databaseService = new DatabaseService();
             this.httpClient = new HttpClient();
         }
 
-        public async Task<string> GenerateAndSaveImage(string prompt, string llmModel, string imgModel, CancellationToken cancellationToken = default)
+        public async Task<ImageGenerationResult> GenerateImage(string prompt, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrEmpty(llmModel))
-                throw new ArgumentException("LLM model cannot be null or empty", nameof(llmModel));
-            if (string.IsNullOrEmpty(imgModel))
-                throw new ArgumentException("Image model cannot be null or empty", nameof(imgModel));
-            const int maxFileNamePromptLength = 75;
-            var sanitizedPrompt = string.Join("_", prompt.Split(Path.GetInvalidFileNameChars()));
-            if (sanitizedPrompt.Length > maxFileNamePromptLength)
-            {
-                sanitizedPrompt = sanitizedPrompt.Substring(0, maxFileNamePromptLength);
-            }
-
             // Create request payload
             var requestPayload = new
             {
@@ -67,7 +50,7 @@ namespace WallTrek.Services.ImageGen
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            
+
             // Parse response to extract base64 image data
             using var jsonDoc = JsonDocument.Parse(responseContent);
 
@@ -95,45 +78,13 @@ namespace WallTrek.Services.ImageGen
 
             // Decode base64 image data
             var imageBytes = Convert.FromBase64String(base64Data);
+            var memoryStream = new MemoryStream(imageBytes);
 
-            // Create filename and save image
-            var fileName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss} ({sanitizedPrompt}).jpg";
-            var filePath = Path.Combine(outputDirectory, fileName);
-
-            // Save the image with metadata
-            using (var memoryStream = new MemoryStream(imageBytes))
+            return new ImageGenerationResult
             {
-                using (var bitmap = new Bitmap(memoryStream))
-                {
-                    // Add prompt to image metadata
-                    var propertyItem = (PropertyItem?)Activator.CreateInstance(typeof(PropertyItem), true);
-                    if (propertyItem != null)
-                    {
-                        propertyItem.Id = 0x010E; // ImageDescription EXIF tag
-                        propertyItem.Type = 2; // ASCII string
-                        var promptBytes = Encoding.UTF8.GetBytes(prompt + "\0");
-                        propertyItem.Value = promptBytes;
-                        propertyItem.Len = promptBytes.Length;
-                        
-                        bitmap.SetPropertyItem(propertyItem);
-                    }
-                    bitmap.Save(filePath, ImageFormat.Jpeg);
-                }
-            }
-
-            // Add to database after successful generation
-            try
-            {
-                var promptId = await databaseService.AddOrUpdatePromptAsync(prompt);
-                await databaseService.AddGeneratedImageAsync(promptId, filePath, llmModel, imgModel);
-            }
-            catch (Exception ex)
-            {
-                // Log database error but don't fail the image generation
-                System.Diagnostics.Debug.WriteLine($"Database error: {ex.Message}");
-            }
-
-            return filePath;
+                ImageData = memoryStream,
+                Format = ImageFormat.Jpeg
+            };
         }
 
         public void Dispose()

@@ -88,18 +88,19 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
 
 ### Core Services
 
-- **Services/ImageGenerator**: Multi-provider image generation with factory pattern support
-- **Services/ImageGenerationServiceFactory**: Creates appropriate image generation service instances
-- **Services/GoogleImagenService**: Google Imagen API integration for image generation
-- **Services/LlmServiceFactory**: Creates appropriate LLM service instances
-- **Services/OpenAILlmService**: OpenAI GPT API integration for text generation
-- **Services/AnthropicLlmService**: Anthropic Claude API integration for text generation and image descriptions
-- **Services/PromptGeneratorService**: AI-powered random prompt generation with customizable elements
-- **Services/TitleService**: AI-powered title and tag generation for DeviantArt uploads
+- **Services/ImageGen/OpenAiImageGenerator**: OpenAI DALL-E 3 image generation implementation
+- **Services/ImageGen/ImageGenerationServiceFactory**: Creates appropriate image generation service instances
+- **Services/ImageGen/GoogleImagenService**: Google Imagen API integration for image generation
+- **Services/FileService**: Image file persistence with EXIF metadata handling
+- **Services/TextGen/LlmServiceFactory**: Creates appropriate LLM service instances
+- **Services/TextGen/OpenAILlmService**: OpenAI GPT API integration for text generation
+- **Services/TextGen/AnthropicLlmService**: Anthropic Claude API integration for text generation and image descriptions
+- **Services/TextGen/PromptGeneratorService**: AI-powered random prompt generation with customizable elements
+- **Services/TextGen/TitleService**: AI-powered title and tag generation for DeviantArt uploads
 - **Services/DeviantArt**: OAuth authentication and upload functionality for DeviantArt integration
 - **Services/DatabaseService**: SQLite persistence for prompt and image history with model metadata
 - **Services/AutoGenerateService**: Configurable timer-based automatic generation
-- **Services/StartupManager**: Windows registry integration for startup functionality
+- **Utilities/StartupManager**: Windows registry integration for startup functionality
 - **Services/Wallpaper**: Desktop wallpaper integration via Win32 API
 
 ### Data Storage
