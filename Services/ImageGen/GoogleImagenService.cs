@@ -78,11 +78,10 @@ namespace WallTrek.Services.ImageGen
 
             // Decode base64 image data
             var imageBytes = Convert.FromBase64String(base64Data);
-            var memoryStream = new MemoryStream(imageBytes);
 
             return new ImageGenerationResult
             {
-                ImageData = memoryStream,
+                ImageData = imageBytes,
                 Format = ImageFormat.Jpeg
             };
         }

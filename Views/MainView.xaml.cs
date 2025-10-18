@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using WallTrek.Services;
 using WallTrek.Services.ImageGen;
 using WallTrek.Services.TextGen;
+using WallTrek.Utilities;
 using Windows.System;
 
 namespace WallTrek.Views
@@ -166,6 +167,24 @@ namespace WallTrek.Views
                 // Generate image
                 var result = await imageGenerator.GenerateImage(PromptTextBox.Text, _cancellationTokenSource.Token);
 
+                // Upscale image
+                if (!string.IsNullOrEmpty(Settings.Instance.StabilityApiKey))
+                {
+                    try
+                    {
+                        SetStatus("Upscaling image...", Microsoft.UI.Colors.DodgerBlue);
+                        var upscaleService = new UpscaleService(Settings.Instance.StabilityApiKey);
+                        result.ImageData = await upscaleService.UpscaleImageAsync(result.ImageData, result.Format, _cancellationTokenSource.Token);
+                    }
+                    catch (Exception ex)
+                    {
+                        await DialogHelper.ShowMessageAsync(
+                            this.XamlRoot,
+                            "Image Upscaling Failed",
+                            $"Image upscaling failed with {ex.Message}. Proceeding with original image.");
+                    }
+                }
+
                 // Save image with metadata
                 var fileService = new FileService(Settings.Instance.OutputDirectory);
                 var filePath = fileService.SaveImageWithMetadata(result.ImageData, PromptTextBox.Text, result.Format);
@@ -174,9 +193,6 @@ namespace WallTrek.Views
                 var databaseService = new DatabaseService();
                 var promptId = await databaseService.AddOrUpdatePromptAsync(PromptTextBox.Text);
                 await databaseService.AddGeneratedImageAsync(promptId, filePath, currentLlmModel, currentImgModel);
-
-                // Clean up the memory stream
-                result.ImageData.Dispose();
 
                 Wallpaper.Set(filePath);
 

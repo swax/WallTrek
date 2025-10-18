@@ -25,13 +25,9 @@ namespace WallTrek.Services.ImageGen
             GeneratedImage image = await client.GenerateImageAsync(prompt, options, cancellationToken);
             BinaryData bytes = image.ImageBytes;
 
-            var memoryStream = new MemoryStream();
-            bytes.ToStream().CopyTo(memoryStream);
-            memoryStream.Position = 0;
-
             return new ImageGenerationResult
             {
-                ImageData = memoryStream,
+                ImageData = bytes.ToArray(),
                 Format = ImageFormat.Png
             };
         }

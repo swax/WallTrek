@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using WallTrek.Services;
 using WallTrek.Services.DeviantArt;
+using WallTrek.Utilities;
 using Windows.System;
 
 namespace WallTrek.Views
@@ -122,18 +123,14 @@ namespace WallTrek.Views
         {
             if (sender is Button button && button.Tag is PromptHistoryItem item)
             {
-                var dialog = new ContentDialog
-                {
-                    Title = "Delete Prompt",
-                    Content = "This will delete the prompt from history. The generated images will still exist in your image folder.\n\nAre you sure you want to continue?",
-                    PrimaryButtonText = "Delete",
-                    CloseButtonText = "Cancel",
-                    DefaultButton = ContentDialogButton.Close,
-                    XamlRoot = this.XamlRoot
-                };
+                var confirmed = await DialogHelper.ShowConfirmationAsync(
+                    this.XamlRoot,
+                    "Delete Prompt",
+                    "This will delete the prompt from history. The generated images will still exist in your image folder.\n\nAre you sure you want to continue?",
+                    "Delete",
+                    "Cancel");
 
-                var result = await dialog.ShowAsync();
-                if (result == ContentDialogResult.Primary)
+                if (confirmed)
                 {
                     try
                     {
@@ -178,18 +175,14 @@ namespace WallTrek.Views
 
         private async void DeleteImage(string imagePath)
         {
-            var dialog = new ContentDialog
-            {
-                Title = "Delete Image",
-                Content = "This will permanently delete the image file and remove it from the history.\n\nAre you sure you want to continue?",
-                PrimaryButtonText = "Delete",
-                CloseButtonText = "Cancel",
-                DefaultButton = ContentDialogButton.Close,
-                XamlRoot = this.XamlRoot
-            };
+            var confirmed = await DialogHelper.ShowConfirmationAsync(
+                this.XamlRoot,
+                "Delete Image",
+                "This will permanently delete the image file and remove it from the history.\n\nAre you sure you want to continue?",
+                "Delete",
+                "Cancel");
 
-            var result = await dialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
+            if (confirmed)
             {
                 try
                 {
@@ -201,7 +194,7 @@ namespace WallTrek.Views
 
                     // Remove from database
                     await databaseService.DeleteImageAsync(imagePath);
-                    
+
                     // Refresh the history
                     LoadPromptHistory();
                 }

@@ -15,10 +15,10 @@ namespace WallTrek.Services
             Directory.CreateDirectory(outputDirectory);
         }
 
-        public string SaveImageWithMetadata(MemoryStream imageStream, string prompt, ImageFormat format)
+        public string SaveImageWithMetadata(byte[] imageData, string prompt, ImageFormat format)
         {
-            if (imageStream == null)
-                throw new ArgumentNullException(nameof(imageStream));
+            if (imageData == null)
+                throw new ArgumentNullException(nameof(imageData));
             if (string.IsNullOrEmpty(prompt))
                 throw new ArgumentException("Prompt cannot be null or empty", nameof(prompt));
 
@@ -29,7 +29,7 @@ namespace WallTrek.Services
             var filePath = Path.Combine(outputDirectory, fileName);
 
             // Save the image with metadata
-            imageStream.Position = 0;
+            using (var imageStream = new MemoryStream(imageData))
             using (var bitmap = new Bitmap(imageStream))
             {
                 // Add prompt to image metadata

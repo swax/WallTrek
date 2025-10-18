@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using WallTrek.Utilities;
 using Windows.System;
 
 namespace WallTrek.Services.DeviantArt
@@ -18,25 +19,22 @@ namespace WallTrek.Services.DeviantArt
                 return false;
             }
 
-            var authDialog = new ContentDialog
-            {
-                Title = "DeviantArt Authorization Required",
-                Content = "To upload images to DeviantArt, you need to authorize this application.\n\n" +
-                         "Click 'Authorize' to open DeviantArt in your browser, then copy the authorization code that appears in the URL after you approve the application.\n\n" +
-                         "Look for: ?code=XXXXXXX in the browser URL after authorization.",
-                PrimaryButtonText = "Authorize",
-                CloseButtonText = "Cancel",
-                XamlRoot = xamlRoot
-            };
+            var confirmed = await DialogHelper.ShowConfirmationAsync(
+                xamlRoot,
+                "DeviantArt Authorization Required",
+                "To upload images to DeviantArt, you need to authorize this application.\n\n" +
+                "Click 'Authorize' to open DeviantArt in your browser, then copy the authorization code that appears in the URL after you approve the application.\n\n" +
+                "Look for: ?code=XXXXXXX in the browser URL after authorization.",
+                "Authorize",
+                "Cancel");
 
-            var result = await authDialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
+            if (confirmed)
             {
                 var deviantArtService = new DeviantArtService();
                 var authUrl = deviantArtService.GetAuthorizationUrl(settings.DeviantArtClientId);
-                
+
                 await Launcher.LaunchUriAsync(new Uri(authUrl));
-                
+
                 return await HandleCodeInput(imageItem, promptText, deviantArtService, xamlRoot);
             }
 
@@ -45,33 +43,28 @@ namespace WallTrek.Services.DeviantArt
 
         private async Task ShowConfigurationRequiredDialog(XamlRoot xamlRoot)
         {
-            var configDialog = new ContentDialog
-            {
-                Title = "DeviantArt Configuration Required",
-                Content = "Please configure your DeviantArt Client ID and Secret in Settings first.",
-                CloseButtonText = "OK",
-                XamlRoot = xamlRoot
-            };
-            await configDialog.ShowAsync();
+            await DialogHelper.ShowMessageAsync(
+                xamlRoot,
+                "DeviantArt Configuration Required",
+                "Please configure your DeviantArt Client ID and Secret in Settings first.");
         }
 
         private async Task<bool> HandleCodeInput(ImageHistoryItem imageItem, string? promptText, DeviantArtService deviantArtService, XamlRoot xamlRoot)
         {
-            var codeDialog = new ContentDialog
-            {
-                Title = "Enter Authorization Code",
-                Content = CreateCodeInputContent(),
-                PrimaryButtonText = "Complete Authorization",
-                CloseButtonText = "Cancel",
-                XamlRoot = xamlRoot
-            };
+            var codeInputContent = CreateCodeInputContent();
+            var result = await DialogHelper.ShowCustomContentAsync(
+                xamlRoot,
+                "Enter Authorization Code",
+                codeInputContent,
+                "Complete Authorization",
+                null,
+                "Cancel");
 
-            var result = await codeDialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {
-                var codeTextBox = (TextBox)((StackPanel)codeDialog.Content).Children[1];
+                var codeTextBox = (TextBox)codeInputContent.Children[1];
                 var authCode = codeTextBox.Text.Trim();
-                
+
                 if (!string.IsNullOrEmpty(authCode))
                 {
                     authCode = ExtractCodeFromInput(authCode);
@@ -79,7 +72,7 @@ namespace WallTrek.Services.DeviantArt
                     var settings = Settings.Instance;
                     var success = await deviantArtService.ExchangeCodeForTokenAsync(
                         authCode, settings.DeviantArtClientId!, settings.DeviantArtClientSecret!);
-                    
+
                     if (success)
                     {
                         return true;
@@ -102,14 +95,10 @@ namespace WallTrek.Services.DeviantArt
 
         private async Task ShowAuthorizationFailedDialog(XamlRoot xamlRoot)
         {
-            var errorDialog = new ContentDialog
-            {
-                Title = "Authorization Failed",
-                Content = "Failed to exchange authorization code for access token. Please try again.",
-                CloseButtonText = "OK",
-                XamlRoot = xamlRoot
-            };
-            await errorDialog.ShowAsync();
+            await DialogHelper.ShowMessageAsync(
+                xamlRoot,
+                "Authorization Failed",
+                "Failed to exchange authorization code for access token. Please try again.");
         }
 
         private StackPanel CreateCodeInputContent()

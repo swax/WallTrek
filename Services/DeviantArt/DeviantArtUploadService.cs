@@ -1,8 +1,8 @@
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Threading.Tasks;
 using WallTrek.Services.TextGen;
+using WallTrek.Utilities;
 
 namespace WallTrek.Services.DeviantArt
 {
@@ -120,26 +120,18 @@ namespace WallTrek.Services.DeviantArt
 
         private async Task ShowGenericUploadErrorDialog(string? errorMessage, XamlRoot xamlRoot)
         {
-            var errorDialog = new ContentDialog
-            {
-                Title = "Upload Failed",
-                Content = errorMessage ?? "Unknown error occurred during upload.",
-                CloseButtonText = "OK",
-                XamlRoot = xamlRoot
-            };
-            await errorDialog.ShowAsync();
+            await DialogHelper.ShowMessageAsync(
+                xamlRoot,
+                "Upload Failed",
+                errorMessage ?? "Unknown error occurred during upload.");
         }
 
         private async Task ShowUploadErrorDialog(Exception ex, XamlRoot xamlRoot)
         {
-            var errorDialog = new ContentDialog
-            {
-                Title = "Upload Error",
-                Content = $"An error occurred while uploading: {ex.Message}",
-                CloseButtonText = "OK",
-                XamlRoot = xamlRoot
-            };
-            await errorDialog.ShowAsync();
+            await DialogHelper.ShowMessageAsync(
+                xamlRoot,
+                "Upload Error",
+                $"An error occurred while uploading: {ex.Message}");
         }
     }
 }
