@@ -47,6 +47,8 @@ namespace WallTrek.Services
                     DeviantArtUrl TEXT NULL,
                     LlmModel TEXT NOT NULL DEFAULT 'gpt5',
                     ImgModel TEXT NOT NULL DEFAULT 'dalle3',
+                    PromptText TEXT NOT NULL DEFAULT '',
+                    IsFavorite INTEGER NOT NULL DEFAULT 0,
                     FOREIGN KEY (PromptId) REFERENCES Prompts (Id)
                 );
 
@@ -62,6 +64,11 @@ namespace WallTrek.Services
             AddColumnIfNotExists(connection, "GeneratedImages", "DeviantArtUrl", "TEXT NULL");
             AddColumnIfNotExists(connection, "GeneratedImages", "LlmModel", "TEXT NOT NULL DEFAULT ''");
             AddColumnIfNotExists(connection, "GeneratedImages", "ImgModel", "TEXT NOT NULL DEFAULT ''");
+            AddColumnIfNotExists(connection, "GeneratedImages", "PromptText", "TEXT NOT NULL DEFAULT ''");
+            AddColumnIfNotExists(connection, "GeneratedImages", "IsFavorite", "INTEGER NOT NULL DEFAULT 0");
+
+            // Migrate data from Prompts table to GeneratedImages table
+            MigratePromptDataToImages(connection);
         }
 
         private void AddColumnIfNotExists(SqliteConnection connection, string tableName, string columnName, string columnDefinition)
@@ -75,6 +82,37 @@ namespace WallTrek.Services
             catch
             {
                 // Column already exists, ignore the error
+            }
+        }
+
+        private void MigratePromptDataToImages(SqliteConnection connection)
+        {
+            try
+            {
+                // Update GeneratedImages with PromptText and IsFavorite from Prompts table
+                var migrationCommand = connection.CreateCommand();
+                migrationCommand.CommandText = @"
+                    UPDATE GeneratedImages
+                    SET PromptText = (
+                        SELECT PromptText
+                        FROM Prompts
+                        WHERE Prompts.Id = GeneratedImages.PromptId
+                    ),
+                    IsFavorite = (
+                        SELECT IsFavorite
+                        FROM Prompts
+                        WHERE Prompts.Id = GeneratedImages.PromptId
+                    )
+                    WHERE (PromptText = '' OR PromptText IS NULL)
+                    AND EXISTS (
+                        SELECT 1 FROM Prompts WHERE Prompts.Id = GeneratedImages.PromptId
+                    )";
+                migrationCommand.ExecuteNonQuery();
+            }
+            catch
+            {
+                // Migration may fail if columns don't exist yet or data is already migrated
+                // This is expected and can be ignored
             }
         }
 
@@ -122,20 +160,22 @@ namespace WallTrek.Services
             }
         }
 
-        public async Task AddGeneratedImageAsync(int promptId, string imagePath, string llmModel, string imgModel)
+        public async Task AddGeneratedImageAsync(int promptId, string imagePath, string llmModel, string imgModel, string promptText = "", bool isFavorite = false)
         {
             using var connection = new SqliteConnection(connectionString);
             await connection.OpenAsync();
 
             var insertCommand = connection.CreateCommand();
             insertCommand.CommandText = @"
-                INSERT INTO GeneratedImages (PromptId, ImagePath, GeneratedDate, LlmModel, ImgModel) 
-                VALUES (@promptId, @imagePath, @generatedDate, @llmModel, @imgModel)";
+                INSERT INTO GeneratedImages (PromptId, ImagePath, GeneratedDate, LlmModel, ImgModel, PromptText, IsFavorite)
+                VALUES (@promptId, @imagePath, @generatedDate, @llmModel, @imgModel, @promptText, @isFavorite)";
             insertCommand.Parameters.AddWithValue("@promptId", promptId);
             insertCommand.Parameters.AddWithValue("@imagePath", imagePath);
             insertCommand.Parameters.AddWithValue("@generatedDate", DateTime.Now);
             insertCommand.Parameters.AddWithValue("@llmModel", llmModel);
             insertCommand.Parameters.AddWithValue("@imgModel", imgModel);
+            insertCommand.Parameters.AddWithValue("@promptText", promptText);
+            insertCommand.Parameters.AddWithValue("@isFavorite", isFavorite ? 1 : 0);
 
             await insertCommand.ExecuteNonQueryAsync();
         }
@@ -254,6 +294,18 @@ namespace WallTrek.Services
             await updateCommand.ExecuteNonQueryAsync();
         }
 
+        public async Task SetImageFavoriteAsync(string imagePath, bool isFavorite)
+        {
+            using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync();
+
+            var updateCommand = connection.CreateCommand();
+            updateCommand.CommandText = "UPDATE GeneratedImages SET IsFavorite = @isFavorite WHERE ImagePath = @imagePath";
+            updateCommand.Parameters.AddWithValue("@imagePath", imagePath);
+            updateCommand.Parameters.AddWithValue("@isFavorite", isFavorite ? 1 : 0);
+            await updateCommand.ExecuteNonQueryAsync();
+        }
+
         public async Task SetDeviantArtUploadAsync(string imagePath, bool isUploaded, string? deviantArtUrl = null)
         {
             using var connection = new SqliteConnection(connectionString);
@@ -280,9 +332,8 @@ namespace WallTrek.Services
             var command = connection.CreateCommand();
 
             command.CommandText = $@"
-                SELECT gi.ImagePath, gi.GeneratedDate, p.PromptText, p.IsFavorite, gi.IsUploadedToDeviantArt
+                SELECT gi.ImagePath, gi.GeneratedDate, gi.PromptText, gi.IsFavorite, gi.IsUploadedToDeviantArt
                 FROM GeneratedImages gi
-                INNER JOIN Prompts p ON gi.PromptId = p.Id
                 ORDER BY gi.GeneratedDate DESC
                 LIMIT @limit OFFSET @offset";
 
@@ -317,7 +368,7 @@ namespace WallTrek.Services
             var whereClause = "";
             if (favoritesOnly)
             {
-                whereClause += " AND p.IsFavorite = 1";
+                whereClause += " AND gi.IsFavorite = 1";
             }
             if (notUploadedOnly)
             {
@@ -327,7 +378,6 @@ namespace WallTrek.Services
             command.CommandText = $@"
                 SELECT COUNT(*)
                 FROM GeneratedImages gi
-                INNER JOIN Prompts p ON gi.PromptId = p.Id
                 WHERE 1=1 {whereClause}";
 
             var result = await command.ExecuteScalarAsync();

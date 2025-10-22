@@ -5,6 +5,12 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:WallTrek.Views">
 
+    <UserControl.Resources>
+        <local:FavoriteColorConverter x:Key="FavoriteColorConverter"/>
+        <local:BooleanNegationConverter x:Key="BooleanNegationConverter"/>
+        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -53,13 +59,92 @@
                           HorizontalAlignment="Center">
                     <GridView.ItemTemplate>
                         <DataTemplate x:DataType="local:ImageGridItemViewModel">
-                            <Grid Width="200" Height="200" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                  CornerRadius="8" Margin="4">
-                                <Image Source="{x:Bind ThumbnailImage, Mode=OneWay}"
-                                       Stretch="UniformToFill"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"/>
-                            </Grid>
+                            <Border CornerRadius="8" BorderBrush="Gray" BorderThickness="1"
+                                    Background="Transparent" Width="200" Height="200" Margin="4">
+                                <Grid>
+                                    <Button Background="Transparent" BorderThickness="0"
+                                            Padding="0" Click="ImageButton_Click" RightTapped="ImageButton_RightTapped"
+                                            Tag="{x:Bind}">
+                                        <Button.ContextFlyout>
+                                            <MenuFlyout Opening="ImageContextMenu_Opening">
+                                                <MenuFlyoutItem Text="Set as Background"
+                                                              Click="SetAsBackground_Click"
+                                                              Tag="{x:Bind}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="&#xE91B;"/>
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutSeparator/>
+                                                <MenuFlyoutItem x:Name="UploadToDeviantArtItem"
+                                                              Text="Upload to DeviantArt"
+                                                              Click="UploadToDeviantArt_Click"
+                                                              Tag="{x:Bind}"
+                                                              IsEnabled="True"
+                                                              Visibility="{x:Bind IsUploaded, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert, Mode=OneWay}"/>
+                                                <MenuFlyoutItem x:Name="ViewOnDeviantArtItem"
+                                                              Text="View on DeviantArt"
+                                                              Click="ViewOnDeviantArt_Click"
+                                                              Tag="{x:Bind}"
+                                                              Visibility="{x:Bind IsUploaded, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}"/>
+                                                <MenuFlyoutSeparator Visibility="{x:Bind IsUploaded, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}"/>
+                                                <MenuFlyoutItem x:Name="ToggleFavoriteItem"
+                                                              Text="Add to Favorites"
+                                                              Click="ToggleFavorite_Click"
+                                                              Tag="{x:Bind}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="&#xE735;"/>
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutSeparator/>
+                                                <MenuFlyoutItem Text="Open Image"
+                                                              Click="OpenImage_Click"
+                                                              Tag="{x:Bind}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="&#xE8A7;"/>
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="Open in file explorer"
+                                                              Click="OpenInExplorer_Click"
+                                                              Tag="{x:Bind}"/>
+                                            </MenuFlyout>
+                                        </Button.ContextFlyout>
+                                        <Image Source="{x:Bind ThumbnailImage, Mode=OneWay}"
+                                               Stretch="UniformToFill"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"/>
+                                    </Button>
+
+                                    <!-- Favorite indicator (top-left) -->
+                                    <Border Background="#80000000"
+                                            CornerRadius="12"
+                                            Width="24" Height="24"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Top"
+                                            Margin="5,5,0,0"
+                                            Visibility="{x:Bind IsFavorite, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}">
+                                        <FontIcon Glyph="&#xE735;"
+                                                FontSize="12"
+                                                Foreground="{x:Bind IsFavorite, Converter={StaticResource FavoriteColorConverter}, Mode=OneWay}"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                                    </Border>
+
+                                    <!-- Upload indicator (top-right) -->
+                                    <Border Background="LimeGreen"
+                                            CornerRadius="12"
+                                            Width="24" Height="24"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Margin="0,5,5,0"
+                                            Visibility="{x:Bind IsUploaded, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}">
+                                        <FontIcon Glyph="&#xE72E;"
+                                                FontSize="12"
+                                                Foreground="White"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
                         </DataTemplate>
                     </GridView.ItemTemplate>
                 </GridView>
@@ -81,5 +166,12 @@
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
+
+        <!-- Full screen image popup -->
+        <Border x:Name="FullScreenOverlay" Grid.RowSpan="2" Background="Black" Opacity="0.9"
+                Visibility="Collapsed" Tapped="FullScreenOverlay_Tapped">
+            <Image x:Name="FullScreenImage" Stretch="Uniform" HorizontalAlignment="Center"
+                   VerticalAlignment="Center" Tapped="FullScreenImage_Tapped"/>
+        </Border>
     </Grid>
 </UserControl>

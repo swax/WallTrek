@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
@@ -8,8 +9,11 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using WallTrek.Services;
+using WallTrek.Services.DeviantArt;
+using WallTrek.Utilities;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
+using Windows.System;
 
 namespace WallTrek.Views
 {
@@ -21,10 +25,12 @@ namespace WallTrek.Views
         private List<ImageGridItemViewModel> _filteredImages = new List<ImageGridItemViewModel>();
         private int _displayCount = 100;
         private int _currentDisplayed = 0;
+        private readonly DeviantArtUploadService deviantArtUploadService;
 
         public ImageGridView()
         {
             this.InitializeComponent();
+            deviantArtUploadService = new DeviantArtUploadService();
         }
 
         private void BackButton_Click(object sender, RoutedEventArgs e)
@@ -52,7 +58,8 @@ namespace WallTrek.Views
                         PromptText = image.PromptText,
                         GeneratedDate = image.GeneratedDate,
                         IsFavorite = image.IsFavorite,
-                        IsUploaded = image.IsUploaded
+                        IsUploaded = image.IsUploaded,
+                        DeviantArtUrl = string.Empty // Not loaded from database for ImageGridItem
                     };
 
                     _allImages.Add(viewModel);
@@ -152,6 +159,205 @@ namespace WallTrek.Views
                 // If thumbnail fails, ignore for now
             }
         }
+
+        private void ImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is ImageGridItemViewModel viewModel)
+            {
+                ShowFullScreenImage(viewModel.ImagePath);
+            }
+        }
+
+        private void ImageButton_RightTapped(object sender, Microsoft.UI.Xaml.Input.RightTappedRoutedEventArgs e)
+        {
+            // This method is handled by the XAML ContextFlyout
+        }
+
+        private void ShowFullScreenImage(string imagePath)
+        {
+            try
+            {
+                if (File.Exists(imagePath))
+                {
+                    var bitmap = new BitmapImage(new Uri(imagePath));
+                    FullScreenImage.Source = bitmap;
+                    FullScreenOverlay.Visibility = Visibility.Visible;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error showing fullscreen image: {ex.Message}");
+            }
+        }
+
+        private void HideFullScreenImage()
+        {
+            FullScreenOverlay.Visibility = Visibility.Collapsed;
+            FullScreenImage.Source = null;
+        }
+
+        private void FullScreenOverlay_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            HideFullScreenImage();
+        }
+
+        private void FullScreenImage_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            HideFullScreenImage();
+        }
+
+        private void SetAsBackground_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageGridItemViewModel viewModel)
+            {
+                SetAsBackground(viewModel.ImagePath);
+            }
+        }
+
+        private void SetAsBackground(string imagePath)
+        {
+            try
+            {
+                Wallpaper.Set(imagePath);
+                // Could show a success message or notification here
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error setting wallpaper: {ex.Message}");
+            }
+        }
+
+        private async void UploadToDeviantArt_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageGridItemViewModel viewModel)
+            {
+                viewModel.IsUploading = true;
+
+                try
+                {
+                    // Create a temporary ImageHistoryItem for the upload service
+                    var imageItem = new ImageHistoryItem
+                    {
+                        ImagePath = viewModel.ImagePath,
+                        IsUploadedToDeviantArt = viewModel.IsUploaded,
+                        DeviantArtUrl = viewModel.DeviantArtUrl
+                    };
+
+                    await deviantArtUploadService.UploadImageAsync(imageItem, viewModel.PromptText, this.XamlRoot, () =>
+                    {
+                        // Update the view model after successful upload
+                        viewModel.IsUploaded = imageItem.IsUploadedToDeviantArt;
+                        viewModel.DeviantArtUrl = imageItem.DeviantArtUrl ?? string.Empty;
+                        LoadImages(); // Refresh the grid
+                    });
+                }
+                finally
+                {
+                    viewModel.IsUploading = false;
+                }
+            }
+        }
+
+        private async void ViewOnDeviantArt_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageGridItemViewModel viewModel)
+            {
+                if (!string.IsNullOrEmpty(viewModel.DeviantArtUrl))
+                {
+                    try
+                    {
+                        await Launcher.LaunchUriAsync(new Uri(viewModel.DeviantArtUrl));
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error opening DeviantArt URL: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        private void OpenImage_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageGridItemViewModel viewModel)
+            {
+                OpenImage(viewModel.ImagePath);
+            }
+        }
+
+        private async void OpenImage(string imagePath)
+        {
+            try
+            {
+                if (File.Exists(imagePath))
+                {
+                    await Launcher.LaunchUriAsync(new Uri($"file:///{imagePath.Replace('\\', '/')}"));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error opening image: {ex.Message}");
+            }
+        }
+
+        private async void OpenInExplorer_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageGridItemViewModel viewModel)
+            {
+                try
+                {
+                    var folderPath = Path.GetDirectoryName(viewModel.ImagePath);
+                    if (Directory.Exists(folderPath))
+                    {
+                        await Launcher.LaunchUriAsync(new Uri($"file:///{folderPath.Replace('\\', '/')}"));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error opening explorer: {ex.Message}");
+                }
+            }
+        }
+
+        private void ImageContextMenu_Opening(object sender, object e)
+        {
+            if (sender is MenuFlyout menuFlyout)
+            {
+                // Find the toggle favorite menu item and update its text
+                foreach (var item in menuFlyout.Items)
+                {
+                    if (item is MenuFlyoutItem menuItem && menuItem.Name == "ToggleFavoriteItem")
+                    {
+                        if (menuItem.Tag is ImageGridItemViewModel viewModel)
+                        {
+                            menuItem.Text = viewModel.IsFavorite ? "Remove from Favorites" : "Add to Favorites";
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        private async void ToggleFavorite_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageGridItemViewModel viewModel)
+            {
+                try
+                {
+                    var newFavoriteStatus = !viewModel.IsFavorite;
+
+                    // Update database
+                    var databaseService = new DatabaseService();
+                    await databaseService.SetImageFavoriteAsync(viewModel.ImagePath, newFavoriteStatus);
+
+                    // Update view model
+                    viewModel.IsFavorite = newFavoriteStatus;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error toggling favorite status: {ex.Message}");
+                }
+            }
+        }
     }
 
     public class ImageGridItemViewModel : System.ComponentModel.INotifyPropertyChanged
@@ -159,8 +365,49 @@ namespace WallTrek.Views
         public string ImagePath { get; set; } = string.Empty;
         public string PromptText { get; set; } = string.Empty;
         public DateTime GeneratedDate { get; set; }
-        public bool IsFavorite { get; set; }
-        public bool IsUploaded { get; set; }
+        public string DeviantArtUrl { get; set; } = string.Empty;
+
+        private bool _isFavorite;
+        public bool IsFavorite
+        {
+            get => _isFavorite;
+            set
+            {
+                if (_isFavorite != value)
+                {
+                    _isFavorite = value;
+                    PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsFavorite)));
+                }
+            }
+        }
+
+        private bool _isUploaded;
+        public bool IsUploaded
+        {
+            get => _isUploaded;
+            set
+            {
+                if (_isUploaded != value)
+                {
+                    _isUploaded = value;
+                    PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsUploaded)));
+                }
+            }
+        }
+
+        private bool _isUploading;
+        public bool IsUploading
+        {
+            get => _isUploading;
+            set
+            {
+                if (_isUploading != value)
+                {
+                    _isUploading = value;
+                    PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsUploading)));
+                }
+            }
+        }
 
         private BitmapImage? _thumbnailImage;
         public BitmapImage? ThumbnailImage

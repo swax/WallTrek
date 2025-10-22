@@ -364,9 +364,9 @@ namespace WallTrek.Views
         {
             if (value is bool isFavorite && isFavorite)
             {
-                return Microsoft.UI.Colors.Gold;
+                return new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gold);
             }
-            return Microsoft.UI.Colors.Gray;
+            return new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)
