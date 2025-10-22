@@ -84,10 +84,6 @@
                     MinWidth="100"
                     Background="Red"
                     Foreground="White"/>
-            <Button x:Name="HistoryButton"
-                    Content="Prompt History"
-                    Click="HistoryButton_Click"
-                    MinWidth="120"/>
             <Button x:Name="ImageGridButton"
                     Content="Image Grid"
                     Click="ImageGridButton_Click"

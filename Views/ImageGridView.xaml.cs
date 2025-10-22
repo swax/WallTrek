@@ -425,4 +425,79 @@ namespace WallTrek.Views
 
         public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
     }
+
+    public class FavoriteColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool isFavorite && isFavorite)
+            {
+                return new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gold);
+            }
+            return new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class BooleanNegationConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool boolValue)
+            {
+                return !boolValue;
+            }
+            return true;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool boolValue)
+            {
+                return !boolValue;
+            }
+            return false;
+        }
+    }
+
+    public class BooleanToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool boolValue)
+            {
+                bool shouldShow = boolValue;
+
+                // Check if we should invert the logic
+                if (parameter?.ToString()?.ToLowerInvariant() == "invert")
+                {
+                    shouldShow = !boolValue;
+                }
+
+                return shouldShow ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            if (value is Visibility visibility)
+            {
+                bool isVisible = visibility == Visibility.Visible;
+
+                // Check if we should invert the logic
+                if (parameter?.ToString()?.ToLowerInvariant() == "invert")
+                {
+                    return !isVisible;
+                }
+
+                return isVisible;
+            }
+            return false;
+        }
+    }
 }

@@ -29,18 +29,8 @@ namespace WallTrek.Services
 
             var createTablesCommand = connection.CreateCommand();
             createTablesCommand.CommandText = @"
-                CREATE TABLE IF NOT EXISTS Prompts (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    PromptText TEXT NOT NULL UNIQUE,
-                    FirstUsedDate DATETIME NOT NULL,
-                    LastUsedDate DATETIME NOT NULL,
-                    UsageCount INTEGER NOT NULL DEFAULT 1,
-                    IsFavorite INTEGER NOT NULL DEFAULT 0
-                );
-
                 CREATE TABLE IF NOT EXISTS GeneratedImages (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    PromptId INTEGER NOT NULL,
                     ImagePath TEXT NOT NULL,
                     GeneratedDate DATETIME NOT NULL,
                     IsUploadedToDeviantArt INTEGER NOT NULL DEFAULT 0,
@@ -48,128 +38,24 @@ namespace WallTrek.Services
                     LlmModel TEXT NOT NULL DEFAULT 'gpt5',
                     ImgModel TEXT NOT NULL DEFAULT 'dalle3',
                     PromptText TEXT NOT NULL DEFAULT '',
-                    IsFavorite INTEGER NOT NULL DEFAULT 0,
-                    FOREIGN KEY (PromptId) REFERENCES Prompts (Id)
+                    IsFavorite INTEGER NOT NULL DEFAULT 0
                 );
 
-                CREATE INDEX IF NOT EXISTS IX_GeneratedImages_PromptId ON GeneratedImages (PromptId);
                 CREATE INDEX IF NOT EXISTS IX_GeneratedImages_GeneratedDate ON GeneratedImages (GeneratedDate);
             ";
-            
+
             createTablesCommand.ExecuteNonQuery();
-            
-            // Handle migration for existing databases
-            AddColumnIfNotExists(connection, "Prompts", "IsFavorite", "INTEGER NOT NULL DEFAULT 0");
-            AddColumnIfNotExists(connection, "GeneratedImages", "IsUploadedToDeviantArt", "INTEGER NOT NULL DEFAULT 0");
-            AddColumnIfNotExists(connection, "GeneratedImages", "DeviantArtUrl", "TEXT NULL");
-            AddColumnIfNotExists(connection, "GeneratedImages", "LlmModel", "TEXT NOT NULL DEFAULT ''");
-            AddColumnIfNotExists(connection, "GeneratedImages", "ImgModel", "TEXT NOT NULL DEFAULT ''");
-            AddColumnIfNotExists(connection, "GeneratedImages", "PromptText", "TEXT NOT NULL DEFAULT ''");
-            AddColumnIfNotExists(connection, "GeneratedImages", "IsFavorite", "INTEGER NOT NULL DEFAULT 0");
-
-            // Migrate data from Prompts table to GeneratedImages table
-            MigratePromptDataToImages(connection);
         }
 
-        private void AddColumnIfNotExists(SqliteConnection connection, string tableName, string columnName, string columnDefinition)
-        {
-            try
-            {
-                var migrationCommand = connection.CreateCommand();
-                migrationCommand.CommandText = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnDefinition}";
-                migrationCommand.ExecuteNonQuery();
-            }
-            catch
-            {
-                // Column already exists, ignore the error
-            }
-        }
-
-        private void MigratePromptDataToImages(SqliteConnection connection)
-        {
-            try
-            {
-                // Update GeneratedImages with PromptText and IsFavorite from Prompts table
-                var migrationCommand = connection.CreateCommand();
-                migrationCommand.CommandText = @"
-                    UPDATE GeneratedImages
-                    SET PromptText = (
-                        SELECT PromptText
-                        FROM Prompts
-                        WHERE Prompts.Id = GeneratedImages.PromptId
-                    ),
-                    IsFavorite = (
-                        SELECT IsFavorite
-                        FROM Prompts
-                        WHERE Prompts.Id = GeneratedImages.PromptId
-                    )
-                    WHERE (PromptText = '' OR PromptText IS NULL)
-                    AND EXISTS (
-                        SELECT 1 FROM Prompts WHERE Prompts.Id = GeneratedImages.PromptId
-                    )";
-                migrationCommand.ExecuteNonQuery();
-            }
-            catch
-            {
-                // Migration may fail if columns don't exist yet or data is already migrated
-                // This is expected and can be ignored
-            }
-        }
-
-        public async Task<int> AddOrUpdatePromptAsync(string promptText)
-        {
-            using var connection = new SqliteConnection(connectionString);
-            await connection.OpenAsync();
-
-            // Check if prompt exists
-            var selectCommand = connection.CreateCommand();
-            selectCommand.CommandText = "SELECT Id, UsageCount FROM Prompts WHERE PromptText = @prompt";
-            selectCommand.Parameters.AddWithValue("@prompt", promptText);
-
-            var result = await selectCommand.ExecuteScalarAsync();
-            
-            if (result != null)
-            {
-                // Update existing prompt
-                var promptId = Convert.ToInt32(result);
-                var updateCommand = connection.CreateCommand();
-                updateCommand.CommandText = @"
-                    UPDATE Prompts 
-                    SET LastUsedDate = @lastUsed, UsageCount = UsageCount + 1 
-                    WHERE Id = @id";
-                updateCommand.Parameters.AddWithValue("@lastUsed", DateTime.Now);
-                updateCommand.Parameters.AddWithValue("@id", promptId);
-                
-                await updateCommand.ExecuteNonQueryAsync();
-                return promptId;
-            }
-            else
-            {
-                // Insert new prompt
-                var insertCommand = connection.CreateCommand();
-                insertCommand.CommandText = @"
-                    INSERT INTO Prompts (PromptText, FirstUsedDate, LastUsedDate, UsageCount) 
-                    VALUES (@prompt, @firstUsed, @lastUsed, 1);
-                    SELECT last_insert_rowid();";
-                insertCommand.Parameters.AddWithValue("@prompt", promptText);
-                insertCommand.Parameters.AddWithValue("@firstUsed", DateTime.Now);
-                insertCommand.Parameters.AddWithValue("@lastUsed", DateTime.Now);
-
-                var newId = await insertCommand.ExecuteScalarAsync();
-                return Convert.ToInt32(newId);
-            }
-        }
-
-        public async Task AddGeneratedImageAsync(int promptId, string imagePath, string llmModel, string imgModel, string promptText = "", bool isFavorite = false)
+        public async Task AddGeneratedImageAsync(string imagePath, string llmModel, string imgModel, string promptText, bool isFavorite = false)
         {
             using var connection = new SqliteConnection(connectionString);
             await connection.OpenAsync();
 
             var insertCommand = connection.CreateCommand();
             insertCommand.CommandText = @"
-                INSERT INTO GeneratedImages (PromptId, ImagePath, GeneratedDate, LlmModel, ImgModel, PromptText, IsFavorite)
-                VALUES (@promptId, @imagePath, @generatedDate, @llmModel, @imgModel, @promptText, @isFavorite)";
-            insertCommand.Parameters.AddWithValue("@promptId", promptId);
+                INSERT INTO GeneratedImages (ImagePath, GeneratedDate, LlmModel, ImgModel, PromptText, IsFavorite)
+                VALUES (@imagePath, @generatedDate, @llmModel, @imgModel, @promptText, @isFavorite)";
             insertCommand.Parameters.AddWithValue("@imagePath", imagePath);
             insertCommand.Parameters.AddWithValue("@generatedDate", DateTime.Now);
             insertCommand.Parameters.AddWithValue("@llmModel", llmModel);
@@ -178,97 +64,6 @@ namespace WallTrek.Services
             insertCommand.Parameters.AddWithValue("@isFavorite", isFavorite ? 1 : 0);
 
             await insertCommand.ExecuteNonQueryAsync();
-        }
-
-        public async Task<List<PromptHistoryItem>> GetPromptHistoryAsync()
-        {
-            using var connection = new SqliteConnection(connectionString);
-            await connection.OpenAsync();
-
-            var command = connection.CreateCommand();
-            command.CommandText = @"
-                SELECT p.Id, p.PromptText, p.FirstUsedDate, p.LastUsedDate, p.UsageCount, p.IsFavorite,
-                       GROUP_CONCAT(gi.ImagePath, '|') as ImagePaths,
-                       GROUP_CONCAT(COALESCE(gi.IsUploadedToDeviantArt, 0), '|') as UploadStatuses,
-                       GROUP_CONCAT(gi.DeviantArtUrl, '|') as DeviantArtUrls,
-                       GROUP_CONCAT(gi.LlmModel, '|') as LlmModels,
-                       GROUP_CONCAT(gi.ImgModel, '|') as ImgModels
-                FROM Prompts p
-                LEFT JOIN GeneratedImages gi ON p.Id = gi.PromptId
-                GROUP BY p.Id, p.PromptText, p.FirstUsedDate, p.LastUsedDate, p.UsageCount, p.IsFavorite
-                ORDER BY p.IsFavorite DESC, p.LastUsedDate DESC";
-
-            var items = new List<PromptHistoryItem>();
-            using var reader = await command.ExecuteReaderAsync();
-            
-            while (await reader.ReadAsync())
-            {
-                var imagePaths = reader.IsDBNull(6) ? new List<string>() : 
-                    reader.GetString(6).Split('|').Where(s => !string.IsNullOrEmpty(s)).ToList();
-                
-                var uploadStatuses = reader.IsDBNull(7) ? new List<bool>() :
-                    reader.GetString(7).Split('|').Select(s => s == "1").ToList();
-                    
-                var deviantArtUrls = reader.IsDBNull(8) ? new List<string?>() :
-                    reader.GetString(8).Split('|').Select(s => string.IsNullOrEmpty(s) ? null : s).ToList();
-
-                var llmModels = reader.IsDBNull(9) ? new List<string>() :
-                    reader.GetString(9).Split('|').Where(s => !string.IsNullOrEmpty(s)).ToList();
-
-                var imgModels = reader.IsDBNull(10) ? new List<string>() :
-                    reader.GetString(10).Split('|').Where(s => !string.IsNullOrEmpty(s)).ToList();
-
-                // Ensure all lists have the same length
-                while (uploadStatuses.Count < imagePaths.Count) uploadStatuses.Add(false);
-                while (deviantArtUrls.Count < imagePaths.Count) deviantArtUrls.Add(null);
-                while (llmModels.Count < imagePaths.Count) llmModels.Add(string.Empty);
-                while (imgModels.Count < imagePaths.Count) imgModels.Add(string.Empty);
-
-                var imageItems = new List<ImageHistoryItem>();
-                for (int i = 0; i < imagePaths.Count; i++)
-                {
-                    imageItems.Add(new ImageHistoryItem
-                    {
-                        ImagePath = imagePaths[i],
-                        IsUploadedToDeviantArt = i < uploadStatuses.Count ? uploadStatuses[i] : false,
-                        DeviantArtUrl = i < deviantArtUrls.Count ? deviantArtUrls[i] : null,
-                        LlmModel = i < llmModels.Count ? llmModels[i] : string.Empty,
-                        ImgModel = i < imgModels.Count ? imgModels[i] : string.Empty
-                    });
-                }
-
-                items.Add(new PromptHistoryItem
-                {
-                    Id = reader.GetInt32(0),
-                    PromptText = reader.GetString(1),
-                    FirstUsedDate = reader.GetDateTime(2),
-                    LastUsedDate = reader.GetDateTime(3),
-                    UsageCount = reader.GetInt32(4),
-                    IsFavorite = reader.GetInt32(5) == 1,
-                    ImagePaths = imagePaths, // Keep for backward compatibility
-                    ImageItems = imageItems
-                });
-            }
-
-            return items;
-        }
-
-        public async Task DeletePromptAsync(int promptId)
-        {
-            using var connection = new SqliteConnection(connectionString);
-            await connection.OpenAsync();
-
-            // Delete associated images first
-            var deleteImagesCommand = connection.CreateCommand();
-            deleteImagesCommand.CommandText = "DELETE FROM GeneratedImages WHERE PromptId = @promptId";
-            deleteImagesCommand.Parameters.AddWithValue("@promptId", promptId);
-            await deleteImagesCommand.ExecuteNonQueryAsync();
-
-            // Delete the prompt
-            var deletePromptCommand = connection.CreateCommand();
-            deletePromptCommand.CommandText = "DELETE FROM Prompts WHERE Id = @promptId";
-            deletePromptCommand.Parameters.AddWithValue("@promptId", promptId);
-            await deletePromptCommand.ExecuteNonQueryAsync();
         }
 
         public async Task DeleteImageAsync(string imagePath)
@@ -280,18 +75,6 @@ namespace WallTrek.Services
             deleteCommand.CommandText = "DELETE FROM GeneratedImages WHERE ImagePath = @imagePath";
             deleteCommand.Parameters.AddWithValue("@imagePath", imagePath);
             await deleteCommand.ExecuteNonQueryAsync();
-        }
-
-        public async Task SetFavoriteAsync(int promptId, bool isFavorite)
-        {
-            using var connection = new SqliteConnection(connectionString);
-            await connection.OpenAsync();
-
-            var updateCommand = connection.CreateCommand();
-            updateCommand.CommandText = "UPDATE Prompts SET IsFavorite = @isFavorite WHERE Id = @promptId";
-            updateCommand.Parameters.AddWithValue("@promptId", promptId);
-            updateCommand.Parameters.AddWithValue("@isFavorite", isFavorite ? 1 : 0);
-            await updateCommand.ExecuteNonQueryAsync();
         }
 
         public async Task SetImageFavoriteAsync(string imagePath, bool isFavorite)
@@ -409,52 +192,6 @@ namespace WallTrek.Services
 
         public event PropertyChangedEventHandler? PropertyChanged;
         
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
-
-    public class PromptHistoryItem : INotifyPropertyChanged
-    {
-        public int Id { get; set; }
-        public string PromptText { get; set; } = string.Empty;
-        public DateTime FirstUsedDate { get; set; }
-        public DateTime LastUsedDate { get; set; }
-        public int UsageCount { get; set; }
-        public List<string> ImagePaths { get; set; } = new List<string>(); // Keep for backward compatibility
-        public List<ImageHistoryItem> ImageItems { get; set; } = new List<ImageHistoryItem>();
-
-        private bool _isFavorite = false;
-        public bool IsFavorite
-        {
-            get => _isFavorite;
-            set
-            {
-                if (_isFavorite != value)
-                {
-                    _isFavorite = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        private bool _isExpanded = false;
-        public bool IsExpanded
-        {
-            get => _isExpanded;
-            set
-            {
-                if (_isExpanded != value)
-                {
-                    _isExpanded = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

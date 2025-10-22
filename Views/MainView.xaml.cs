@@ -17,7 +17,6 @@ namespace WallTrek.Views
     public sealed partial class MainView : UserControl
     {
         public event EventHandler? NavigateToSettings;
-        public event EventHandler? NavigateToHistory;
         public event EventHandler? NavigateToImageGrid;
         private CancellationTokenSource? _cancellationTokenSource;
 
@@ -192,8 +191,7 @@ namespace WallTrek.Views
 
                 // Register in database
                 var databaseService = new DatabaseService();
-                var promptId = await databaseService.AddOrUpdatePromptAsync(PromptTextBox.Text);
-                await databaseService.AddGeneratedImageAsync(promptId, filePath, currentLlmModel, currentImgModel);
+                await databaseService.AddGeneratedImageAsync(filePath, currentLlmModel, currentImgModel, PromptTextBox.Text);
 
                 Wallpaper.Set(filePath);
 
@@ -235,11 +233,6 @@ namespace WallTrek.Views
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             NavigateToSettings?.Invoke(this, EventArgs.Empty);
-        }
-
-        private void HistoryButton_Click(object sender, RoutedEventArgs e)
-        {
-            NavigateToHistory?.Invoke(this, EventArgs.Empty);
         }
 
         private void ImageGridButton_Click(object sender, RoutedEventArgs e)
