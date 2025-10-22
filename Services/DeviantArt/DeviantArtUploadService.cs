@@ -19,7 +19,7 @@ namespace WallTrek.Services.DeviantArt
             authService = new DeviantArtAuthService();
         }
 
-        public async Task UploadImageAsync(ImageHistoryItem imageItem, string? promptText, XamlRoot xamlRoot, Action refreshCallback)
+        public async Task UploadImageAsync(ImageHistoryItem imageItem, string? promptText, XamlRoot xamlRoot, Action refreshCallback, string? title = null, string[]? tags = null)
         {
             if (imageItem.IsUploadedToDeviantArt)
             {
@@ -29,18 +29,23 @@ namespace WallTrek.Services.DeviantArt
             try
             {
                 var deviantArtService = new DeviantArtService();
-                
-                if (string.IsNullOrEmpty(promptText))
+
+                // Only generate title and tags if they weren't provided
+                if (title == null || tags == null)
                 {
-                    throw new InvalidOperationException("Cannot generate title and tags: prompt text is null or empty");
+                    if (string.IsNullOrEmpty(promptText))
+                    {
+                        throw new InvalidOperationException("Cannot generate title and tags: prompt text is null or empty");
+                    }
+
+                    var titleResult = await titleService.GenerateTitleAndTagsAsync(promptText);
+                    ValidateTitleResult(titleResult);
+
+                    title ??= titleResult!.Title;
+                    tags ??= titleResult!.Tags;
                 }
-                
-                var titleResult = await titleService.GenerateTitleAndTagsAsync(promptText);
-                ValidateTitleResult(titleResult);
-                
-                var title = titleResult!.Title;
-                var tags = titleResult.Tags;
-                var description = CreateDescription(promptText);
+
+                var description = CreateDescription(promptText ?? string.Empty);
 
                 var result = await deviantArtService.UploadImageAsync(imageItem.ImagePath, title, description, tags, imageItem.LlmModel, imageItem.ImgModel);
                 

@@ -39,10 +39,10 @@
                           MinWidth="150">
                     <ComboBoxItem Content="OpenAI GPT-5" Tag="gpt-5"/>
                     <ComboBoxItem Content="OpenAI GPT-4o" Tag="gpt-4o"/>
-                    <ComboBoxItem Content="OpenAI o3" Tag="o3-mini"/>
+                    <ComboBoxItem Content="OpenAI o3" Tag="o3"/>
                     <ComboBoxItem Content="Claude Opus 4.1" Tag="claude-opus-4-1"/>
-                    <ComboBoxItem Content="Claude Sonnet 4.0" Tag="claude-sonnet-4-0"/>
-                    <ComboBoxItem Content="Claude 3.5 Haiku" Tag="claude-3-5-haiku-latest"/>
+                    <ComboBoxItem Content="Claude Sonnet 4.5" Tag="claude-sonnet-4-5-20250929"/>
+                    <ComboBoxItem Content="Claude Haiku 4.5" Tag="claude-haiku-4-5-20251001"/>
                 </ComboBox>
                 <TextBlock Text="Image Model:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="20,0,0,0"/>
                 <ComboBox x:Name="ImageModelSelectionComboBox"
@@ -53,12 +53,13 @@
                     <ComboBoxItem Content="Google Imagen 4.0 Ultra" Tag="imagen-4.0-ultra-generate-001"/>
                 </ComboBox>
             </StackPanel>
-            <TextBox x:Name="PromptTextBox" 
+            <TextBox x:Name="PromptTextBox"
                      PlaceholderText="Enter a description for your AI-generated wallpaper..."
-                     Height="120" 
-                     TextWrapping="Wrap" 
+                     Height="120"
+                     TextWrapping="Wrap"
                      AcceptsReturn="True"
-                     KeyDown="PromptTextBox_KeyDown"/>
+                     KeyDown="PromptTextBox_KeyDown"
+                     TextChanged="PromptTextBox_TextChanged"/>
         </StackPanel>
         
         <!-- Progress Bar -->

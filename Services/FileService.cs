@@ -15,17 +15,15 @@ namespace WallTrek.Services
             Directory.CreateDirectory(outputDirectory);
         }
 
-        public string SaveImageWithMetadata(byte[] imageData, string prompt, ImageFormat format)
+        public string SaveImageWithMetadata(byte[] imageData, string metadata, ImageFormat format, string title)
         {
             if (imageData == null)
                 throw new ArgumentNullException(nameof(imageData));
-            if (string.IsNullOrEmpty(prompt))
-                throw new ArgumentException("Prompt cannot be null or empty", nameof(prompt));
 
-            // Create filename from prompt
-            var sanitizedPrompt = SanitizePromptForFilename(prompt);
+            // Create filename from title
+            var sanitizedFilename = SanitizePromptForFilename(title);
             var extension = GetExtensionForFormat(format);
-            var fileName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss} ({sanitizedPrompt}){extension}";
+            var fileName = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss} {sanitizedFilename}{extension}";
             var filePath = Path.Combine(outputDirectory, fileName);
 
             // Save the image with metadata
@@ -38,9 +36,9 @@ namespace WallTrek.Services
                 {
                     propertyItem.Id = 0x010E; // ImageDescription EXIF tag
                     propertyItem.Type = 2; // ASCII string
-                    var promptBytes = Encoding.UTF8.GetBytes(prompt + "\0");
-                    propertyItem.Value = promptBytes;
-                    propertyItem.Len = promptBytes.Length;
+                    var metadataBytes = Encoding.UTF8.GetBytes(metadata + "\0");
+                    propertyItem.Value = metadataBytes;
+                    propertyItem.Len = metadataBytes.Length;
 
                     bitmap.SetPropertyItem(propertyItem);
                 }

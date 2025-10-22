@@ -38,30 +38,71 @@ namespace WallTrek.Services
                     LlmModel TEXT NOT NULL DEFAULT 'gpt5',
                     ImgModel TEXT NOT NULL DEFAULT 'dalle3',
                     PromptText TEXT NOT NULL DEFAULT '',
-                    IsFavorite INTEGER NOT NULL DEFAULT 0
+                    IsFavorite INTEGER NOT NULL DEFAULT 0,
+                    Title TEXT NULL,
+                    Tags TEXT NULL
                 );
 
                 CREATE INDEX IF NOT EXISTS IX_GeneratedImages_GeneratedDate ON GeneratedImages (GeneratedDate);
             ";
 
             createTablesCommand.ExecuteNonQuery();
+
+            // Run migrations
+            ApplyMigrations(connection);
         }
 
-        public async Task AddGeneratedImageAsync(string imagePath, string llmModel, string imgModel, string promptText, bool isFavorite = false)
+        private void ApplyMigrations(SqliteConnection connection)
+        {
+            // Migration 1: Add Title and Tags columns if they don't exist
+            var checkTitleColumnCommand = connection.CreateCommand();
+            checkTitleColumnCommand.CommandText = "PRAGMA table_info(GeneratedImages);";
+
+            bool hasTitleColumn = false;
+            bool hasTagsColumn = false;
+
+            using (var reader = checkTitleColumnCommand.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    var columnName = reader.GetString(1); // Column name is at index 1
+                    if (columnName == "Title") hasTitleColumn = true;
+                    if (columnName == "Tags") hasTagsColumn = true;
+                }
+            }
+
+            if (!hasTitleColumn)
+            {
+                var addTitleCommand = connection.CreateCommand();
+                addTitleCommand.CommandText = "ALTER TABLE GeneratedImages ADD COLUMN Title TEXT NULL;";
+                addTitleCommand.ExecuteNonQuery();
+            }
+
+            if (!hasTagsColumn)
+            {
+                var addTagsCommand = connection.CreateCommand();
+                addTagsCommand.CommandText = "ALTER TABLE GeneratedImages ADD COLUMN Tags TEXT NULL;";
+                addTagsCommand.ExecuteNonQuery();
+            }
+        }
+
+        public async Task AddGeneratedImageAsync(string imagePath, string llmModel, string imgModel, string promptText, string title, string tags, bool isFavorite = false)
         {
             using var connection = new SqliteConnection(connectionString);
             await connection.OpenAsync();
 
             var insertCommand = connection.CreateCommand();
             insertCommand.CommandText = @"
-                INSERT INTO GeneratedImages (ImagePath, GeneratedDate, LlmModel, ImgModel, PromptText, IsFavorite)
-                VALUES (@imagePath, @generatedDate, @llmModel, @imgModel, @promptText, @isFavorite)";
+                INSERT INTO GeneratedImages (ImagePath, GeneratedDate, LlmModel, ImgModel, PromptText, IsFavorite, Title, Tags)
+                VALUES (@imagePath, @generatedDate, @llmModel, @imgModel, @promptText, @isFavorite, @title, @tags)";
             insertCommand.Parameters.AddWithValue("@imagePath", imagePath);
             insertCommand.Parameters.AddWithValue("@generatedDate", DateTime.Now);
             insertCommand.Parameters.AddWithValue("@llmModel", llmModel);
             insertCommand.Parameters.AddWithValue("@imgModel", imgModel);
             insertCommand.Parameters.AddWithValue("@promptText", promptText);
             insertCommand.Parameters.AddWithValue("@isFavorite", isFavorite ? 1 : 0);
+            insertCommand.Parameters.AddWithValue("@title", title);
+            insertCommand.Parameters.AddWithValue("@tags", tags);
 
             await insertCommand.ExecuteNonQueryAsync();
         }
@@ -115,7 +156,7 @@ namespace WallTrek.Services
             var command = connection.CreateCommand();
 
             command.CommandText = $@"
-                SELECT gi.ImagePath, gi.GeneratedDate, gi.PromptText, gi.IsFavorite, gi.IsUploadedToDeviantArt, gi.DeviantArtUrl, gi.LlmModel, gi.ImgModel
+                SELECT gi.ImagePath, gi.GeneratedDate, gi.PromptText, gi.IsFavorite, gi.IsUploadedToDeviantArt, gi.DeviantArtUrl, gi.LlmModel, gi.ImgModel, gi.Title, gi.Tags
                 FROM GeneratedImages gi
                 ORDER BY gi.GeneratedDate DESC
                 LIMIT @limit OFFSET @offset";
@@ -137,7 +178,9 @@ namespace WallTrek.Services
                     IsUploaded = reader.IsDBNull(4) ? false : reader.GetInt32(4) == 1,
                     DeviantArtUrl = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
                     LlmModel = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
-                    ImgModel = reader.IsDBNull(7) ? string.Empty : reader.GetString(7)
+                    ImgModel = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                    Title = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                    Tags = reader.IsDBNull(9) ? string.Empty : reader.GetString(9)
                 });
             }
 
@@ -211,5 +254,7 @@ namespace WallTrek.Services
         public string DeviantArtUrl { get; set; } = string.Empty;
         public string LlmModel { get; set; } = string.Empty;
         public string ImgModel { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Tags { get; set; } = string.Empty;
     }
 }

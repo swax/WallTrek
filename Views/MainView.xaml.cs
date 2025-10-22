@@ -19,6 +19,7 @@ namespace WallTrek.Views
         public event EventHandler? NavigateToSettings;
         public event EventHandler? NavigateToImageGrid;
         private CancellationTokenSource? _cancellationTokenSource;
+        private PromptGenerationResult? _currentPromptGenerationResult;
 
         public void SetPromptText(string prompt)
         {
@@ -146,6 +147,33 @@ namespace WallTrek.Views
                 SetGeneratingState(true);
                 SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
 
+                // If we don't have a cached prompt generation result (e.g., user typed their own prompt),
+                // generate title and tags from the prompt
+                if (_currentPromptGenerationResult == null)
+                {
+                    SetStatus("Generating title and tags...", Microsoft.UI.Colors.DodgerBlue);
+                    var titleService = new TitleService();
+                    var titleResult = await titleService.GenerateTitleAndTagsAsync(PromptTextBox.Text, _cancellationTokenSource.Token);
+
+                    if (titleResult != null)
+                    {
+                        _currentPromptGenerationResult = new PromptGenerationResult
+                        {
+                            Prompt = PromptTextBox.Text,
+                            Title = titleResult.Title,
+                            Tags = titleResult.Tags
+                        };
+                    }
+                }
+
+                if (_currentPromptGenerationResult == null)
+                {
+                    SetStatus("Failed to generate title and tags.", Microsoft.UI.Colors.OrangeRed);
+                    return;
+                }
+
+                SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
+
                 var imageGenerator = ImageGenerationServiceFactory.CreateService(Settings.Instance.SelectedImageModel);
 
                 // Get current model selections from UI
@@ -164,6 +192,8 @@ namespace WallTrek.Views
                     return;
                 }
 
+                var tags = _currentPromptGenerationResult.Tags.ToList();
+
                 // Generate image
                 var result = await imageGenerator.GenerateImage(PromptTextBox.Text, _cancellationTokenSource.Token);
 
@@ -175,6 +205,8 @@ namespace WallTrek.Views
                         SetStatus("Upscaling image...", Microsoft.UI.Colors.DodgerBlue);
                         var upscaleService = new UpscaleService(Settings.Instance.StabilityApiKey);
                         result.ImageData = await upscaleService.UpscaleImageAsync(result.ImageData, result.Format, _cancellationTokenSource.Token);
+                        tags.Add("stability_ai");
+                        tags.Add("4k");
                     }
                     catch (Exception ex)
                     {
@@ -187,11 +219,14 @@ namespace WallTrek.Views
 
                 // Save image with metadata
                 var fileService = new FileService(Settings.Instance.OutputDirectory);
-                var filePath = fileService.SaveImageWithMetadata(result.ImageData, PromptTextBox.Text, result.Format);
+                var title = _currentPromptGenerationResult.Title;
+                var tagString = string.Join(", ", tags);
+                var metadata = $"Title: {title}\nPrompt: {PromptTextBox.Text}\nTags: {tagString}";
+                var filePath = fileService.SaveImageWithMetadata(result.ImageData, metadata, result.Format, title);
 
                 // Register in database
                 var databaseService = new DatabaseService();
-                await databaseService.AddGeneratedImageAsync(filePath, currentLlmModel, currentImgModel, PromptTextBox.Text);
+                await databaseService.AddGeneratedImageAsync(filePath, currentLlmModel, currentImgModel, PromptTextBox.Text, title, tagString);
 
                 Wallpaper.Set(filePath);
 
@@ -227,6 +262,15 @@ namespace WallTrek.Views
             {
                 e.Handled = true;
                 GenerateButton_Click(sender, e);
+            }
+        }
+
+        private void PromptTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Set _currentPromptGenerationResult to null if the current prompt text does not equal the cached prompt
+            if (_currentPromptGenerationResult != null && PromptTextBox.Text != _currentPromptGenerationResult.Prompt)
+            {
+                _currentPromptGenerationResult = null;
             }
         }
 
@@ -277,10 +321,18 @@ namespace WallTrek.Views
                 SetStatus("Generating random prompt...", Microsoft.UI.Colors.DodgerBlue);
 
                 var promptGenerator = new PromptGeneratorService();
-                var randomPrompt = await promptGenerator.GenerateRandomPromptAsync(_cancellationTokenSource.Token);
+                var result = await promptGenerator.GenerateRandomPromptAsync(_cancellationTokenSource.Token);
 
-                PromptTextBox.Text = randomPrompt;
-                SetStatus("Random prompt generated!", Microsoft.UI.Colors.LimeGreen);
+                if (result != null)
+                {
+                    _currentPromptGenerationResult = result;
+                    PromptTextBox.Text = result.Prompt;
+                    SetStatus("Random prompt generated!", Microsoft.UI.Colors.LimeGreen);
+                }
+                else
+                {
+                    SetStatus("Failed to generate random prompt.", Microsoft.UI.Colors.OrangeRed);
+                }
             }
             catch (OperationCanceledException)
             {
