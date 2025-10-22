@@ -11,7 +11,8 @@ namespace WallTrek
     {
         Home,
         Settings,
-        History
+        History,
+        ImageGrid
     }
 
     public sealed partial class MainWindow : Window
@@ -35,12 +36,14 @@ namespace WallTrek
             // Connect view events
             MainViewControl.NavigateToSettings += (s, e) => NavigateToSettings();
             MainViewControl.NavigateToHistory += (s, e) => NavigateToHistory();
+            MainViewControl.NavigateToImageGrid += (s, e) => NavigateToImageGrid();
             SettingsViewControl.NavigateToMain += (s, e) => NavigateToHome();
             HistoryViewControl.NavigateBack += (s, e) => NavigateToHome();
             HistoryViewControl.CopyPrompt += (s, prompt) => {
                 MainViewControl.SetPromptText(prompt);
                 NavigateToHome();
             };
+            ImageGridViewControl.NavigateBack += (s, e) => NavigateToHome();
         }
         
         private void AppWindow_Changed(object? sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs e)
@@ -93,6 +96,7 @@ namespace WallTrek
             MainViewControl.Visibility = viewType == ViewType.Home ? Visibility.Visible : Visibility.Collapsed;
             SettingsViewControl.Visibility = viewType == ViewType.Settings ? Visibility.Visible : Visibility.Collapsed;
             HistoryViewControl.Visibility = viewType == ViewType.History ? Visibility.Visible : Visibility.Collapsed;
+            ImageGridViewControl.Visibility = viewType == ViewType.ImageGrid ? Visibility.Visible : Visibility.Collapsed;
         }
 
 
@@ -111,6 +115,12 @@ namespace WallTrek
         {
             SetActiveView(ViewType.History);
             HistoryViewControl.RefreshHistory();
+        }
+
+        private void NavigateToImageGrid()
+        {
+            SetActiveView(ViewType.ImageGrid);
+            ImageGridViewControl.LoadImages();
         }
 
     }

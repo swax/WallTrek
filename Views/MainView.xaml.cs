@@ -18,6 +18,7 @@ namespace WallTrek.Views
     {
         public event EventHandler? NavigateToSettings;
         public event EventHandler? NavigateToHistory;
+        public event EventHandler? NavigateToImageGrid;
         private CancellationTokenSource? _cancellationTokenSource;
 
         public void SetPromptText(string prompt)
@@ -239,6 +240,11 @@ namespace WallTrek.Views
         private void HistoryButton_Click(object sender, RoutedEventArgs e)
         {
             NavigateToHistory?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void ImageGridButton_Click(object sender, RoutedEventArgs e)
+        {
+            NavigateToImageGrid?.Invoke(this, EventArgs.Empty);
         }
 
         private void SetStatus(string message, Windows.UI.Color color)

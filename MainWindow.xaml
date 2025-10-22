@@ -11,11 +11,13 @@
 
     <Grid>
         <!-- Content Area -->
-        <views:MainView x:Name="MainViewControl" 
+        <views:MainView x:Name="MainViewControl"
                        Visibility="Visible"/>
-        <views:SettingsView x:Name="SettingsViewControl" 
+        <views:SettingsView x:Name="SettingsViewControl"
                            Visibility="Collapsed"/>
-        <views:PromptHistoryView x:Name="HistoryViewControl" 
+        <views:PromptHistoryView x:Name="HistoryViewControl"
                                 Visibility="Collapsed"/>
+        <views:ImageGridView x:Name="ImageGridViewControl"
+                            Visibility="Collapsed"/>
     </Grid>
 </Window>

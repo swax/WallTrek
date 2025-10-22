@@ -266,6 +266,73 @@ namespace WallTrek.Services
             updateCommand.Parameters.AddWithValue("@url", deviantArtUrl ?? (object)DBNull.Value);
             await updateCommand.ExecuteNonQueryAsync();
         }
+
+        public async Task<List<ImageGridItem>> GetAllImagesAsync()
+        {
+            return await GetImagesAsync(0, int.MaxValue);
+        }
+
+        public async Task<List<ImageGridItem>> GetImagesAsync(int offset, int limit)
+        {
+            using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync();
+
+            var command = connection.CreateCommand();
+
+            command.CommandText = $@"
+                SELECT gi.ImagePath, gi.GeneratedDate, p.PromptText, p.IsFavorite, gi.IsUploadedToDeviantArt
+                FROM GeneratedImages gi
+                INNER JOIN Prompts p ON gi.PromptId = p.Id
+                ORDER BY gi.GeneratedDate DESC
+                LIMIT @limit OFFSET @offset";
+
+            command.Parameters.AddWithValue("@limit", limit);
+            command.Parameters.AddWithValue("@offset", offset);
+
+            var items = new List<ImageGridItem>();
+            using var reader = await command.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                items.Add(new ImageGridItem
+                {
+                    ImagePath = reader.GetString(0),
+                    GeneratedDate = reader.GetDateTime(1),
+                    PromptText = reader.GetString(2),
+                    IsFavorite = reader.GetInt32(3) == 1,
+                    IsUploaded = reader.IsDBNull(4) ? false : reader.GetInt32(4) == 1
+                });
+            }
+
+            return items;
+        }
+
+        public async Task<int> GetImageCountAsync(bool favoritesOnly, bool notUploadedOnly)
+        {
+            using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync();
+
+            var command = connection.CreateCommand();
+
+            var whereClause = "";
+            if (favoritesOnly)
+            {
+                whereClause += " AND p.IsFavorite = 1";
+            }
+            if (notUploadedOnly)
+            {
+                whereClause += " AND (gi.IsUploadedToDeviantArt = 0 OR gi.IsUploadedToDeviantArt IS NULL)";
+            }
+
+            command.CommandText = $@"
+                SELECT COUNT(*)
+                FROM GeneratedImages gi
+                INNER JOIN Prompts p ON gi.PromptId = p.Id
+                WHERE 1=1 {whereClause}";
+
+            var result = await command.ExecuteScalarAsync();
+            return Convert.ToInt32(result);
+        }
     }
 
     public class ImageHistoryItem : INotifyPropertyChanged
@@ -342,5 +409,14 @@ namespace WallTrek.Services
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+    }
+
+    public class ImageGridItem
+    {
+        public string ImagePath { get; set; } = string.Empty;
+        public DateTime GeneratedDate { get; set; }
+        public string PromptText { get; set; } = string.Empty;
+        public bool IsFavorite { get; set; }
+        public bool IsUploaded { get; set; }
     }
 }
