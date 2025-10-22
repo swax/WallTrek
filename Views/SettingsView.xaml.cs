@@ -2,6 +2,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -284,6 +285,33 @@ namespace WallTrek.Views
 
             StatusTextBlock.Text = "Default settings restored. Click 'Save Settings' to apply.";
             StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
+        }
+
+        private void OpenDataFolderButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var appDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WallTrek");
+
+                // Create the directory if it doesn't exist
+                if (!Directory.Exists(appDataFolder))
+                {
+                    Directory.CreateDirectory(appDataFolder);
+                }
+
+                // Open the folder in Windows Explorer
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = appDataFolder,
+                    UseShellExecute = true,
+                    Verb = "open"
+                });
+            }
+            catch (Exception ex)
+            {
+                StatusTextBlock.Text = $"Error opening folder: {ex.Message}";
+                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+            }
         }
     }
 }

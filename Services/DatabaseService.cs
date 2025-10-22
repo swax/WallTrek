@@ -115,7 +115,7 @@ namespace WallTrek.Services
             var command = connection.CreateCommand();
 
             command.CommandText = $@"
-                SELECT gi.ImagePath, gi.GeneratedDate, gi.PromptText, gi.IsFavorite, gi.IsUploadedToDeviantArt
+                SELECT gi.ImagePath, gi.GeneratedDate, gi.PromptText, gi.IsFavorite, gi.IsUploadedToDeviantArt, gi.DeviantArtUrl, gi.LlmModel, gi.ImgModel
                 FROM GeneratedImages gi
                 ORDER BY gi.GeneratedDate DESC
                 LIMIT @limit OFFSET @offset";
@@ -134,7 +134,10 @@ namespace WallTrek.Services
                     GeneratedDate = reader.GetDateTime(1),
                     PromptText = reader.GetString(2),
                     IsFavorite = reader.GetInt32(3) == 1,
-                    IsUploaded = reader.IsDBNull(4) ? false : reader.GetInt32(4) == 1
+                    IsUploaded = reader.IsDBNull(4) ? false : reader.GetInt32(4) == 1,
+                    DeviantArtUrl = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                    LlmModel = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                    ImgModel = reader.IsDBNull(7) ? string.Empty : reader.GetString(7)
                 });
             }
 
@@ -205,5 +208,8 @@ namespace WallTrek.Services
         public string PromptText { get; set; } = string.Empty;
         public bool IsFavorite { get; set; }
         public bool IsUploaded { get; set; }
+        public string DeviantArtUrl { get; set; } = string.Empty;
+        public string LlmModel { get; set; } = string.Empty;
+        public string ImgModel { get; set; } = string.Empty;
     }
 }

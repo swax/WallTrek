@@ -52,6 +52,11 @@
                             <CheckBox x:Name="MinimizeToTrayCheckBox" Content="Minimize to System Tray" IsChecked="True"/>
                             <CheckBox x:Name="RunOnStartupCheckBox" Content="Run on Windows Startup"/>
                         </StackPanel>
+
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Data Location:" FontWeight="SemiBold"/>
+                            <Button x:Name="OpenDataFolderButton" Content="Open WallTrek Folder" Click="OpenDataFolderButton_Click" HorizontalAlignment="Left"/>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabViewItem>

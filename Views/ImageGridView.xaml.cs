@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
@@ -59,7 +60,9 @@ namespace WallTrek.Views
                         GeneratedDate = image.GeneratedDate,
                         IsFavorite = image.IsFavorite,
                         IsUploaded = image.IsUploaded,
-                        DeviantArtUrl = string.Empty // Not loaded from database for ImageGridItem
+                        DeviantArtUrl = image.DeviantArtUrl,
+                        LlmModel = image.LlmModel,
+                        ImgModel = image.ImgModel
                     };
 
                     _allImages.Add(viewModel);
@@ -182,6 +185,7 @@ namespace WallTrek.Views
                     var bitmap = new BitmapImage(new Uri(imagePath));
                     FullScreenImage.Source = bitmap;
                     FullScreenOverlay.Visibility = Visibility.Visible;
+                    FullScreenOverlay.Focus(FocusState.Programmatic);
                 }
             }
             catch (Exception ex)
@@ -194,6 +198,15 @@ namespace WallTrek.Views
         {
             FullScreenOverlay.Visibility = Visibility.Collapsed;
             FullScreenImage.Source = null;
+        }
+
+        private void FullScreenOverlay_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Escape)
+            {
+                HideFullScreenImage();
+                e.Handled = true;
+            }
         }
 
         private void FullScreenOverlay_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
@@ -358,6 +371,134 @@ namespace WallTrek.Views
                 }
             }
         }
+
+        private async void Details_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageGridItemViewModel viewModel)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "Image Details",
+                    CloseButtonText = "Close",
+                    XamlRoot = this.XamlRoot
+                };
+
+                var detailsPanel = new StackPanel { Spacing = 12, Margin = new Thickness(0, 10, 0, 0) };
+
+                // Prompt with copy button
+                var promptPanel = new StackPanel { Spacing = 4 };
+                var promptHeader = new TextBlock
+                {
+                    Text = "Prompt:",
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                };
+                promptPanel.Children.Add(promptHeader);
+
+                var promptRow = new Grid();
+                promptRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                promptRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var promptText = new TextBlock
+                {
+                    Text = viewModel.PromptText,
+                    TextWrapping = TextWrapping.Wrap,
+                    IsTextSelectionEnabled = true
+                };
+                Grid.SetColumn(promptText, 0);
+                promptRow.Children.Add(promptText);
+
+                var copyButton = new Button
+                {
+                    Content = new FontIcon { Glyph = "\uE8C8", FontSize = 14 },
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Margin = new Thickness(8, 0, 0, 0)
+                };
+                copyButton.Click += (s, args) =>
+                {
+                    var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
+                    dataPackage.SetText(viewModel.PromptText);
+                    Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+                };
+                Grid.SetColumn(copyButton, 1);
+                promptRow.Children.Add(copyButton);
+
+                promptPanel.Children.Add(promptRow);
+                detailsPanel.Children.Add(promptPanel);
+
+                // Generated Date
+                detailsPanel.Children.Add(new TextBlock
+                {
+                    Text = $"Generated: {viewModel.GeneratedDate:yyyy-MM-dd HH:mm:ss}",
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                });
+
+                // LLM Model
+                detailsPanel.Children.Add(new TextBlock
+                {
+                    Text = $"LLM Model: {(string.IsNullOrEmpty(viewModel.LlmModel) ? "N/A" : viewModel.LlmModel)}"
+                });
+
+                // Image Model
+                detailsPanel.Children.Add(new TextBlock
+                {
+                    Text = $"Image Model: {(string.IsNullOrEmpty(viewModel.ImgModel) ? "N/A" : viewModel.ImgModel)}"
+                });
+
+                // Favorite Status
+                detailsPanel.Children.Add(new TextBlock
+                {
+                    Text = $"Favorite: {(viewModel.IsFavorite ? "Yes" : "No")}"
+                });
+
+                // Upload Status
+                detailsPanel.Children.Add(new TextBlock
+                {
+                    Text = $"Uploaded to DeviantArt: {(viewModel.IsUploaded ? "Yes" : "No")}"
+                });
+
+                // DeviantArt URL (if uploaded)
+                if (viewModel.IsUploaded && !string.IsNullOrEmpty(viewModel.DeviantArtUrl))
+                {
+                    var urlPanel = new StackPanel { Spacing = 4 };
+                    urlPanel.Children.Add(new TextBlock
+                    {
+                        Text = "DeviantArt URL:",
+                        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                    });
+
+                    var hyperlinkButton = new HyperlinkButton
+                    {
+                        Content = viewModel.DeviantArtUrl,
+                        NavigateUri = new Uri(viewModel.DeviantArtUrl)
+                    };
+                    urlPanel.Children.Add(hyperlinkButton);
+                    detailsPanel.Children.Add(urlPanel);
+                }
+
+                // File Path
+                var filePathPanel = new StackPanel { Spacing = 4 };
+                filePathPanel.Children.Add(new TextBlock
+                {
+                    Text = "File Path:",
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
+                });
+                filePathPanel.Children.Add(new TextBlock
+                {
+                    Text = viewModel.ImagePath,
+                    TextWrapping = TextWrapping.Wrap,
+                    IsTextSelectionEnabled = true
+                });
+                detailsPanel.Children.Add(filePathPanel);
+
+                dialog.Content = new ScrollViewer
+                {
+                    Content = detailsPanel,
+                    MaxHeight = 500
+                };
+
+                await dialog.ShowAsync();
+            }
+        }
     }
 
     public class ImageGridItemViewModel : System.ComponentModel.INotifyPropertyChanged
@@ -366,6 +507,8 @@ namespace WallTrek.Views
         public string PromptText { get; set; } = string.Empty;
         public DateTime GeneratedDate { get; set; }
         public string DeviantArtUrl { get; set; } = string.Empty;
+        public string LlmModel { get; set; } = string.Empty;
+        public string ImgModel { get; set; } = string.Empty;
 
         private bool _isFavorite;
         public bool IsFavorite

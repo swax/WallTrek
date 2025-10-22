@@ -106,6 +106,14 @@
                                                 <MenuFlyoutItem Text="Open in file explorer"
                                                               Click="OpenInExplorer_Click"
                                                               Tag="{x:Bind}"/>
+                                                <MenuFlyoutSeparator/>
+                                                <MenuFlyoutItem Text="Details"
+                                                              Click="Details_Click"
+                                                              Tag="{x:Bind}">
+                                                    <MenuFlyoutItem.Icon>
+                                                        <FontIcon Glyph="&#xE946;"/>
+                                                    </MenuFlyoutItem.Icon>
+                                                </MenuFlyoutItem>
                                             </MenuFlyout>
                                         </Button.ContextFlyout>
                                         <Image Source="{x:Bind ThumbnailImage, Mode=OneWay}"
@@ -169,7 +177,8 @@
 
         <!-- Full screen image popup -->
         <Border x:Name="FullScreenOverlay" Grid.RowSpan="2" Background="Black" Opacity="0.9"
-                Visibility="Collapsed" Tapped="FullScreenOverlay_Tapped">
+                Visibility="Collapsed" Tapped="FullScreenOverlay_Tapped" KeyDown="FullScreenOverlay_KeyDown"
+                IsTabStop="True" AllowFocusOnInteraction="True">
             <Image x:Name="FullScreenImage" Stretch="Uniform" HorizontalAlignment="Center"
                    VerticalAlignment="Center" Tapped="FullScreenImage_Tapped"/>
         </Border>
