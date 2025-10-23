@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -204,7 +205,7 @@ namespace WallTrek.Views
                     {
                         SetStatus("Upscaling image...", Microsoft.UI.Colors.DodgerBlue);
                         var upscaleService = new UpscaleService(Settings.Instance.StabilityApiKey);
-                        result.ImageData = await upscaleService.UpscaleImageAsync(result.ImageData, result.Format, _cancellationTokenSource.Token);
+                        result.ImageData = await upscaleService.UpscaleImageAsync(result.ImageData, _cancellationTokenSource.Token);
                         tags.Add("stability_ai");
                         tags.Add("4k");
                     }
@@ -222,7 +223,7 @@ namespace WallTrek.Views
                 var title = _currentPromptGenerationResult.Title;
                 var tagString = string.Join(", ", tags);
                 var metadata = $"Title: {title}\nPrompt: {PromptTextBox.Text}\nTags: {tagString}";
-                var filePath = fileService.SaveImageWithMetadata(result.ImageData, metadata, result.Format, title);
+                var filePath = fileService.SaveImageWithMetadata(result.ImageData, metadata, title);
 
                 // Register in database
                 var databaseService = new DatabaseService();

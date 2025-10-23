@@ -15,11 +15,14 @@ namespace WallTrek.Services
             Directory.CreateDirectory(outputDirectory);
         }
 
-        public string SaveImageWithMetadata(byte[] imageData, string metadata, ImageFormat format, string title)
+        public string SaveImageWithMetadata(byte[] imageData, string metadata, string title)
         {
             if (imageData == null)
                 throw new ArgumentNullException(nameof(imageData));
 
+            // Upscaled images are 16 megapixels, a jpg is like 5mb, a png like 30mb, and windows doesn't support wallpapers with file sizes that large
+            var format = ImageFormat.Jpeg; 
+            
             // Create filename from title
             var sanitizedFilename = SanitizePromptForFilename(title);
             var extension = GetExtensionForFormat(format);

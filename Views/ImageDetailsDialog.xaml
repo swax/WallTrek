@@ -1,0 +1,101 @@
+<UserControl
+    x:Class="WallTrek.Views.ImageDetailsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <ScrollViewer MaxHeight="500">
+        <StackPanel Spacing="12" Margin="0,10,0,0">
+            <!-- Title Section -->
+            <StackPanel Spacing="4" Visibility="{x:Bind ShowTitle, Mode=OneWay}">
+                <TextBlock Text="Title:" FontWeight="SemiBold" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.Title, Mode=OneWay}"
+                    TextWrapping="Wrap"
+                    IsTextSelectionEnabled="True" />
+            </StackPanel>
+
+            <!-- Tags Section -->
+            <StackPanel Spacing="4" Visibility="{x:Bind ShowTags, Mode=OneWay}">
+                <TextBlock Text="Tags:" FontWeight="SemiBold" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.Tags, Mode=OneWay}"
+                    TextWrapping="Wrap"
+                    IsTextSelectionEnabled="True" />
+            </StackPanel>
+
+            <!-- Prompt Section with Copy Button -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Prompt:" FontWeight="SemiBold" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock
+                        Grid.Column="0"
+                        Text="{x:Bind ViewModel.PromptText, Mode=OneWay}"
+                        TextWrapping="Wrap"
+                        IsTextSelectionEnabled="True" />
+
+                    <Button
+                        Grid.Column="1"
+                        Click="CopyPromptButton_Click"
+                        VerticalAlignment="Top"
+                        Margin="8,0,0,0">
+                        <FontIcon Glyph="&#xE8C8;" FontSize="14" />
+                    </Button>
+                </Grid>
+            </StackPanel>
+
+            <!-- Image Dimensions -->
+            <TextBlock
+                Text="{x:Bind ImageDimensions, Mode=OneWay}"
+                FontWeight="SemiBold"
+                Visibility="{x:Bind ShowImageDimensions, Mode=OneWay}" />
+
+            <!-- File Size -->
+            <TextBlock
+                Text="{x:Bind FileSizeText, Mode=OneWay}"
+                FontWeight="SemiBold"
+                Visibility="{x:Bind ShowFileSize, Mode=OneWay}" />
+
+            <!-- Generated Date -->
+            <TextBlock
+                Text="{x:Bind GeneratedDateText, Mode=OneWay}"
+                FontWeight="SemiBold" />
+
+            <!-- LLM Model -->
+            <TextBlock Text="{x:Bind LlmModelText, Mode=OneWay}" />
+
+            <!-- Image Model -->
+            <TextBlock Text="{x:Bind ImgModelText, Mode=OneWay}" />
+
+            <!-- Favorite Status -->
+            <TextBlock Text="{x:Bind FavoriteText, Mode=OneWay}" />
+
+            <!-- Upload Status -->
+            <TextBlock Text="{x:Bind UploadStatusText, Mode=OneWay}" />
+
+            <!-- DeviantArt URL Section -->
+            <StackPanel Spacing="4" Visibility="{x:Bind ShowDeviantArtUrl, Mode=OneWay}">
+                <TextBlock Text="DeviantArt URL:" FontWeight="SemiBold" />
+                <HyperlinkButton
+                    Content="{x:Bind ViewModel.DeviantArtUrl, Mode=OneWay}"
+                    NavigateUri="{x:Bind DeviantArtUri, Mode=OneWay}" />
+            </StackPanel>
+
+            <!-- File Path Section -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="File Path:" FontWeight="SemiBold" />
+                <TextBlock
+                    Text="{x:Bind ViewModel.ImagePath, Mode=OneWay}"
+                    TextWrapping="Wrap"
+                    IsTextSelectionEnabled="True" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -151,6 +151,21 @@
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"/>
                                     </Border>
+
+                                    <!-- Uploading indicator (top-right) -->
+                                    <Border Background="Orange"
+                                            CornerRadius="12"
+                                            Width="24" Height="24"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Margin="0,5,5,0"
+                                            Visibility="{x:Bind IsUploading, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}">
+                                        <FontIcon Glyph="&#xE916;"
+                                                FontSize="12"
+                                                Foreground="White"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                                    </Border>
                                 </Grid>
                             </Border>
                         </DataTemplate>

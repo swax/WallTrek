@@ -84,9 +84,9 @@ namespace WallTrek.Services.DeviantArt
 
         private string CreateDescription(string promptText)
         {
-            return !string.IsNullOrEmpty(promptText) ? 
-                $"Prompt: {promptText}\n\nGenerated with WallTrek - AI-powered wallpaper generator" :
-                "Generated with WallTrek - AI-powered wallpaper generator";
+            return $"Prompt: {promptText}";
+                
+            // Tried to append this to description with line break, but nothing works, <br><p> nothing.. "\n\nGenerated with WallTrek - AI-powered wallpaper generator"
         }
 
         private async Task HandleSuccessfulUpload(ImageHistoryItem imageItem, string? deviantArtUrl, Action refreshCallback)

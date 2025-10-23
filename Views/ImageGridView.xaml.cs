@@ -389,7 +389,19 @@ namespace WallTrek.Views
         {
             if (sender is MenuFlyoutItem menuItem && menuItem.Tag is ImageGridItemViewModel viewModel)
             {
-                ImageDetailsDialog.Show(viewModel, this.XamlRoot);
+                ImageDetailsDialog.Show(viewModel, this.XamlRoot, OnImageDeleted);
+            }
+        }
+
+        private void OnImageDeleted(string imagePath)
+        {
+            // Remove the deleted image from all collections
+            var imageToRemove = _allImages.FirstOrDefault(img => img.ImagePath == imagePath);
+            if (imageToRemove != null)
+            {
+                _allImages.Remove(imageToRemove);
+                _filteredImages.Remove(imageToRemove);
+                _displayedImages.Remove(imageToRemove);
             }
         }
     }

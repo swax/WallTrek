@@ -9,15 +9,24 @@ namespace WallTrek.Services.ImageGen
         private readonly HttpClient httpClient;
         private const string BaseUrl = "https://api.stability.ai/v2beta/stable-image/upscale/fast";
         private const int PixelMax = 1_048_576; // Maximum pixels allowed by Stability AI API
+        private readonly string logFilePath;
 
         public UpscaleService(string? apiKey)
         {
             this.apiKey = apiKey;
             this.httpClient = new HttpClient();
+
+            // Set up log file path in AppData
+            var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var wallTrekPath = Path.Combine(appDataPath, "WallTrek");
+            Directory.CreateDirectory(wallTrekPath);
+            this.logFilePath = Path.Combine(wallTrekPath, "upscale.log");
         }
 
-        public async Task<byte[]> UpscaleImageAsync(byte[] imageData, ImageFormat format, CancellationToken cancellationToken = default)
+        public async Task<byte[]> UpscaleImageAsync(byte[] imageData, CancellationToken cancellationToken = default)
         {
+            var format = ImageFormat.Jpeg;
+
             // If no API key is configured, return the original image
             if (string.IsNullOrEmpty(apiKey))
             {
@@ -77,7 +86,12 @@ namespace WallTrek.Services.ImageGen
             }
 
             // Read and return upscaled image
-            return await response.Content.ReadAsByteArrayAsync();
+            var upscaledImageData = await response.Content.ReadAsByteArrayAsync();
+
+            // Log final upscaled dimensions
+            LogUpscaledDimensions(upscaledImageData);
+
+            return upscaledImageData;
         }
 
         private byte[] CropImageIfNeeded(byte[] imageData, ImageFormat format)
@@ -85,36 +99,146 @@ namespace WallTrek.Services.ImageGen
             using var ms = new MemoryStream(imageData);
             using var image = Image.FromStream(ms);
 
-            int totalPixels = image.Width * image.Height;
+            int originalWidth = image.Width;
+            int originalHeight = image.Height;
+            int totalPixels = originalWidth * originalHeight;
+            double originalAspectRatio = (double)originalWidth / originalHeight;
+
+            // Log original dimensions
+            var logEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Original image: {originalWidth}x{originalHeight}, Aspect ratio: {originalAspectRatio:F4}, Total pixels: {totalPixels:N0}";
 
             // If image is within pixel max, return original
             if (totalPixels <= PixelMax)
             {
+                logEntry += " - No processing needed";
+                LogToFile(logEntry);
                 return imageData;
             }
 
-            // Calculate new width needed to meet pixel max (keeping same height)
-            int newWidth = PixelMax / image.Height;
+            // Step 1: Calculate crop dimensions for 16:9 aspect ratio from original image
+            const double targetAspectRatio = 16.0 / 9.0;
+            int cropWidth, cropHeight;
 
-            // Calculate how much to crop from each side
-            int totalCrop = image.Width - newWidth;
-            int cropLeft = totalCrop / 2;
-            int cropRight = totalCrop - cropLeft; // Handle odd numbers
+            if (originalAspectRatio > targetAspectRatio)
+            {
+                // Image is wider than 16:9, crop width
+                cropHeight = originalHeight;
+                cropWidth = (int)(cropHeight * targetAspectRatio);
+            }
+            else
+            {
+                // Image is taller than 16:9, crop height
+                cropWidth = originalWidth;
+                cropHeight = (int)(cropWidth / targetAspectRatio);
+            }
 
-            // Create cropped image
-            using var croppedImage = new Bitmap(newWidth, image.Height);
+            // Step 2: Calculate resize dimensions so that width * height < PixelMax
+            int resizeWidth, resizeHeight;
+            int cropPixels = cropWidth * cropHeight;
+
+            if (cropPixels <= PixelMax)
+            {
+                // Already under pixel max after crop, no resize needed
+                resizeWidth = originalWidth;
+                resizeHeight = originalHeight;
+            }
+            else
+            {
+                // Calculate scale factor to get under PixelMax
+                double scaleFactor = Math.Sqrt((double)PixelMax / cropPixels);
+                resizeWidth = (int)(originalWidth * scaleFactor);
+                resizeHeight = (int)(originalHeight * scaleFactor);
+            }
+
+            logEntry += $"\nTarget 16:9 dimensions: {cropWidth}x{cropHeight}";
+
+            // Step 3: Resize the original image first
+            Bitmap resizedImage;
+            if (resizeWidth != originalWidth || resizeHeight != originalHeight)
+            {
+                logEntry += $"\nResized to: {resizeWidth}x{resizeHeight}";
+            
+                resizedImage = new Bitmap(resizeWidth, resizeHeight);
+                using (var g = Graphics.FromImage(resizedImage))
+                {
+                    g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    g.DrawImage(image, 0, 0, resizeWidth, resizeHeight);
+                }
+            }
+            else
+            {
+                // No resize needed, create a copy
+                resizedImage = new Bitmap(image);
+            }
+
+            // Step 4: Crop the resized image to 16:9
+            // Recalculate crop dimensions based on resized image
+            int finalCropWidth, finalCropHeight;
+            double resizedAspectRatio = (double)resizeWidth / resizeHeight;
+
+            if (resizedAspectRatio > targetAspectRatio)
+            {
+                // Image is wider than 16:9, crop width
+                finalCropHeight = resizeHeight;
+                finalCropWidth = (int)(finalCropHeight * targetAspectRatio);
+            }
+            else
+            {
+                // Image is taller than 16:9, crop height
+                finalCropWidth = resizeWidth;
+                finalCropHeight = (int)(finalCropWidth / targetAspectRatio);
+            }
+
+            // Calculate crop offsets to center the crop
+            int cropLeft = (resizeWidth - finalCropWidth) / 2;
+            int cropTop = (resizeHeight - finalCropHeight) / 2;
+
+            using var croppedImage = new Bitmap(finalCropWidth, finalCropHeight);
             using (var g = Graphics.FromImage(croppedImage))
             {
-                g.DrawImage(image,
-                    new Rectangle(0, 0, newWidth, image.Height),
-                    new Rectangle(cropLeft, 0, newWidth, image.Height),
+                g.DrawImage(resizedImage,
+                    new Rectangle(0, 0, finalCropWidth, finalCropHeight),
+                    new Rectangle(cropLeft, cropTop, finalCropWidth, finalCropHeight),
                     GraphicsUnit.Pixel);
             }
+
+            resizedImage.Dispose();
+
+            logEntry += $"\nCropped to: {finalCropWidth}x{finalCropHeight}. Achieving target aspect ratio within pixel limit.";
+            LogToFile(logEntry);
 
             // Convert back to byte array with original format
             using var outputMs = new MemoryStream();
             croppedImage.Save(outputMs, format);
             return outputMs.ToArray();
+        }
+
+        private void LogUpscaledDimensions(byte[] upscaledImageData)
+        {
+            try
+            {
+                using var ms = new MemoryStream(upscaledImageData);
+                using var image = Image.FromStream(ms);
+
+                var logEntry = $"Upscaled to: {image.Width}x{image.Height}, Total pixels: {image.Width * image.Height:N0}\n";
+                LogToFile(logEntry);
+            }
+            catch (Exception ex)
+            {
+                LogToFile($"Error logging upscaled dimensions: {ex.Message}\n");
+            }
+        }
+
+        private void LogToFile(string message)
+        {
+            try
+            {
+                File.AppendAllText(logFilePath, message + "\n");
+            }
+            catch
+            {
+                // Silently fail if logging doesn't work - don't want to break upscaling
+            }
         }
 
         private string GetOutputFormat(ImageFormat format)

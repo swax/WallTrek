@@ -426,6 +426,7 @@ namespace WallTrek.Services.DeviantArt
                 publishContent.Add(new StringContent("false"), "is_mature");
                 publishContent.Add(new StringContent("true"), "agree_submission");
                 publishContent.Add(new StringContent("true"), "agree_tos");
+                publishContent.Add(new StringContent("0"), "display_resolution"); // original size
 
                 // prevent auto-adding to Featured
                 // publishContent.Add(new StringContent("false"), "feature");
