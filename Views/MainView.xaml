@@ -60,6 +60,33 @@
                      AcceptsReturn="True"
                      KeyDown="PromptTextBox_KeyDown"
                      TextChanged="PromptTextBox_TextChanged"/>
+            
+            <ItemsControl x:Name="PropertiesBadgesControl" Margin="0,0,0,8">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="6"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{ThemeResource SystemFillColorNeutralBrush}"
+                                CornerRadius="4"
+                                Padding="8,3">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="{Binding Key}"
+                                          FontSize="11"
+                                          Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
+                                <TextBlock Text=":"
+                                          FontSize="11"
+                                          Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
+                                <TextBlock Text="{Binding Value}"
+                                          FontSize="11"
+                                          Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </StackPanel>
         
         <!-- Progress Bar -->

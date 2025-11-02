@@ -203,7 +203,7 @@ namespace WallTrek.Views
                     return false;
                 }
 
-                var newSettings = JsonSerializer.Deserialize<RandomPromptsSettings>(jsonText);
+                var newSettings = JsonSerializer.Deserialize<Dictionary<string, string[]>>(jsonText);
 
                 if (newSettings == null)
                 {
@@ -271,7 +271,7 @@ namespace WallTrek.Views
         private void RestoreDefaultsButton_Click(object sender, RoutedEventArgs e)
         {
             // Create a new RandomPromptsSettings to get the default values
-            var defaultSettings = new RandomPromptsSettings();
+            var defaultSettings = new DefaultRandomPrompts();
 
             // Serialize to JSON and display with better formatting
             var options = new JsonSerializerOptions

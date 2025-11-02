@@ -272,6 +272,7 @@ namespace WallTrek.Views
             if (_currentPromptGenerationResult != null && PromptTextBox.Text != _currentPromptGenerationResult.Prompt)
             {
                 _currentPromptGenerationResult = null;
+                PropertiesBadgesControl.ItemsSource = null;
             }
         }
 
@@ -328,6 +329,7 @@ namespace WallTrek.Views
                 {
                     _currentPromptGenerationResult = result;
                     PromptTextBox.Text = result.Prompt;
+                    PropertiesBadgesControl.ItemsSource = result.SelectedProperties;
                     SetStatus("Random prompt generated!", Microsoft.UI.Colors.LimeGreen);
                 }
                 else

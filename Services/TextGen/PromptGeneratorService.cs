@@ -64,7 +64,14 @@ namespace WallTrek.Services.TextGen
   ""required"": [""prompt"", ""title"", ""tags""]
 }";
 
-            return await llmService.GenerateStructuredResponseAsync<PromptGenerationResult>(systemPrompt, userPrompt, jsonSchema, cancellationToken);
+            var result = await llmService.GenerateStructuredResponseAsync<PromptGenerationResult>(systemPrompt, userPrompt, jsonSchema, cancellationToken);
+
+            if (result != null)
+            {
+                result.SelectedProperties = selectedProperties;
+            }
+
+            return result;
         }
     }
 }

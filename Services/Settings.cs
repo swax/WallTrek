@@ -16,9 +16,9 @@ namespace WallTrek.Services
         public string Source { get; set; } = "current";
     }
 
-    public class RandomPromptsSettings : Dictionary<string, string[]>
+    public class DefaultRandomPrompts : Dictionary<string, string[]>
     {
-        public RandomPromptsSettings()
+        public DefaultRandomPrompts()
         {
             this["Category"] = new[]
             {
@@ -54,7 +54,7 @@ namespace WallTrek.Services
         public string? AnthropicApiKey { get; set; }
         public string? LastPrompt { get; set; }
         public AutoGenerateSettings AutoGenerate { get; set; } = new();
-        public RandomPromptsSettings RandomPrompts { get; set; } = new();
+        public Dictionary<string, string[]> RandomPrompts { get; set; } = new();
         public bool MinimizeToTray { get; set; } = true;
         public bool IsFirstRun { get; set; } = true;
         public string? OutputDirectory { get; set; }
@@ -134,7 +134,7 @@ namespace WallTrek.Services
             set => _model.AutoGenerate.Source = value;
         }
 
-        public RandomPromptsSettings RandomPrompts
+        public Dictionary<string, string[]> RandomPrompts
         {
             get => _model.RandomPrompts;
             set => _model.RandomPrompts = value;
