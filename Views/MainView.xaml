@@ -72,17 +72,9 @@
                         <Border Background="{ThemeResource SystemFillColorNeutralBrush}"
                                 CornerRadius="4"
                                 Padding="8,3">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <TextBlock Text="{Binding Key}"
-                                          FontSize="11"
-                                          Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
-                                <TextBlock Text=":"
-                                          FontSize="11"
-                                          Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
-                                <TextBlock Text="{Binding Value}"
-                                          FontSize="11"
-                                          Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
-                            </StackPanel>
+                            <TextBlock Text="{Binding}"
+                                      FontSize="11"
+                                      Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

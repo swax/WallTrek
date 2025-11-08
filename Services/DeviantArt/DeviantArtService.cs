@@ -27,16 +27,16 @@ namespace WallTrek.Services.DeviantArt
             {
                 AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
             };
-            
+
             var client = new HttpClient(handler);
-            
+
             // Set headers to avoid DA quirks
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             client.DefaultRequestHeaders.Add("User-Agent", "WallTrek/1.1");
-            
+
             // Disable Expect: 100-continue which can cause issues with chunked responses
             client.DefaultRequestHeaders.ExpectContinue = false;
-            
+
             return client;
         }
 
@@ -45,32 +45,32 @@ namespace WallTrek.Services.DeviantArt
             try
             {
                 var settings = Settings.Instance;
-                
+
                 if (string.IsNullOrEmpty(settings.DeviantArtClientId) || string.IsNullOrEmpty(settings.DeviantArtClientSecret))
                 {
-                    return new DeviantArtUploadResult 
-                    { 
-                        Success = false, 
-                        ErrorMessage = "DeviantArt credentials not configured. Please check settings." 
+                    return new DeviantArtUploadResult
+                    {
+                        Success = false,
+                        ErrorMessage = "DeviantArt credentials not configured. Please check settings."
                     };
                 }
 
                 if (!File.Exists(imagePath))
                 {
-                    return new DeviantArtUploadResult 
-                    { 
-                        Success = false, 
-                        ErrorMessage = "Image file not found." 
+                    return new DeviantArtUploadResult
+                    {
+                        Success = false,
+                        ErrorMessage = "Image file not found."
                     };
                 }
 
                 // Ensure we have a valid access token (this will trigger user auth if needed)
                 if (!await EnsureValidUserTokenAsync(settings.DeviantArtClientId, settings.DeviantArtClientSecret))
                 {
-                    return new DeviantArtUploadResult 
-                    { 
-                        Success = false, 
-                        ErrorMessage = "DeviantArt user authorization required. Please authorize the application first." 
+                    return new DeviantArtUploadResult
+                    {
+                        Success = false,
+                        ErrorMessage = "DeviantArt user authorization required. Please authorize the application first."
                     };
                 }
 
@@ -79,10 +79,10 @@ namespace WallTrek.Services.DeviantArt
             }
             catch (Exception ex)
             {
-                return new DeviantArtUploadResult 
-                { 
-                    Success = false, 
-                    ErrorMessage = $"Upload failed: {ex.Message}" 
+                return new DeviantArtUploadResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Upload failed: {ex.Message}"
                 };
             }
         }
@@ -131,7 +131,7 @@ namespace WallTrek.Services.DeviantArt
                 });
 
                 var response = await httpClient.PostAsync("https://www.deviantart.com/oauth2/token", tokenRequest);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
@@ -160,11 +160,11 @@ namespace WallTrek.Services.DeviantArt
                 });
 
                 var response = await httpClient.PostAsync("https://www.deviantart.com/oauth2/token", tokenRequest);
-                
+
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    
+
                     // Clear invalid tokens
                     accessToken = null;
                     refreshToken = null;
@@ -189,25 +189,25 @@ namespace WallTrek.Services.DeviantArt
                 if (tokenData.TryGetProperty("access_token", out var tokenElement))
                 {
                     accessToken = tokenElement.GetString();
-                    
+
                     // Get refresh token if provided
                     if (tokenData.TryGetProperty("refresh_token", out var refreshElement))
                     {
                         refreshToken = refreshElement.GetString();
                     }
-                    
+
                     // Set token expiry (default to 1 hour if not specified)
                     var expiresIn = 3600; // Default 1 hour
                     if (tokenData.TryGetProperty("expires_in", out var expiryElement))
                     {
                         expiresIn = expiryElement.GetInt32();
                     }
-                    
+
                     tokenExpiry = DateTime.UtcNow.AddSeconds(expiresIn - 60); // 1 minute buffer
-                    
+
                     // Save tokens to settings
                     SaveTokensToSettings();
-                    
+
                     return true;
                 }
 
@@ -313,7 +313,7 @@ namespace WallTrek.Services.DeviantArt
             {
                 // Step 1: Submit to stash
                 using var submitContent = new MultipartFormDataContent();
-                
+
                 // Add the image file
                 var imageBytes = await File.ReadAllBytesAsync(imagePath);
                 var imageContent = new ByteArrayContent(imageBytes);
@@ -322,6 +322,11 @@ namespace WallTrek.Services.DeviantArt
                 submitContent.Add(imageContent, "test", fileName);
 
                 // Add metadata for submit
+                if (title.Length > Settings.TitleCharacterMax)
+                {
+                    title = title.Substring(0, Settings.TitleCharacterMax);
+                }
+
                 submitContent.Add(new StringContent(accessToken!), "access_token");
                 submitContent.Add(new StringContent(title), "title");
                 submitContent.Add(new StringContent(description ?? ""), "artist_comments");
@@ -330,7 +335,7 @@ namespace WallTrek.Services.DeviantArt
                 // Add tags - always include walltrek tag
                 var allTags = new List<string> { "walltrek", "wallpaper" };
                 allTags.AddRange(tags);
-                
+
                 // Add model tags if provided
                 if (!string.IsNullOrEmpty(llmModel))
                 {
@@ -340,7 +345,7 @@ namespace WallTrek.Services.DeviantArt
                 {
                     allTags.Add(imgModel);
                 }
-                
+
                 // Sanitize tags and add them
                 foreach (var tag in allTags)
                 {
@@ -354,32 +359,32 @@ namespace WallTrek.Services.DeviantArt
                 // Set authorization header (don't clear default headers since we set Accept/User-Agent in CreateHttpClient)
                 if (httpClient.DefaultRequestHeaders.Authorization?.Parameter != accessToken)
                 {
-                    httpClient.DefaultRequestHeaders.Authorization = 
+                    httpClient.DefaultRequestHeaders.Authorization =
                         new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
                 }
-                
+
                 // Submit to stash
                 var submitResponse = await httpClient.PostAsync("https://www.deviantart.com/api/v1/oauth2/stash/submit", submitContent);
-                
+
                 var submitResponseContent = await submitResponse.Content.ReadAsStringAsync();
-                
+
                 // Handle submit response errors
                 if (!submitResponse.IsSuccessStatusCode)
                 {
-                    return new DeviantArtUploadResult 
-                    { 
-                        Success = false, 
-                        ErrorMessage = $"Submit failed: {submitResponse.StatusCode} - {submitResponseContent}" 
+                    return new DeviantArtUploadResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"Submit failed: {submitResponse.StatusCode} - {submitResponseContent}"
                     };
                 }
 
                 // Handle empty or whitespace-only responses
                 if (string.IsNullOrWhiteSpace(submitResponseContent))
                 {
-                    return new DeviantArtUploadResult 
-                    { 
-                        Success = false, 
-                        ErrorMessage = $"Empty response from submit (Status: {submitResponse.StatusCode})" 
+                    return new DeviantArtUploadResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"Empty response from submit (Status: {submitResponse.StatusCode})"
                     };
                 }
 
@@ -391,19 +396,19 @@ namespace WallTrek.Services.DeviantArt
                 }
                 catch (JsonException ex)
                 {
-                    return new DeviantArtUploadResult 
-                    { 
-                        Success = false, 
-                        ErrorMessage = $"Failed to parse submit response: {ex.Message}" 
+                    return new DeviantArtUploadResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"Failed to parse submit response: {ex.Message}"
                     };
                 }
 
                 if (!submitData.TryGetProperty("itemid", out var itemIdElement))
                 {
-                    return new DeviantArtUploadResult 
-                    { 
-                        Success = false, 
-                        ErrorMessage = $"Unexpected submit response (no itemid): {submitResponseContent.Substring(0, Math.Min(200, submitResponseContent.Length))}..." 
+                    return new DeviantArtUploadResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"Unexpected submit response (no itemid): {submitResponseContent.Substring(0, Math.Min(200, submitResponseContent.Length))}..."
                     };
                 }
                 var itemId = itemIdElement.GetInt64();
@@ -433,7 +438,7 @@ namespace WallTrek.Services.DeviantArt
 
                 // Add the album assignment
                 publishContent.Add(new StringContent(wallTrekFolderId), "galleryids[]");
-                
+
                 // Mirror flags from stash/submit
                 publishContent.Add(new StringContent("true"), "is_ai_generated");
                 publishContent.Add(new StringContent("false"), "noai");
@@ -443,10 +448,10 @@ namespace WallTrek.Services.DeviantArt
 
                 if (!publishResponse.IsSuccessStatusCode)
                 {
-                    return new DeviantArtUploadResult 
-                    { 
-                        Success = false, 
-                        ErrorMessage = $"Publish failed: {publishResponse.StatusCode} - {publishResponseContent}" 
+                    return new DeviantArtUploadResult
+                    {
+                        Success = false,
+                        ErrorMessage = $"Publish failed: {publishResponse.StatusCode} - {publishResponseContent}"
                     };
                 }
 
@@ -471,18 +476,18 @@ namespace WallTrek.Services.DeviantArt
                     deviantArtUrl = $"https://sta.sh/1{itemId}";
                 }
 
-                return new DeviantArtUploadResult 
-                { 
-                    Success = true, 
-                    DeviantArtUrl = deviantArtUrl 
+                return new DeviantArtUploadResult
+                {
+                    Success = true,
+                    DeviantArtUrl = deviantArtUrl
                 };
             }
             catch (Exception ex)
             {
-                return new DeviantArtUploadResult 
-                { 
-                    Success = false, 
-                    ErrorMessage = $"Upload error: {ex.Message}" 
+                return new DeviantArtUploadResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Upload error: {ex.Message}"
                 };
             }
         }

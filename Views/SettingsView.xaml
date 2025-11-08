@@ -108,7 +108,13 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     
-                    <TextBlock Grid.Row="0" Text="Random Prompt Settings (JSON)" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                    <StackPanel Grid.Row="0" Spacing="10" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <CheckBox x:Name="AddRandomWordsCheckBox" Content="Add this number of random words from the dictionary:" VerticalAlignment="Center"/>
+                            <NumberBox x:Name="RandomWordCountNumberBox" Value="5" Minimum="1" Maximum="50" Width="80" VerticalAlignment="Center" SpinButtonPlacementMode="Inline"/>
+                        </StackPanel>
+                        <TextBlock Text="Random Prompt Settings (JSON)" FontSize="16" FontWeight="SemiBold"/>
+                    </StackPanel>
                     
                     <ScrollViewer Grid.Row="1" ZoomMode="Disabled" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                         <TextBox x:Name="JsonTextBox" 

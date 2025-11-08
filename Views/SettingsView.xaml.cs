@@ -66,6 +66,10 @@ namespace WallTrek.Views
             
             // Load random prompt settings JSON
             LoadRandomPromptSettingsToUI();
+
+            // Load random words settings
+            AddRandomWordsCheckBox.IsChecked = settings.AddRandomWords;
+            RandomWordCountNumberBox.Value = settings.RandomWordCount;
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -97,7 +101,11 @@ namespace WallTrek.Views
             {
                 settings.AutoGenerateSource = selectedItem.Tag?.ToString() ?? "current";
             }
-            
+
+            // Save random words settings
+            settings.AddRandomWords = AddRandomWordsCheckBox.IsChecked ?? false;
+            settings.RandomWordCount = (int)RandomWordCountNumberBox.Value;
+
             // Handle startup setting - only update registry, no need to store in settings
             var runOnStartup = RunOnStartupCheckBox.IsChecked ?? false;
             StartupManager.SetStartupEnabled(runOnStartup);

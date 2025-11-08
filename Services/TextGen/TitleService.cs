@@ -14,9 +14,6 @@ namespace WallTrek.Services.TextGen
 
   public class TitleService
   {
-    const int TitleCharacterMax = 50;
-    const int MaxTags = 15;
-
     public async Task<TitleResult?> GenerateTitleAndTagsAsync(
         string imageDescription,
         CancellationToken cancellationToken = default)
@@ -31,9 +28,9 @@ namespace WallTrek.Services.TextGen
       );
 
       var systemPrompt =
-          "You are a creative assistant that generates titles and tags for AI-generated images. Create a short title that captures the essence of the image description. The title should be suitable for art sharing platforms like DeviantArt.";
+          "You are a creative assistant that generates titles and tags for AI-generated images. Create a short title, that captures the essence of the image description. The title should be suitable for art sharing platforms like DeviantArt.";
 
-      var userPrompt = $"Generate a DeviantArt-friendly short title (less than {TitleCharacterMax} characters) and tags that cover the style, mood, colors, subjects, and artistic elements for an image with this description: {imageDescription}. No more than {MaxTags} tags. Thanks!";
+      var userPrompt = $"Generate a DeviantArt-friendly short title (less than {Settings.TitleCharacterMax} characters) and tags that cover the style, mood, colors, subjects, and artistic elements for an image with this description: {imageDescription}. No more than {Settings.MaxTags} tags. Thanks!";
 
       // JSON Schema describing the object we want back
       var jsonSchema = """
@@ -60,16 +57,16 @@ namespace WallTrek.Services.TextGen
       if (response != null)
       {
         // Ensure title length constraint
-        if (response.Title.Length > TitleCharacterMax)
+        if (response.Title.Length > Settings.TitleCharacterMax)
         {
-          response.Title = response.Title.Substring(0, TitleCharacterMax);
+          response.Title = response.Title.Substring(0, Settings.TitleCharacterMax);
         }
 
         // Ensure max tags constraint
-        if (response.Tags.Length > MaxTags)
+        if (response.Tags.Length > Settings.MaxTags)
         {
           var tags = response.Tags;
-          Array.Resize(ref tags, MaxTags);
+          Array.Resize(ref tags, Settings.MaxTags);
           response.Tags = tags;
         }
       }

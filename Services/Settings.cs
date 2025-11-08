@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -67,10 +68,15 @@ namespace WallTrek.Services
         public string SelectedImageModel { get; set; } = "dalle-3";
         public string? GoogleApiKey { get; set; }
         public string? StabilityApiKey { get; set; }
+        public bool AddRandomWords { get; set; } = false;
+        public int RandomWordCount { get; set; } = 5;
     }
 
     public class Settings
     {
+        public static readonly int TitleCharacterMax = 50;
+        public static readonly int MaxTags = 15;
+
         private static readonly string SettingsPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "WallTrek",
@@ -198,6 +204,18 @@ namespace WallTrek.Services
         {
             get => _model.StabilityApiKey;
             set => _model.StabilityApiKey = value;
+        }
+
+        public bool AddRandomWords
+        {
+            get => _model.AddRandomWords;
+            set => _model.AddRandomWords = value;
+        }
+
+        public int RandomWordCount
+        {
+            get => _model.RandomWordCount;
+            set => _model.RandomWordCount = value;
         }
 
         public void Save()
