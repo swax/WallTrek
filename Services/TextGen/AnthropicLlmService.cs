@@ -41,7 +41,7 @@ namespace WallTrek.Services.TextGen
             };
 
             var result = await client.Messages.GetClaudeMessageAsync(parameters);
-            
+
             // Extract text from the response content
             var textContent = result.Content?.FirstOrDefault(c => c is TextContent) as TextContent;
             return textContent?.Text?.Trim() ?? string.Empty;
@@ -70,19 +70,32 @@ namespace WallTrek.Services.TextGen
                 new Message(RoleType.User, userPrompt)
             };
 
+            bool useThinking = true;
+
             var parameters = new MessageParameters
             {
                 Messages = messages,
                 Model = model,
-                MaxTokens = 1000,
+                MaxTokens = 10000,
                 System = new List<SystemMessage> { new SystemMessage(systemPrompt) },
                 Tools = tools,
-                ToolChoice = new ToolChoice
+                ToolChoice = useThinking ? new ToolChoice
                 {
-                    Type = ToolChoiceType.Tool,
+                    Type = ToolChoiceType.Auto
+                } : new ToolChoice
+                {
+                    Type = ToolChoiceType.Any,
                     Name = toolName
                 }
             };
+
+            if (useThinking)
+            {
+                parameters.Thinking = new ThinkingParameters
+                {
+                    BudgetTokens = 5000
+                };
+            }
 
             var result = await client.Messages.GetClaudeMessageAsync(parameters);
 
