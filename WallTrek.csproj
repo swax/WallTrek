@@ -56,6 +56,7 @@
 
   <ItemGroup>
     <PackageReference Include="Anthropic.SDK" Version="5.5.1" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.250402" />
     <PackageReference Include="Google_GenerativeAI" Version="3.2.0" />
     <PackageReference Include="H.NotifyIcon.WinUI" Version="2.3.0" />
     <PackageReference Include="OpenAI" Version="2.1.0" />

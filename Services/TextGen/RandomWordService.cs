@@ -15,7 +15,7 @@ namespace WallTrek.Services.TextGen
         {
             try
             {
-                var url = $"https://random-word-api.herokuapp.com/word?number={count}";
+                var url = $"https://random-word-api.vercel.app/api?words={count}";
                 var response = await _httpClient.GetAsync(url, cancellationToken);
                 response.EnsureSuccessStatusCode();
 
@@ -26,8 +26,7 @@ namespace WallTrek.Services.TextGen
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error fetching random words: {ex.Message}");
-                return new List<string>();
+                throw new Exception($"Error fetching random words: {ex.Message}");
             }
         }
     }

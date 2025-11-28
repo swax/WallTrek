@@ -6,6 +6,7 @@
     xmlns:local="using:WallTrek.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     mc:Ignorable="d">
 
     <Grid Margin="20">
@@ -51,6 +52,7 @@
                     <ComboBoxItem Content="OpenAI DALL-E 3" Tag="dalle-3"/>
                     <ComboBoxItem Content="Google Imagen 4.0" Tag="imagen-4.0-generate-001"/>
                     <ComboBoxItem Content="Google Imagen 4.0 Ultra" Tag="imagen-4.0-ultra-generate-001"/>
+                    <ComboBoxItem Content="Google Gemini 3 Pro Image Preview" Tag="gemini-3-pro-image-preview"/>
                 </ComboBox>
             </StackPanel>
             <TextBox x:Name="PromptTextBox"
@@ -64,7 +66,7 @@
             <ItemsControl x:Name="PropertiesBadgesControl" Margin="0,0,0,8">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal" Spacing="6"/>
+                        <controls:WrapPanel HorizontalSpacing="6" VerticalSpacing="6"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>

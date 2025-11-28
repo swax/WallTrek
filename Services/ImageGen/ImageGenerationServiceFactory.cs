@@ -15,6 +15,7 @@ namespace WallTrek.Services.ImageGen
                         throw new InvalidOperationException("OpenAI API key is required for DALL-E 3");
                     return new OpenAiImageGenerator(settings.ApiKey);
 
+                case "gemini-3-pro-image-preview":
                 case "imagen-4.0-generate-001":
                 case "imagen-4.0-ultra-generate-001":
                     if (string.IsNullOrEmpty(settings.GoogleApiKey))
