@@ -13,8 +13,7 @@
             ],
             "problemMatcher": "$msCompile",
             "group": {
-                "kind": "build",
-                "isDefault": true
+                "kind": "build"
             }
         },
         {
@@ -47,7 +46,9 @@
                 "${workspaceFolder}/WallTrek.csproj"
             ],
             "problemMatcher": "$msCompile",
-            "group": "test"
+            "group": {
+                "kind": "build"
+            }
         }
     ]
 }
