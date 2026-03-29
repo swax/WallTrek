@@ -6,8 +6,12 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using WallTrek.Services;
 using WallTrek.Services.DeviantArt;
@@ -147,22 +151,65 @@ namespace WallTrek.Views
             }
         }
 
+        private static readonly string ThumbnailCacheDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "WallTrek", "thumbnails");
+
         private async Task LoadThumbnailAsync(ImageGridItemViewModel viewModel)
         {
+            // Try StorageFile thumbnail (works when packaged)
             try
             {
                 var file = await StorageFile.GetFileFromPathAsync(viewModel.ImagePath);
                 var thumbnail = await file.GetThumbnailAsync(ThumbnailMode.PicturesView, 200);
 
-                var bitmapImage = new BitmapImage();
-                await bitmapImage.SetSourceAsync(thumbnail);
+                if (thumbnail != null)
+                {
+                    var bitmapImage = new BitmapImage();
+                    await bitmapImage.SetSourceAsync(thumbnail);
+                    viewModel.ThumbnailImage = bitmapImage;
+                    return;
+                }
+            }
+            catch { }
 
+            // Fallback: disk-cached thumbnail
+            try
+            {
+                var cachePath = GetThumbnailCachePath(viewModel.ImagePath);
+
+                if (!File.Exists(cachePath))
+                {
+                    await Task.Run(() => GenerateThumbnail(viewModel.ImagePath, cachePath));
+                }
+
+                var bitmapImage = new BitmapImage();
+                bitmapImage.DecodePixelWidth = 400;
+                bitmapImage.UriSource = new Uri(cachePath);
                 viewModel.ThumbnailImage = bitmapImage;
             }
-            catch
+            catch (Exception ex)
             {
-                // If thumbnail fails, ignore for now
+                System.Diagnostics.Debug.WriteLine($"Thumbnail failed for {viewModel.ImagePath}: {ex.Message}");
             }
+        }
+
+        private static string GetThumbnailCachePath(string imagePath)
+        {
+            var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(imagePath)));
+            return Path.Combine(ThumbnailCacheDir, hash + ".jpg");
+        }
+
+        private static void GenerateThumbnail(string sourcePath, string cachePath)
+        {
+            Directory.CreateDirectory(ThumbnailCacheDir);
+
+            using var original = new Bitmap(sourcePath);
+            int targetWidth = 400;
+            int targetHeight = (int)(original.Height * (targetWidth / (double)original.Width));
+
+            using var thumb = new Bitmap(original, targetWidth, targetHeight);
+            thumb.Save(cachePath, ImageFormat.Jpeg);
         }
 
         private void ImageButton_Click(object sender, RoutedEventArgs e)
