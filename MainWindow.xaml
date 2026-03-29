@@ -10,12 +10,20 @@
     mc:Ignorable="d">
 
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Custom Title Bar Drag Region -->
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="Transparent"/>
+
         <!-- Content Area -->
-        <views:MainView x:Name="MainViewControl"
+        <views:MainView x:Name="MainViewControl" Grid.Row="1"
                        Visibility="Visible"/>
-        <views:SettingsView x:Name="SettingsViewControl"
+        <views:SettingsView x:Name="SettingsViewControl" Grid.Row="1"
                            Visibility="Collapsed"/>
-        <views:ImageGridView x:Name="ImageGridViewControl"
+        <views:ImageGridView x:Name="ImageGridViewControl" Grid.Row="1"
                             Visibility="Collapsed"/>
     </Grid>
 </Window>

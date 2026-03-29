@@ -24,10 +24,9 @@ namespace WallTrek
             // Set window icon
             this.AppWindow.SetIcon("assets/walltrek.ico");
             
-            // Remove title bar
-            var titleBar = this.AppWindow.TitleBar;
-            titleBar.ExtendsContentIntoTitleBar = true;
-            titleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
+            // Custom title bar with drag region
+            this.ExtendsContentIntoTitleBar = true;
+            SetTitleBar(AppTitleBar);
             
             // Handle window state changes to minimize to tray based on setting
             this.AppWindow.Changed += AppWindow_Changed;
