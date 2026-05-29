@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using WallTrek.Services;
+using WallTrek.Services.TextGen;
 using WallTrek.Utilities;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -41,7 +42,7 @@ namespace WallTrek.Views
             AutoGenerateCheckBox.IsChecked = settings.AutoGenerateEnabled;
             AutoGenerateHoursNumberBox.Value = settings.AutoGenerateHours > 0 ? settings.AutoGenerateHours : 6.0;
             MinimizeToTrayCheckBox.IsChecked = settings.MinimizeToTray;
-            
+
             // Set auto-generate source dropdown
             foreach (ComboBoxItem item in AutoGenerateSourceComboBox.Items)
             {
@@ -51,25 +52,28 @@ namespace WallTrek.Views
                     break;
                 }
             }
-            
+
             // Default to first item if nothing was selected
             if (AutoGenerateSourceComboBox.SelectedItem == null)
             {
                 AutoGenerateSourceComboBox.SelectedIndex = 0;
             }
-            
+
             // Show/hide auto-generate options based on checkbox state
             UpdateAutoGenerateOptionsVisibility();
-            
+
             // Load startup setting from both settings and registry to ensure sync
             RunOnStartupCheckBox.IsChecked = StartupManager.IsStartupEnabled();
-            
+
             // Load random prompt settings JSON
             LoadRandomPromptSettingsToUI();
 
             // Load random words settings
             AddRandomWordsCheckBox.IsChecked = settings.AddRandomWords;
             RandomWordCountNumberBox.Value = settings.RandomWordCount;
+
+            // Load the effective random-word list (custom override or embedded default)
+            LoadRandomWordsToUI();
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -81,10 +85,18 @@ namespace WallTrek.Views
                 StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
                 return;
             }
-            
+
+            // Then validate and persist the random-word list (custom override file)
+            if (!TryParseAndSaveRandomWords(out string wordListError))
+            {
+                StatusTextBlock.Text = wordListError;
+                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                return;
+            }
+
             var settings = Settings.Instance;
             var previousHours = settings.AutoGenerateHours;
-            
+
             settings.ApiKey = ApiKeyTextBox.Text;
             settings.AnthropicApiKey = AnthropicApiKeyTextBox.Text;
             settings.GoogleApiKey = GoogleApiKeyTextBox.Text;
@@ -95,7 +107,7 @@ namespace WallTrek.Views
             settings.AutoGenerateEnabled = AutoGenerateCheckBox.IsChecked ?? false;
             settings.AutoGenerateHours = AutoGenerateHoursNumberBox.Value;
             settings.MinimizeToTray = MinimizeToTrayCheckBox.IsChecked ?? true;
-            
+
             // Save auto-generate source
             if (AutoGenerateSourceComboBox.SelectedItem is ComboBoxItem selectedItem)
             {
@@ -111,10 +123,10 @@ namespace WallTrek.Views
             StartupManager.SetStartupEnabled(runOnStartup);
 
             settings.Save();
-            
+
             // Refresh auto-generate service based on new settings
             // If hours changed and auto-generate is enabled, restart to recalculate next generation time
-            if (settings.AutoGenerateEnabled && settings.AutoGenerateHours > 0 && 
+            if (settings.AutoGenerateEnabled && settings.AutoGenerateHours > 0 &&
                 Math.Abs(previousHours - settings.AutoGenerateHours) > 0.001)
             {
                 AutoGenerateService.Instance.Start(settings.AutoGenerateHours);
@@ -123,10 +135,10 @@ namespace WallTrek.Views
             {
                 AutoGenerateService.Instance.RefreshFromSettings();
             }
-            
+
             StatusTextBlock.Text = "Settings saved successfully!";
             StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
-            
+
             // Navigate back to main view after saving
             NavigateToMain?.Invoke(this, EventArgs.Empty);
         }
@@ -137,7 +149,7 @@ namespace WallTrek.Views
             // Reload settings to discard changes
             LoadSettingsToUI();
             StatusTextBlock.Text = "";
-            
+
             // Navigate back to main view
             NavigateToMain?.Invoke(this, EventArgs.Empty);
         }
@@ -178,10 +190,10 @@ namespace WallTrek.Views
             settings.DeviantArtRefreshToken = null;
             settings.DeviantArtTokenExpiry = null;
             settings.Save();
-            
+
             StatusTextBlock.Text = "DeviantArt tokens cleared successfully!";
         }
-        
+
         private void LoadRandomPromptSettingsToUI()
         {
             var settings = Settings.Instance;
@@ -197,7 +209,7 @@ namespace WallTrek.Views
             string json = JsonSerializer.Serialize(randomPrompts, options);
             JsonTextBox.Text = json;
         }
-        
+
         private bool TryParseAndSaveRandomPromptSettings(out string errorMessage)
         {
             errorMessage = "";
@@ -275,8 +287,8 @@ namespace WallTrek.Views
                 return false;
             }
         }
-        
-        private void RestoreDefaultsButton_Click(object sender, RoutedEventArgs e)
+
+        private void RestorePromptDefaultsButton_Click(object sender, RoutedEventArgs e)
         {
             // Create a new RandomPromptsSettings to get the default values
             var defaultSettings = new DefaultRandomPrompts();
@@ -291,8 +303,65 @@ namespace WallTrek.Views
             string json = JsonSerializer.Serialize(defaultSettings, options);
             JsonTextBox.Text = json;
 
-            StatusTextBlock.Text = "Default settings restored. Click 'Save Settings' to apply.";
+            StatusTextBlock.Text = "Default prompt categories restored. Click 'Save Settings' to apply.";
             StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
+        }
+
+        private void LoadRandomWordsToUI()
+        {
+            // Show the override list if the user has one, otherwise the embedded default.
+            WordListTextBox.Text = RandomWordService.GetEffectiveWordListText();
+        }
+
+        private void RestoreWordsDefaultsButton_Click(object sender, RoutedEventArgs e)
+        {
+            WordListTextBox.Text = RandomWordService.GetDefaultWordListText();
+
+            StatusTextBlock.Text = "Default word list restored. Click 'Save Settings' to apply.";
+            StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
+        }
+
+        private bool TryParseAndSaveRandomWords(out string errorMessage)
+        {
+            errorMessage = "";
+
+            try
+            {
+                string text = WordListTextBox.Text ?? string.Empty;
+
+                // An empty editor means "fall back to the built-in default list".
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    RandomWordService.ClearOverride();
+                    return true;
+                }
+
+                var words = RandomWordService.ParseWords(text);
+                if (words.Count == 0)
+                {
+                    errorMessage = "The word list must contain at least one word (only comments or blank lines were found).";
+                    return false;
+                }
+
+                // If the edited list matches the embedded default, drop any override
+                // file so future updates to the built-in list still reach the user.
+                var defaultWords = RandomWordService.ParseWords(RandomWordService.GetDefaultWordListText());
+                if (words.SequenceEqual(defaultWords, StringComparer.OrdinalIgnoreCase))
+                {
+                    RandomWordService.ClearOverride();
+                }
+                else
+                {
+                    RandomWordService.SaveOverride(text);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error saving word list: {ex.Message}";
+                return false;
+            }
         }
 
         private void OpenDataFolderButton_Click(object sender, RoutedEventArgs e)

@@ -15,9 +15,9 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
+
         <TextBlock Grid.Row="0" Text="WallTrek Settings" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
-        
+
         <TabView Grid.Row="1" x:Name="SettingsTabView" IsAddTabButtonVisible="False">
             <!-- General Tab -->
             <TabViewItem Header="General" IsClosable="False">
@@ -34,7 +34,7 @@
                                 <Button x:Name="BrowseButton" Grid.Column="1" Content="Browse..." Click="BrowseButton_Click" Margin="10,0,0,0"/>
                             </Grid>
                         </StackPanel>
-                        
+
                         <StackPanel Spacing="10">
                             <CheckBox x:Name="AutoGenerateCheckBox" Content="Auto-generate wallpapers" VerticalAlignment="Center" Checked="AutoGenerateCheckBox_CheckChanged" Unchecked="AutoGenerateCheckBox_CheckChanged"/>
                             <StackPanel x:Name="AutoGenerateOptionsPanel" Orientation="Horizontal" Spacing="10" Visibility="Collapsed">
@@ -47,7 +47,7 @@
                                 </ComboBox>
                             </StackPanel>
                         </StackPanel>
-                        
+
                         <StackPanel Spacing="10">
                             <CheckBox x:Name="MinimizeToTrayCheckBox" Content="Minimize to System Tray" IsChecked="True"/>
                             <CheckBox x:Name="RunOnStartupCheckBox" Content="Run on Windows Startup"/>
@@ -60,7 +60,7 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabViewItem>
-            
+
             <!-- API Tab -->
             <TabViewItem Header="API" IsClosable="False">
                 <ScrollViewer>
@@ -69,12 +69,12 @@
                             <TextBlock Text="OpenAI API Key:" FontWeight="SemiBold"/>
                             <TextBox x:Name="ApiKeyTextBox" PlaceholderText="Enter your OpenAI API key" Width="400" HorizontalAlignment="Left"/>
                         </StackPanel>
-                        
+
                         <StackPanel Spacing="10">
                             <TextBlock Text="Anthropic API Key:" FontWeight="SemiBold"/>
                             <TextBox x:Name="AnthropicApiKeyTextBox" PlaceholderText="Enter your Anthropic API key" Width="400" HorizontalAlignment="Left"/>
                         </StackPanel>
-                        
+
                         <StackPanel Spacing="10">
                             <TextBlock Text="Google API Key:" FontWeight="SemiBold"/>
                             <TextBox x:Name="GoogleApiKeyTextBox" PlaceholderText="Enter your Google API key" Width="400" HorizontalAlignment="Left"/>
@@ -98,45 +98,83 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabViewItem>
-            
+
             <!-- Random Prompt Tab -->
             <TabViewItem Header="Random Prompt" IsClosable="False">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    
-                    <StackPanel Grid.Row="0" Spacing="10" Margin="0,0,0,10">
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <CheckBox x:Name="AddRandomWordsCheckBox" Content="Add this number of random words from the dictionary:" VerticalAlignment="Center"/>
-                            <NumberBox x:Name="RandomWordCountNumberBox" Value="5" Minimum="1" Maximum="50" Width="80" VerticalAlignment="Center" SpinButtonPlacementMode="Inline"/>
+                <Grid Margin="10" ColumnSpacing="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Left panel: Random prompt categories (JSON) -->
+                    <Grid Grid.Column="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,10">
+                            <TextBlock Text="Random Prompt Categories (JSON)" FontSize="16" FontWeight="SemiBold"/>
+                            <TextBlock Text="Categories and values the AI draws from when building a random prompt."
+                                       TextWrapping="Wrap" FontSize="12" Opacity="0.7"/>
                         </StackPanel>
-                        <TextBlock Text="Random Prompt Settings (JSON)" FontSize="16" FontWeight="SemiBold"/>
-                    </StackPanel>
-                    
-                    <ScrollViewer Grid.Row="1" ZoomMode="Disabled" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                        <TextBox x:Name="JsonTextBox" 
-                                 AcceptsReturn="True" 
-                                 TextWrapping="NoWrap" 
-                                 FontFamily="Consolas"
-                                 FontSize="12"
-                                 MinHeight="400"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
-                    </ScrollViewer>
-                    
-                    <Button Grid.Row="2" x:Name="RestoreDefaultsButton" Content="Restore Defaults" Click="RestoreDefaultsButton_Click" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+
+                        <ScrollViewer Grid.Row="1" ZoomMode="Disabled" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                            <TextBox x:Name="JsonTextBox"
+                                     AcceptsReturn="True"
+                                     TextWrapping="NoWrap"
+                                     FontFamily="Consolas"
+                                     FontSize="12"
+                                     MinHeight="360"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                        </ScrollViewer>
+
+                        <Button Grid.Row="2" x:Name="RestorePromptDefaultsButton" Content="Restore Defaults" Click="RestorePromptDefaultsButton_Click" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+                    </Grid>
+
+                    <!-- Right panel: Random words -->
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,10">
+                            <TextBlock Text="Random Words" FontSize="16" FontWeight="SemiBold"/>
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <CheckBox x:Name="AddRandomWordsCheckBox" Content="Add this many random words:" VerticalAlignment="Center"/>
+                                <NumberBox x:Name="RandomWordCountNumberBox" Value="5" Minimum="1" Maximum="50" Width="80" VerticalAlignment="Center" SpinButtonPlacementMode="Inline"/>
+                            </StackPanel>
+                            <TextBlock Text="One word per line; lines starting with # are ignored. Edit or paste your own list — custom lists are saved to words.txt in the WallTrek data folder."
+                                       TextWrapping="Wrap" FontSize="12" Opacity="0.7"/>
+                        </StackPanel>
+
+                        <ScrollViewer Grid.Row="1" ZoomMode="Disabled" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                            <TextBox x:Name="WordListTextBox"
+                                     AcceptsReturn="True"
+                                     TextWrapping="NoWrap"
+                                     FontFamily="Consolas"
+                                     FontSize="12"
+                                     MinHeight="360"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                        </ScrollViewer>
+
+                        <Button Grid.Row="2" x:Name="RestoreWordsDefaultsButton" Content="Restore Defaults" Click="RestoreWordsDefaultsButton_Click" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+                    </Grid>
                 </Grid>
             </TabViewItem>
         </TabView>
-        
+
         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" Margin="0,20,0,0">
             <Button x:Name="SaveButton" Content="Save Settings" Click="SaveButton_Click" Style="{StaticResource AccentButtonStyle}"/>
             <Button x:Name="CancelButton" Content="Cancel" Click="CancelButton_Click"/>
         </StackPanel>
-        
+
         <TextBlock Grid.Row="3" x:Name="StatusTextBlock" Text="" Foreground="LimeGreen" Margin="0,10,0,0"/>
     </Grid>
 </UserControl>

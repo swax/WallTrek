@@ -45,6 +45,12 @@
     </None>
   </ItemGroup>
 
+  <!-- Offline word list sampled for random prompt generation (see RandomWordService) -->
+  <ItemGroup>
+    <None Remove="Services\TextGen\words.txt" />
+    <EmbeddedResource Include="Services\TextGen\words.txt" />
+  </ItemGroup>
+
   <!-- Include generated XAML files for C# Dev Kit IntelliSense -->
   <ItemGroup Condition="'$(DesignTimeBuild)' == 'true'">
     <Compile Include="$(IntermediateOutputPath)**/*.cs">
