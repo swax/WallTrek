@@ -40,7 +40,7 @@ namespace WallTrek.Services.TextGen
                 Temperature = 0.7m
             };
 
-            var result = await client.Messages.GetClaudeMessageAsync(parameters);
+            var result = await client.Messages.GetClaudeMessageAsync(parameters, cancellationToken);
 
             // Extract text from the response content
             var textContent = result.Content?.FirstOrDefault(c => c is TextContent) as TextContent;
@@ -89,7 +89,7 @@ namespace WallTrek.Services.TextGen
                 }
             };
 
-            var result = await client.Messages.GetClaudeMessageAsync(parameters);
+            var result = await client.Messages.GetClaudeMessageAsync(parameters, cancellationToken);
 
             // Look for the tool use in the response
             var toolUse = result.Content?

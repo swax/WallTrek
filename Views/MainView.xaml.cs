@@ -287,6 +287,10 @@ namespace WallTrek.Views
                     }
                 }
 
+                // A cancel may have arrived during the synchronous gaps between API calls
+                // (e.g. upscale cropping). Honor it before we persist and swap the wallpaper.
+                _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+
                 // Save image with metadata
                 var fileService = new FileService(Settings.Instance.OutputDirectory);
                 var title = _currentPromptGenerationResult.Title;
