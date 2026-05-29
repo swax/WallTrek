@@ -10,6 +10,8 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using mul
 
 - **Multi-provider AI support** - Choose between OpenAI GPT Image and Google Imagen/Gemini for image generation
 - **Flexible LLM integration** - Use OpenAI GPT models or Anthropic Claude for text generation and image descriptions
+- **Cost-aware model picker** - Choose image, LLM, and upscale models from dropdowns showing dimensions and approximate per-image/per-prompt prices, with a live total-cost estimate
+- **Optional 4K upscaling** - Enlarge wallpapers with Stability AI upscalers (Fast, Conservative, or Creative)
 - **Customizable random prompts** - Configure random elements at the key level for varied prompt generation
 - **Prompt history management** with search, favorites, usage tracking, and model metadata
 - **DeviantArt integration** - upload and share generated wallpapers with auto-generated titles and tags, including "I'm feeling lucky" quick upload
@@ -33,6 +35,7 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
   - OpenAI API key (for GPT Image and GPT models)
   - Google AI API key (for Imagen and Gemini image generation)
   - Anthropic API key (for Claude models and image descriptions)
+  - Stability AI API key (optional, for image upscaling)
 - DeviantArt API credentials (optional, for upload functionality)
 
 ## Installation
@@ -59,7 +62,8 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
    - **OpenAI**: Enter API key and select GPT model for text generation
    - **Google AI**: Enter API key for Imagen and Gemini image generation
    - **Anthropic**: Enter API key for Claude models and image descriptions
-3. **Provider Selection**: Choose your preferred image generation and LLM services in the main interface
+   - **Stability AI** (optional): Enter API key to enable image upscaling
+3. **Provider Selection**: Choose your image, LLM, and upscale models from the main interface — each dropdown shows an approximate price and the total cost estimate updates live
 4. **DeviantArt Setup** (Optional): Configure DeviantArt Client ID and Secret for upload functionality
 5. **Auto-Generation**: Configure generation interval and choose between:
    - **Current Prompt**: Use your saved prompt for auto-generation
@@ -91,6 +95,7 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
 - **Services/ImageGen/OpenAiImageGenerator**: OpenAI GPT Image (gpt-image) generation implementation
 - **Services/ImageGen/ImageGenerationServiceFactory**: Creates appropriate image generation service instances
 - **Services/ImageGen/GoogleImagenService**: Google Imagen (predict) and Gemini (generateContent) image generation integration
+- **Services/ImageGen/UpscaleService**: Stability AI image upscaling (Fast, Conservative, and Creative tiers)
 - **Services/FileService**: Image file persistence with EXIF metadata handling
 - **Services/TextGen/LlmServiceFactory**: Creates appropriate LLM service instances
 - **Services/TextGen/OpenAILlmService**: OpenAI GPT API integration for text generation

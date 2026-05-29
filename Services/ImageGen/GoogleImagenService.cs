@@ -8,13 +8,17 @@ namespace WallTrek.Services.ImageGen
     {
         private readonly string apiKey;
         private readonly string model;
+        private readonly string imageSize;
+        private readonly string aspectRatio;
         private readonly HttpClient httpClient;
         private const string BaseUrl = "https://generativelanguage.googleapis.com/v1beta";
 
-        public GoogleImagenService(string apiKey, string model)
+        public GoogleImagenService(string apiKey, string model, string imageSize, string aspectRatio)
         {
             this.apiKey = apiKey ?? throw new ArgumentNullException(nameof(apiKey));
             this.model = model ?? throw new ArgumentNullException(nameof(model));
+            this.imageSize = imageSize;
+            this.aspectRatio = aspectRatio;
             this.httpClient = new HttpClient();
         }
 
@@ -40,8 +44,8 @@ namespace WallTrek.Services.ImageGen
                     outputMimeType = "image/jpeg",
                     sampleCount = 1,
                     personGeneration = "ALLOW_ALL",
-                    aspectRatio = "16:9",
-                    imageSize = "2K"
+                    aspectRatio = this.aspectRatio,
+                    imageSize = this.imageSize
                 }
             };
 
@@ -102,8 +106,8 @@ namespace WallTrek.Services.ImageGen
                     responseModalities = new[] { "IMAGE" },
                     imageConfig = new
                     {
-                        aspectRatio = "16:9",
-                        imageSize = "2K"
+                        aspectRatio = this.aspectRatio,
+                        imageSize = this.imageSize
                     }
                 }
             };

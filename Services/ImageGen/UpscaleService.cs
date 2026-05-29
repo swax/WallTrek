@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Text.Json;
 
 namespace WallTrek.Services.ImageGen
 {
@@ -7,8 +8,11 @@ namespace WallTrek.Services.ImageGen
     {
         private readonly string? apiKey;
         private readonly HttpClient httpClient;
-        private const string BaseUrl = "https://api.stability.ai/v2beta/stable-image/upscale/fast";
-        private const int PixelMax = 1_048_576; // Maximum pixels allowed by Stability AI API
+        private const string FastUrl = "https://api.stability.ai/v2beta/stable-image/upscale/fast";
+        private const string ConservativeUrl = "https://api.stability.ai/v2beta/stable-image/upscale/conservative";
+        private const string CreativeUrl = "https://api.stability.ai/v2beta/stable-image/upscale/creative";
+        private const string ResultsUrl = "https://api.stability.ai/v2beta/results/";
+        private const int PixelMax = 1_048_576; // Stability fast/creative upscalers require <= 1 MP input
         private readonly string logFilePath;
 
         public UpscaleService(string? apiKey)
@@ -23,26 +27,36 @@ namespace WallTrek.Services.ImageGen
             this.logFilePath = Path.Combine(wallTrekPath, "upscale.log");
         }
 
-        public async Task<byte[]> UpscaleImageAsync(byte[] imageData, CancellationToken cancellationToken = default)
+        public async Task<byte[]> UpscaleImageAsync(byte[] imageData, UpscaleMode mode, string prompt, CancellationToken cancellationToken = default)
         {
-            var format = ImageFormat.Jpeg;
-
-            // If no API key is configured, return the original image
-            if (string.IsNullOrEmpty(apiKey))
+            // No upscaling requested, or no key configured: return the original image untouched.
+            if (mode == UpscaleMode.None || string.IsNullOrEmpty(apiKey))
             {
                 return imageData;
             }
 
-            // Crop image if it exceeds the pixel max
-            imageData = CropImageIfNeeded(imageData, format);
+            var format = ImageFormat.Jpeg;
 
-            // Determine output format based on ImageFormat
+            // Fast and creative upscalers require <= 1 MP input; conservative tolerates larger, but
+            // downscaling first is harmless. Crop to 16:9 within the limit in all cases.
+            imageData = CropImageIfNeeded(imageData, format);
             string outputFormat = GetOutputFormat(format);
 
-            // Create multipart form data
-            using var formData = new MultipartFormDataContent();
+            return mode switch
+            {
+                UpscaleMode.Fast => await PostSyncUpscaleAsync(FastUrl, imageData, format, outputFormat, prompt: null, cancellationToken),
+                UpscaleMode.Conservative => await PostSyncUpscaleAsync(ConservativeUrl, imageData, format, outputFormat, prompt, cancellationToken),
+                UpscaleMode.Creative => await CreativeUpscaleAsync(imageData, format, outputFormat, prompt, cancellationToken),
+                _ => imageData
+            };
+        }
 
-            // Add image with explicit Content-Disposition
+        // Builds the multipart form (image + output_format, plus an optional guiding prompt that the
+        // conservative and creative upscalers require).
+        private MultipartFormDataContent BuildForm(byte[] imageData, ImageFormat format, string outputFormat, string? prompt)
+        {
+            var formData = new MultipartFormDataContent();
+
             var imageStream = new MemoryStream(imageData);
             var imageContent = new StreamContent(imageStream);
             imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(GetMimeType(format));
@@ -53,45 +67,103 @@ namespace WallTrek.Services.ImageGen
             };
             formData.Add(imageContent);
 
-            // Add output format with explicit Content-Disposition
-            var outputFormatContent = new StringContent(outputFormat);
-            outputFormatContent.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("form-data")
-            {
-                Name = "\"output_format\""
-            };
-            formData.Add(outputFormatContent);
+            AddField(formData, "output_format", outputFormat);
 
-            // Set authorization header
+            if (!string.IsNullOrWhiteSpace(prompt))
+            {
+                AddField(formData, "prompt", prompt);
+            }
+
+            return formData;
+        }
+
+        private static void AddField(MultipartFormDataContent form, string name, string value)
+        {
+            var content = new StringContent(value);
+            content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("form-data")
+            {
+                Name = $"\"{name}\""
+            };
+            form.Add(content);
+        }
+
+        private void SetAuthHeaders(string accept)
+        {
             httpClient.DefaultRequestHeaders.Clear();
             httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-            httpClient.DefaultRequestHeaders.Add("Accept", "image/*");
+            httpClient.DefaultRequestHeaders.Add("Accept", accept);
+        }
 
-            // Make API request
-            var response = await httpClient.PostAsync(BaseUrl, formData, cancellationToken);
+        // Fast and conservative upscalers return the image synchronously.
+        private async Task<byte[]> PostSyncUpscaleAsync(string url, byte[] imageData, ImageFormat format, string outputFormat, string? prompt, CancellationToken cancellationToken)
+        {
+            using var formData = BuildForm(imageData, format, outputFormat, prompt);
+            SetAuthHeaders("image/*");
 
+            var response = await httpClient.PostAsync(url, formData, cancellationToken);
+            await EnsureNotFilteredOrFailed(response);
+
+            var upscaledImageData = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            LogUpscaledDimensions(upscaledImageData);
+            return upscaledImageData;
+        }
+
+        // The creative upscaler is asynchronous: POST returns a generation id, then we poll
+        // /v2beta/results/{id} (202 = still running, 200 = finished image) until it is ready.
+        private async Task<byte[]> CreativeUpscaleAsync(byte[] imageData, ImageFormat format, string outputFormat, string prompt, CancellationToken cancellationToken)
+        {
+            using var formData = BuildForm(imageData, format, outputFormat, prompt);
+            SetAuthHeaders("application/json");
+
+            var startResponse = await httpClient.PostAsync(CreativeUrl, formData, cancellationToken);
+            if (!startResponse.IsSuccessStatusCode)
+            {
+                var err = await startResponse.Content.ReadAsStringAsync();
+                throw new InvalidOperationException($"Stability AI creative upscale request failed: {startResponse.StatusCode} - {err}");
+            }
+
+            var startJson = await startResponse.Content.ReadAsStringAsync(cancellationToken);
+            using var doc = JsonDocument.Parse(startJson);
+            if (!doc.RootElement.TryGetProperty("id", out var idElement) || idElement.GetString() is not string id)
+            {
+                throw new InvalidOperationException("Stability AI creative upscale did not return a generation id");
+            }
+
+            // Poll for the result (creative upscales typically finish within ~10-40s).
+            for (int attempt = 0; attempt < 40; attempt++)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+
+                SetAuthHeaders("image/*");
+                var poll = await httpClient.GetAsync($"{ResultsUrl}{id}", cancellationToken);
+
+                if (poll.StatusCode == System.Net.HttpStatusCode.Accepted)
+                {
+                    continue; // still generating
+                }
+
+                await EnsureNotFilteredOrFailed(poll);
+                var upscaledImageData = await poll.Content.ReadAsByteArrayAsync(cancellationToken);
+                LogUpscaledDimensions(upscaledImageData);
+                return upscaledImageData;
+            }
+
+            throw new InvalidOperationException("Stability AI creative upscale timed out");
+        }
+
+        private static async Task EnsureNotFilteredOrFailed(HttpResponseMessage response)
+        {
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
                 throw new InvalidOperationException($"Stability AI upscale API request failed: {response.StatusCode} - {errorContent}");
             }
 
-            // Check for content filtering
-            if (response.Headers.TryGetValues("finish-reason", out var finishReasons))
+            if (response.Headers.TryGetValues("finish-reason", out var finishReasons)
+                && finishReasons.FirstOrDefault() == "CONTENT_FILTERED")
             {
-                var finishReason = finishReasons.FirstOrDefault();
-                if (finishReason == "CONTENT_FILTERED")
-                {
-                    throw new InvalidOperationException("Image upscaling failed NSFW classifier");
-                }
+                throw new InvalidOperationException("Image upscaling failed NSFW classifier");
             }
-
-            // Read and return upscaled image
-            var upscaledImageData = await response.Content.ReadAsByteArrayAsync();
-
-            // Log final upscaled dimensions
-            LogUpscaledDimensions(upscaledImageData);
-
-            return upscaledImageData;
         }
 
         private byte[] CropImageIfNeeded(byte[] imageData, ImageFormat format)
@@ -157,7 +229,7 @@ namespace WallTrek.Services.ImageGen
             if (resizeWidth != originalWidth || resizeHeight != originalHeight)
             {
                 logEntry += $"\nResized to: {resizeWidth}x{resizeHeight}";
-            
+
                 resizedImage = new Bitmap(resizeWidth, resizeHeight);
                 using (var g = Graphics.FromImage(resizedImage))
                 {

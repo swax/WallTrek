@@ -68,39 +68,25 @@ namespace WallTrek.Views
             var settings = Settings.Instance;
             PromptTextBox.Text = settings.LastPrompt ?? "";
             
-            // Set the LLM selection dropdown
-            var selectedModel = settings.SelectedLlmModel;
-            foreach (ComboBoxItem item in LlmSelectionComboBox.Items)
-            {
-                if (item.Tag?.ToString() == selectedModel)
-                {
-                    LlmSelectionComboBox.SelectedItem = item;
-                    break;
-                }
-            }
+            // Populate the LLM dropdown from the catalog and select the saved model.
+            LlmSelectionComboBox.ItemsSource = LlmModelCatalog.Options;
+            LlmSelectionComboBox.SelectedItem =
+                LlmModelCatalog.FindById(settings.SelectedLlmModel) ?? LlmModelCatalog.Default;
             
-            // Set default if nothing was selected
-            if (LlmSelectionComboBox.SelectedItem == null && LlmSelectionComboBox.Items.Count > 0)
-            {
-                LlmSelectionComboBox.SelectedIndex = 0;
-            }
-            
-            // Set the Image Model selection dropdown
-            var selectedImageModel = settings.SelectedImageModel;
-            foreach (ComboBoxItem item in ImageModelSelectionComboBox.Items)
-            {
-                if (item.Tag?.ToString() == selectedImageModel)
-                {
-                    ImageModelSelectionComboBox.SelectedItem = item;
-                    break;
-                }
-            }
-            
-            // Set default if nothing was selected
-            if (ImageModelSelectionComboBox.SelectedItem == null && ImageModelSelectionComboBox.Items.Count > 0)
-            {
-                ImageModelSelectionComboBox.SelectedIndex = 0;
-            }
+            // Populate the Image Model dropdown from the catalog and select the saved option.
+            // Legacy settings stored a bare model id, so fall back to matching by model id.
+            ImageModelSelectionComboBox.ItemsSource = ImageModelCatalog.Options;
+            ImageModelSelectionComboBox.SelectedItem =
+                ImageModelCatalog.FindById(settings.SelectedImageModel)
+                ?? ImageModelCatalog.FindByModelId(settings.SelectedImageModel)
+                ?? ImageModelCatalog.Default;
+
+            // Populate the Upscale dropdown and select the saved option.
+            UpscalerSelectionComboBox.ItemsSource = UpscalerCatalog.Options;
+            UpscalerSelectionComboBox.SelectedItem =
+                UpscalerCatalog.FindById(settings.SelectedUpscaler) ?? UpscalerCatalog.Default;
+
+            UpdateCostEstimate();
         }
 
         private async void GenerateButton_Click(object sender, RoutedEventArgs e)
@@ -119,20 +105,19 @@ namespace WallTrek.Views
             Settings.Instance.LastPrompt = PromptTextBox.Text;
             Settings.Instance.Save();
 
-            var selectedImageModel = Settings.Instance.SelectedImageModel;
+            // Resolve the selected image option (from the dropdown, falling back to saved settings).
+            var selectedOption = ImageModelSelectionComboBox.SelectedItem as ImageModelOption
+                ?? ImageModelCatalog.FindById(Settings.Instance.SelectedImageModel)
+                ?? ImageModelCatalog.Default;
 
-            // Check if required API key is available based on selected image model.
-            // Google: Imagen (imagen-*) and Gemini (gemini-*). OpenAI: gpt-image-* (and legacy dall-e-*).
-            bool isGoogleModel = selectedImageModel.StartsWith("imagen") || selectedImageModel.StartsWith("gemini");
-            bool isOpenAiModel = selectedImageModel.StartsWith("gpt-image") || selectedImageModel.StartsWith("dall-e");
-
-            if (isGoogleModel && string.IsNullOrEmpty(Settings.Instance.GoogleApiKey))
+            // Check the required API key for the selected provider.
+            if (selectedOption.Provider == ImageProvider.Google && string.IsNullOrEmpty(Settings.Instance.GoogleApiKey))
             {
                 SetStatus("Please set your Google API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
                 NavigateToSettings?.Invoke(this, EventArgs.Empty);
                 return;
             }
-            else if (isOpenAiModel && string.IsNullOrEmpty(Settings.Instance.ApiKey))
+            else if (selectedOption.Provider == ImageProvider.OpenAI && string.IsNullOrEmpty(Settings.Instance.ApiKey))
             {
                 SetStatus("Please set your OpenAI API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
                 NavigateToSettings?.Invoke(this, EventArgs.Empty);
@@ -151,7 +136,7 @@ namespace WallTrek.Views
             {
                 SetGeneratingState(true);
                 SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
-                Logger.Info($"Generating wallpaper — image model: {Settings.Instance.SelectedImageModel}, LLM: {Settings.Instance.SelectedLlmModel}");
+                Logger.Info($"Generating wallpaper — image: {selectedOption.Id}, LLM: {Settings.Instance.SelectedLlmModel}");
 
                 // If we don't have a cached prompt generation result (e.g., user typed their own prompt),
                 // generate title and tags from the prompt
@@ -180,11 +165,11 @@ namespace WallTrek.Views
 
                 SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
 
-                var imageGenerator = ImageGenerationServiceFactory.CreateService(Settings.Instance.SelectedImageModel);
+                var imageGenerator = ImageGenerationServiceFactory.CreateService(selectedOption);
 
                 // Get current model selections from UI
-                var currentLlmModel = (LlmSelectionComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
-                var currentImgModel = (ImageModelSelectionComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+                var currentLlmModel = (LlmSelectionComboBox.SelectedItem as LlmModelOption)?.ModelId;
+                var currentImgModel = selectedOption.ModelId;
 
                 if (string.IsNullOrEmpty(currentLlmModel))
                 {
@@ -203,14 +188,22 @@ namespace WallTrek.Views
                 // Generate image
                 var result = await imageGenerator.GenerateImage(PromptTextBox.Text, _cancellationTokenSource.Token);
 
-                // Upscale image
-                if (!string.IsNullOrEmpty(Settings.Instance.StabilityApiKey))
+                // Upscale image (Stability AI) when a tier other than "None" is selected.
+                var selectedUpscaler = UpscalerSelectionComboBox.SelectedItem as UpscalerOption
+                    ?? UpscalerCatalog.FindById(Settings.Instance.SelectedUpscaler)
+                    ?? UpscalerCatalog.Default;
+
+                if (selectedUpscaler.Mode != UpscaleMode.None && string.IsNullOrEmpty(Settings.Instance.StabilityApiKey))
+                {
+                    Logger.Warn($"Upscaler '{selectedUpscaler.Id}' selected but no Stability API key is set — skipping upscale.");
+                }
+                else if (selectedUpscaler.Mode != UpscaleMode.None)
                 {
                     try
                     {
-                        SetStatus("Upscaling image...", Microsoft.UI.Colors.DodgerBlue);
+                        SetStatus($"Upscaling image ({selectedUpscaler.Name})...", Microsoft.UI.Colors.DodgerBlue);
                         var upscaleService = new UpscaleService(Settings.Instance.StabilityApiKey);
-                        result.ImageData = await upscaleService.UpscaleImageAsync(result.ImageData, _cancellationTokenSource.Token);
+                        result.ImageData = await upscaleService.UpscaleImageAsync(result.ImageData, selectedUpscaler.Mode, PromptTextBox.Text, _cancellationTokenSource.Token);
                         tags.Add("stability_ai");
                         tags.Add("4k");
                     }
@@ -302,6 +295,7 @@ namespace WallTrek.Views
         private void SetGeneratingState(bool generating)
         {
             GenerateButton.IsEnabled = !generating;
+            RandomImageButton.IsEnabled = !generating;
             CancelButton.Visibility = generating ? Visibility.Visible : Visibility.Collapsed;
             RandomPromptButton.IsEnabled = !generating;
             PromptTextBox.IsEnabled = !generating;
@@ -313,13 +307,13 @@ namespace WallTrek.Views
             await GenerateRandomPrompt();
         }
 
-        private async Task GenerateRandomPrompt()
+        private async Task<bool> GenerateRandomPrompt()
         {
             if (string.IsNullOrEmpty(Settings.Instance.ApiKey))
             {
                 SetStatus("Please set your OpenAI API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
                 NavigateToSettings?.Invoke(this, EventArgs.Empty);
-                return;
+                return false;
             }
 
             _cancellationTokenSource = new CancellationTokenSource();
@@ -339,20 +333,22 @@ namespace WallTrek.Views
                     PromptTextBox.Text = result.Prompt;
                     PropertiesBadgesControl.ItemsSource = result.SelectedProperties;
                     SetStatus("Random prompt generated!", Microsoft.UI.Colors.LimeGreen);
+                    return true;
                 }
-                else
-                {
-                    SetStatus("Failed to generate random prompt.", Microsoft.UI.Colors.OrangeRed);
-                }
+
+                SetStatus("Failed to generate random prompt.", Microsoft.UI.Colors.OrangeRed);
+                return false;
             }
             catch (OperationCanceledException)
             {
                 SetStatus("Random prompt generation cancelled.", Microsoft.UI.Colors.Orange);
+                return false;
             }
             catch (Exception ex)
             {
                 Logger.Error("Random prompt generation failed", ex);
                 SetStatus($"Error generating random prompt: {ex.Message}", Microsoft.UI.Colors.OrangeRed);
+                return false;
             }
             finally
             {
@@ -364,28 +360,60 @@ namespace WallTrek.Views
 
         private void LlmSelectionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (LlmSelectionComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag != null)
+            if (LlmSelectionComboBox.SelectedItem is LlmModelOption option)
             {
-                var selectedModel = selectedItem.Tag.ToString();
-                if (selectedModel != null)
-                {
-                    Settings.Instance.SelectedLlmModel = selectedModel;
-                    Settings.Instance.Save();
-                }
+                Settings.Instance.SelectedLlmModel = option.ModelId;
+                Settings.Instance.Save();
             }
+            UpdateCostEstimate();
         }
 
         private void ImageModelSelectionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ImageModelSelectionComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag != null)
+            if (ImageModelSelectionComboBox.SelectedItem is ImageModelOption option)
             {
-                var selectedModel = selectedItem.Tag.ToString();
-                if (selectedModel != null)
-                {
-                    Settings.Instance.SelectedImageModel = selectedModel;
-                    Settings.Instance.Save();
-                }
+                Settings.Instance.SelectedImageModel = option.Id;
+                Settings.Instance.Save();
             }
+            UpdateCostEstimate();
+        }
+
+        private void UpscalerSelectionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (UpscalerSelectionComboBox.SelectedItem is UpscalerOption option)
+            {
+                Settings.Instance.SelectedUpscaler = option.Id;
+                Settings.Instance.Save();
+            }
+            UpdateCostEstimate();
+        }
+
+        private async void RandomImageButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Full pipeline: generate a random prompt, then generate the image from it.
+            if (await GenerateRandomPrompt())
+            {
+                await GenerateWallpaper();
+            }
+        }
+
+        // Updates the "Random Image" button label and the cost line from the current
+        // LLM + image model + upscaler selections.
+        private void UpdateCostEstimate()
+        {
+            if (RandomImageButton is null || CostEstimateTextBlock is null)
+            {
+                return;
+            }
+
+            var llm = LlmSelectionComboBox.SelectedItem as LlmModelOption ?? LlmModelCatalog.Default;
+            var img = ImageModelSelectionComboBox.SelectedItem as ImageModelOption ?? ImageModelCatalog.Default;
+            var up = UpscalerSelectionComboBox.SelectedItem as UpscalerOption ?? UpscalerCatalog.Default;
+
+            decimal total = llm.Cents + img.Cents + up.Cents;
+
+            RandomImageButton.Content = $"Random Image  (~{total:0}¢)";
+            CostEstimateTextBlock.Text = $"≈ {llm.Cents:0.#}¢ prompt + {img.Cents:0.#}¢ image + {up.Cents:0.#}¢ upscale";
         }
     }
 }

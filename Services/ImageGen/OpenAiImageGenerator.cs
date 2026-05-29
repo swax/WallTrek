@@ -11,10 +11,12 @@ namespace WallTrek.Services.ImageGen
     public class OpenAiImageGenerator : IImageGenerationService
     {
         private readonly ImageClient client;
+        private readonly string quality;
 
-        public OpenAiImageGenerator(string apiKey, string model)
+        public OpenAiImageGenerator(string apiKey, string model, string quality)
         {
             client = new ImageClient(model, apiKey);
+            this.quality = quality;
         }
 
         public async Task<ImageGenerationResult> GenerateImage(string prompt, CancellationToken cancellationToken = default)
@@ -24,9 +26,9 @@ namespace WallTrek.Services.ImageGen
             // offer (3:2) — there is no native 16:9 option, unlike the Google Imagen/Gemini path.
             ImageGenerationOptions options = new()
             {
-                // Pass gpt-image's exact wire value. The SDK's GeneratedImageQuality.High maps to
-                // DALL-E 3's legacy "hd", which gpt-image rejects (it wants low/medium/high/auto).
-                Quality = new GeneratedImageQuality("high"),
+                // Pass gpt-image's exact wire value (low/medium/high/auto). The SDK's
+                // GeneratedImageQuality.High maps to DALL-E 3's legacy "hd", which gpt-image rejects.
+                Quality = new GeneratedImageQuality(quality),
                 Size = GeneratedImageSize.W1536xH1024
             };
 

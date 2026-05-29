@@ -7,6 +7,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:imagegen="using:WallTrek.Services.ImageGen"
+    xmlns:textgen="using:WallTrek.Services.TextGen"
     mc:Ignorable="d">
 
     <Grid Margin="20">
@@ -29,31 +31,29 @@
         <StackPanel Grid.Row="1" Spacing="10" Margin="0,0,0,20">
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <TextBlock Text="Describe your wallpaper:" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                <Button x:Name="RandomPromptButton" 
-                        Content="Random Prompt" 
-                        Click="RandomPromptButton_Click"
-                        FontSize="12"
-                        Padding="8,4"/>
                 <TextBlock Text="LLM:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="20,0,0,0"/>
                 <ComboBox x:Name="LlmSelectionComboBox"
                           SelectionChanged="LlmSelectionComboBox_SelectionChanged"
-                          MinWidth="150">
-                    <ComboBoxItem Content="OpenAI GPT-5.5" Tag="gpt-5.5"/>
-                    <ComboBoxItem Content="OpenAI GPT-5.4" Tag="gpt-5.4"/>
-                    <ComboBoxItem Content="OpenAI GPT-5.4 mini" Tag="gpt-5.4-mini"/>
-                    <ComboBoxItem Content="Claude Opus 4.8" Tag="claude-opus-4-8"/>
-                    <ComboBoxItem Content="Claude Sonnet 4.6" Tag="claude-sonnet-4-6"/>
-                    <ComboBoxItem Content="Claude Haiku 4.5" Tag="claude-haiku-4-5-20251001"/>
+                          MinWidth="210">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="textgen:LlmModelOption">
+                            <Grid ColumnSpacing="12" Padding="2,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="50"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{x:Bind Model}"/>
+                                <TextBlock Grid.Column="1" Text="{x:Bind PerPrompt}" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
                 </ComboBox>
-                <TextBlock Text="Image Model:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="20,0,0,0"/>
-                <ComboBox x:Name="ImageModelSelectionComboBox"
-                          SelectionChanged="ImageModelSelectionComboBox_SelectionChanged"
-                          MinWidth="150">
-                    <ComboBoxItem Content="OpenAI GPT Image" Tag="gpt-image-2"/>
-                    <ComboBoxItem Content="Google Imagen 4.0" Tag="imagen-4.0-generate-001"/>
-                    <ComboBoxItem Content="Google Imagen 4.0 Ultra" Tag="imagen-4.0-ultra-generate-001"/>
-                    <ComboBoxItem Content="Google Gemini 3 Pro Image Preview" Tag="gemini-3-pro-image-preview"/>
-                </ComboBox>
+                <Button x:Name="RandomPromptButton"
+                        Content="Random Prompt"
+                        Click="RandomPromptButton_Click"
+                        FontSize="12"
+                        Padding="8,4"
+                        VerticalAlignment="Center"/>
             </StackPanel>
             <TextBox x:Name="PromptTextBox"
                      PlaceholderText="Enter a description for your AI-generated wallpaper..."
@@ -81,6 +81,58 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="Image Model:" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <ComboBox x:Name="ImageModelSelectionComboBox"
+                          SelectionChanged="ImageModelSelectionComboBox_SelectionChanged"
+                          MinWidth="360">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="imagegen:ImageModelOption">
+                            <Grid ColumnSpacing="14" Padding="2,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="116"/>
+                                    <ColumnDefinition Width="64"/>
+                                    <ColumnDefinition Width="92"/>
+                                    <ColumnDefinition Width="52"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{x:Bind Model}"/>
+                                <TextBlock Grid.Column="1" Text="{x:Bind Quality}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Grid.Column="2" Text="{x:Bind Dimensions}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Grid.Column="3" Text="{x:Bind Price}" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="Upscale:" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <ComboBox x:Name="UpscalerSelectionComboBox"
+                          SelectionChanged="UpscalerSelectionComboBox_SelectionChanged"
+                          MinWidth="240">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="imagegen:UpscalerOption">
+                            <Grid ColumnSpacing="12" Padding="2,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="96"/>
+                                    <ColumnDefinition Width="40"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{x:Bind Name}"/>
+                                <TextBlock Grid.Column="1" Text="{x:Bind Detail}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Grid.Column="2" Text="{x:Bind Price}" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button x:Name="GenerateButton"
+                        Content="Generate Image"
+                        Click="GenerateButton_Click"
+                        Style="{StaticResource AccentButtonStyle}"
+                        VerticalAlignment="Center"
+                        MinWidth="120"/>
+            </StackPanel>
         </StackPanel>
         
         <!-- Progress Bar -->
@@ -93,31 +145,37 @@
                      Margin="0,10"/>
         
         <!-- Action Buttons -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center" Margin="0,20,0,10">
-            <Button x:Name="GenerateButton" 
-                    Content="Generate Wallpaper" 
-                    Click="GenerateButton_Click" 
-                    Style="{StaticResource AccentButtonStyle}"
-                    MinWidth="140"/>
-            <Button x:Name="CancelButton" 
-                    Content="Cancel" 
-                    Click="CancelButton_Click" 
-                    Visibility="Collapsed"
-                    MinWidth="100"
-                    Background="Red"
-                    Foreground="White"/>
-            <Button x:Name="ImageGridButton"
-                    Content="Image Grid"
-                    Click="ImageGridButton_Click"
-                    MinWidth="100"/>
-            <Button x:Name="OpenFolderButton"
-                    Content="Open Image Folder"
-                    Click="OpenFolderButton_Click"
-                    MinWidth="100"/>
-            <Button x:Name="SettingsButton" 
-                    Content="Settings" 
-                    Click="SettingsButton_Click"
-                    MinWidth="100"/>
+        <StackPanel Grid.Row="3" Spacing="6" HorizontalAlignment="Center" Margin="0,20,0,10">
+            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                <Button x:Name="RandomImageButton"
+                        Content="Random Image"
+                        Click="RandomImageButton_Click"
+                        Style="{StaticResource AccentButtonStyle}"
+                        MinWidth="170"/>
+                <Button x:Name="CancelButton"
+                        Content="Cancel"
+                        Click="CancelButton_Click"
+                        Visibility="Collapsed"
+                        MinWidth="100"
+                        Background="Red"
+                        Foreground="White"/>
+                <Button x:Name="ImageGridButton"
+                        Content="Image Grid"
+                        Click="ImageGridButton_Click"
+                        MinWidth="100"/>
+                <Button x:Name="OpenFolderButton"
+                        Content="Open Image Folder"
+                        Click="OpenFolderButton_Click"
+                        MinWidth="100"/>
+                <Button x:Name="SettingsButton"
+                        Content="Settings"
+                        Click="SettingsButton_Click"
+                        MinWidth="100"/>
+            </StackPanel>
+            <TextBlock x:Name="CostEstimateTextBlock"
+                       HorizontalAlignment="Center"
+                       Foreground="Gray"
+                       FontSize="12"/>
         </StackPanel>
         
         <!-- Status Text -->
