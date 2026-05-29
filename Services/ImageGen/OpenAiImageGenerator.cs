@@ -24,7 +24,9 @@ namespace WallTrek.Services.ImageGen
             // offer (3:2) — there is no native 16:9 option, unlike the Google Imagen/Gemini path.
             ImageGenerationOptions options = new()
             {
-                Quality = GeneratedImageQuality.High,
+                // Pass gpt-image's exact wire value. The SDK's GeneratedImageQuality.High maps to
+                // DALL-E 3's legacy "hd", which gpt-image rejects (it wants low/medium/high/auto).
+                Quality = new GeneratedImageQuality("high"),
                 Size = GeneratedImageSize.W1536xH1024
             };
 

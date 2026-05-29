@@ -70,8 +70,6 @@ namespace WallTrek.Services.TextGen
                 new Message(RoleType.User, userPrompt)
             };
 
-            bool useThinking = true;
-
             var parameters = new MessageParameters
             {
                 Messages = messages,
@@ -79,23 +77,17 @@ namespace WallTrek.Services.TextGen
                 MaxTokens = 10000,
                 System = new List<SystemMessage> { new SystemMessage(systemPrompt) },
                 Tools = tools,
-                ToolChoice = useThinking ? new ToolChoice
+                // Force a tool call so we reliably get structured JSON back. There is exactly one
+                // tool in the list, so "any" forces it — and unlike "tool", "any" must NOT carry a
+                // name (the API rejects tool_choice.any.name). We deliberately do NOT enable
+                // thinking: the Anthropic API forbids combining forced tool choice with thinking,
+                // and newer models (e.g. Claude Opus 4.8) reject the legacy "thinking.type.enabled"
+                // parameter outright (they use adaptive thinking + effort instead).
+                ToolChoice = new ToolChoice
                 {
-                    Type = ToolChoiceType.Auto
-                } : new ToolChoice
-                {
-                    Type = ToolChoiceType.Any,
-                    Name = toolName
+                    Type = ToolChoiceType.Any
                 }
             };
-
-            if (useThinking)
-            {
-                parameters.Thinking = new ThinkingParameters
-                {
-                    BudgetTokens = 5000
-                };
-            }
 
             var result = await client.Messages.GetClaudeMessageAsync(parameters);
 
