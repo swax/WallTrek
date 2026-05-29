@@ -1,0 +1,79 @@
+<!-- MultiSelectComboBox.xaml -->
+<UserControl
+    x:Class="WallTrek.Views.Controls.MultiSelectComboBox"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:WallTrek.Views.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <DropDownButton HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"
+                    VerticalAlignment="Stretch">
+        <DropDownButton.Content>
+            <Grid>
+                <!-- Shown when exactly one option is selected: mirrors the ComboBox header. -->
+                <ContentControl x:Name="SingleContent"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalAlignment="Center"
+                                IsTabStop="False"/>
+                <!-- Shown for zero / multiple selections: "N selected · ~avg¢". -->
+                <TextBlock x:Name="SummaryBlock"
+                           VerticalAlignment="Center"
+                           Visibility="Collapsed"/>
+            </Grid>
+        </DropDownButton.Content>
+        <DropDownButton.Flyout>
+            <Flyout x:Name="DropFlyout" Placement="Bottom">
+                <Flyout.FlyoutPresenterStyle>
+                    <Style TargetType="FlyoutPresenter">
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="MaxHeight" Value="440"/>
+                    </Style>
+                </Flyout.FlyoutPresenterStyle>
+                <ListView x:Name="ItemsListView"
+                          SelectionMode="None"
+                          IsItemClickEnabled="True"
+                          ItemClick="ItemsListView_ItemClick"
+                          Padding="0,4">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Padding" Value="10,0"/>
+                            <Setter Property="MinHeight" Value="36"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="controls:SelectableOption">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Toggling the checkbox keeps the dropdown open (multi-select). -->
+                                <CheckBox Grid.Column="0"
+                                          MinWidth="0"
+                                          Margin="0"
+                                          VerticalAlignment="Center"
+                                          IsChecked="{x:Bind IsChecked, Mode=TwoWay}"
+                                          Click="ItemCheckBox_Click"/>
+                                <!-- Hit-test disabled so a click on the columns falls through to
+                                     the row (ItemClick) for exclusive select-and-close. -->
+                                <ContentControl Grid.Column="1"
+                                                VerticalAlignment="Center"
+                                                HorizontalContentAlignment="Stretch"
+                                                IsHitTestVisible="False"
+                                                IsTabStop="False"
+                                                Content="{x:Bind Item}"
+                                                ContentTemplate="{x:Bind ContentTemplate}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Flyout>
+        </DropDownButton.Flyout>
+    </DropDownButton>
+</UserControl>

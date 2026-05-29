@@ -16,13 +16,15 @@ namespace WallTrek.Services.TextGen
   {
     public async Task<TitleResult?> GenerateTitleAndTagsAsync(
         string imageDescription,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? llmModelOverride = null)
     {
       var settings = Settings.Instance;
 
-      // Create LLM service based on selected model
+      // Create LLM service based on the selected model (or the per-generation random pick).
+      var modelId = string.IsNullOrEmpty(llmModelOverride) ? settings.SelectedLlmModel : llmModelOverride;
       var llmService = LlmServiceFactory.CreateService(
-          settings.SelectedLlmModel,
+          modelId,
           settings.ApiKey ?? string.Empty,
           settings.AnthropicApiKey ?? string.Empty
       );

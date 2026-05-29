@@ -66,6 +66,8 @@ namespace WallTrek.Services
         public DateTime? DeviantArtTokenExpiry { get; set; }
         public string SelectedLlmModel { get; set; } = "gpt-5.5";
         public string SelectedImageModel { get; set; } = "imagen-4.0-generate-001@2K";
+        public List<string> SelectedLlmModels { get; set; } = new();
+        public List<string> SelectedImageModels { get; set; } = new();
         public string SelectedUpscaler { get; set; } = "fast";
         public string? GoogleApiKey { get; set; }
         public string? StabilityApiKey { get; set; }
@@ -193,6 +195,18 @@ namespace WallTrek.Services
         {
             get => _model.SelectedImageModel;
             set => _model.SelectedImageModel = value;
+        }
+
+        public List<string> SelectedLlmModels
+        {
+            get => _model.SelectedLlmModels;
+            set => _model.SelectedLlmModels = value;
+        }
+
+        public List<string> SelectedImageModels
+        {
+            get => _model.SelectedImageModels;
+            set => _model.SelectedImageModels = value;
         }
 
         public string SelectedUpscaler

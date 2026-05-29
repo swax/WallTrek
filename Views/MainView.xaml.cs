@@ -21,6 +21,7 @@ namespace WallTrek.Views
         public event EventHandler? NavigateToImageGrid;
         private CancellationTokenSource? _cancellationTokenSource;
         private PromptGenerationResult? _currentPromptGenerationResult;
+        private readonly Random _random = new();
 
         public void SetPromptText(string prompt)
         {
@@ -67,19 +68,16 @@ namespace WallTrek.Views
         {
             var settings = Settings.Instance;
             PromptTextBox.Text = settings.LastPrompt ?? "";
-            
-            // Populate the LLM dropdown from the catalog and select the saved model.
-            LlmSelectionComboBox.ItemsSource = LlmModelCatalog.Options;
-            LlmSelectionComboBox.SelectedItem =
-                LlmModelCatalog.FindById(settings.SelectedLlmModel) ?? LlmModelCatalog.Default;
-            
-            // Populate the Image Model dropdown from the catalog and select the saved option.
-            // Legacy settings stored a bare model id, so fall back to matching by model id.
-            ImageModelSelectionComboBox.ItemsSource = ImageModelCatalog.Options;
-            ImageModelSelectionComboBox.SelectedItem =
-                ImageModelCatalog.FindById(settings.SelectedImageModel)
-                ?? ImageModelCatalog.FindByModelId(settings.SelectedImageModel)
-                ?? ImageModelCatalog.Default;
+
+            // Populate the LLM dropdown from the catalog and restore the saved (multi) selection.
+            LlmSelectionControl.CostSelector = o => ((LlmModelOption)o).Cents;
+            LlmSelectionControl.ItemsSource = LlmModelCatalog.Options;
+            LlmSelectionControl.SetSelectedItems(ResolveLlmSelection());
+
+            // Populate the Image Model dropdown from the catalog and restore the saved selection.
+            ImageModelSelectionControl.CostSelector = o => ((ImageModelOption)o).Cents;
+            ImageModelSelectionControl.ItemsSource = ImageModelCatalog.Options;
+            ImageModelSelectionControl.SetSelectedItems(ResolveImageSelection());
 
             // Populate the Upscale dropdown and select the saved option.
             UpscalerSelectionComboBox.ItemsSource = UpscalerCatalog.Options;
@@ -87,6 +85,73 @@ namespace WallTrek.Views
                 UpscalerCatalog.FindById(settings.SelectedUpscaler) ?? UpscalerCatalog.Default;
 
             UpdateCostEstimate();
+        }
+
+        // Resolves the saved LLM checkbox selection, falling back to the legacy single setting
+        // (and finally the catalog default) so existing installs keep their previous model.
+        private static List<object> ResolveLlmSelection()
+        {
+            var settings = Settings.Instance;
+            var ids = settings.SelectedLlmModels.Count > 0
+                ? settings.SelectedLlmModels
+                : new List<string> { settings.SelectedLlmModel };
+
+            var options = ids
+                .Select(LlmModelCatalog.FindById)
+                .Where(o => o is not null)
+                .Cast<object>()
+                .ToList();
+
+            if (options.Count == 0)
+            {
+                options.Add(LlmModelCatalog.FindById(settings.SelectedLlmModel) ?? LlmModelCatalog.Default);
+            }
+
+            return options;
+        }
+
+        private static List<object> ResolveImageSelection()
+        {
+            var settings = Settings.Instance;
+            var ids = settings.SelectedImageModels.Count > 0
+                ? settings.SelectedImageModels
+                : new List<string> { settings.SelectedImageModel };
+
+            var options = ids
+                .Select(id => ImageModelCatalog.FindById(id) ?? ImageModelCatalog.FindByModelId(id))
+                .Where(o => o is not null)
+                .Cast<object>()
+                .ToList();
+
+            if (options.Count == 0)
+            {
+                options.Add(ImageModelCatalog.FindById(settings.SelectedImageModel)
+                    ?? ImageModelCatalog.FindByModelId(settings.SelectedImageModel)
+                    ?? ImageModelCatalog.Default);
+            }
+
+            return options;
+        }
+
+        // When several models are checked, each generation randomly picks one of them.
+        private LlmModelOption PickLlmModel()
+        {
+            var selected = LlmSelectionControl.SelectedItems.Cast<LlmModelOption>().ToList();
+            if (selected.Count == 0)
+            {
+                return LlmModelCatalog.FindById(Settings.Instance.SelectedLlmModel) ?? LlmModelCatalog.Default;
+            }
+            return selected[_random.Next(selected.Count)];
+        }
+
+        private ImageModelOption PickImageModel()
+        {
+            var selected = ImageModelSelectionControl.SelectedItems.Cast<ImageModelOption>().ToList();
+            if (selected.Count == 0)
+            {
+                return ImageModelCatalog.FindById(Settings.Instance.SelectedImageModel) ?? ImageModelCatalog.Default;
+            }
+            return selected[_random.Next(selected.Count)];
         }
 
         private async void GenerateButton_Click(object sender, RoutedEventArgs e)
@@ -105,10 +170,9 @@ namespace WallTrek.Views
             Settings.Instance.LastPrompt = PromptTextBox.Text;
             Settings.Instance.Save();
 
-            // Resolve the selected image option (from the dropdown, falling back to saved settings).
-            var selectedOption = ImageModelSelectionComboBox.SelectedItem as ImageModelOption
-                ?? ImageModelCatalog.FindById(Settings.Instance.SelectedImageModel)
-                ?? ImageModelCatalog.Default;
+            // Pick the models for this run. When multiple are checked, one is chosen at random.
+            var selectedOption = PickImageModel();
+            var selectedLlm = PickLlmModel();
 
             // Check the required API key for the selected provider.
             if (selectedOption.Provider == ImageProvider.Google && string.IsNullOrEmpty(Settings.Instance.GoogleApiKey))
@@ -136,7 +200,7 @@ namespace WallTrek.Views
             {
                 SetGeneratingState(true);
                 SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
-                Logger.Info($"Generating wallpaper — image: {selectedOption.Id}, LLM: {Settings.Instance.SelectedLlmModel}");
+                Logger.Info($"Generating wallpaper — image: {selectedOption.Id}, LLM: {selectedLlm.ModelId}");
 
                 // If we don't have a cached prompt generation result (e.g., user typed their own prompt),
                 // generate title and tags from the prompt
@@ -144,7 +208,7 @@ namespace WallTrek.Views
                 {
                     SetStatus("Generating title and tags...", Microsoft.UI.Colors.DodgerBlue);
                     var titleService = new TitleService();
-                    var titleResult = await titleService.GenerateTitleAndTagsAsync(PromptTextBox.Text, _cancellationTokenSource.Token);
+                    var titleResult = await titleService.GenerateTitleAndTagsAsync(PromptTextBox.Text, _cancellationTokenSource.Token, selectedLlm.ModelId);
 
                     if (titleResult != null)
                     {
@@ -167,8 +231,8 @@ namespace WallTrek.Views
 
                 var imageGenerator = ImageGenerationServiceFactory.CreateService(selectedOption);
 
-                // Get current model selections from UI
-                var currentLlmModel = (LlmSelectionComboBox.SelectedItem as LlmModelOption)?.ModelId;
+                // Record the models actually used for this generation.
+                var currentLlmModel = selectedLlm.ModelId;
                 var currentImgModel = selectedOption.ModelId;
 
                 if (string.IsNullOrEmpty(currentLlmModel))
@@ -322,10 +386,12 @@ namespace WallTrek.Views
             {
                 SetGeneratingState(true);
                 SetStatus("Generating random prompt...", Microsoft.UI.Colors.DodgerBlue);
-                Logger.Info($"Generating random prompt — LLM: {Settings.Instance.SelectedLlmModel}");
+
+                var selectedLlm = PickLlmModel();
+                Logger.Info($"Generating random prompt — LLM: {selectedLlm.ModelId}");
 
                 var promptGenerator = new PromptGeneratorService();
-                var result = await promptGenerator.GenerateRandomPromptAsync(_cancellationTokenSource.Token);
+                var result = await promptGenerator.GenerateRandomPromptAsync(_cancellationTokenSource.Token, selectedLlm.ModelId);
 
                 if (result != null)
                 {
@@ -358,23 +424,28 @@ namespace WallTrek.Views
             }
         }
 
-        private void LlmSelectionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void LlmSelectionControl_SelectionChanged(object? sender, EventArgs e)
         {
-            if (LlmSelectionComboBox.SelectedItem is LlmModelOption option)
+            var ids = LlmSelectionControl.SelectedItems.Cast<LlmModelOption>().Select(o => o.ModelId).ToList();
+            Settings.Instance.SelectedLlmModels = ids;
+            // Keep the legacy single setting valid (used by other paths, e.g. DeviantArt titles).
+            if (ids.Count > 0 && !ids.Contains(Settings.Instance.SelectedLlmModel))
             {
-                Settings.Instance.SelectedLlmModel = option.ModelId;
-                Settings.Instance.Save();
+                Settings.Instance.SelectedLlmModel = ids[0];
             }
+            Settings.Instance.Save();
             UpdateCostEstimate();
         }
 
-        private void ImageModelSelectionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ImageModelSelectionControl_SelectionChanged(object? sender, EventArgs e)
         {
-            if (ImageModelSelectionComboBox.SelectedItem is ImageModelOption option)
+            var ids = ImageModelSelectionControl.SelectedItems.Cast<ImageModelOption>().Select(o => o.Id).ToList();
+            Settings.Instance.SelectedImageModels = ids;
+            if (ids.Count > 0 && !ids.Contains(Settings.Instance.SelectedImageModel))
             {
-                Settings.Instance.SelectedImageModel = option.Id;
-                Settings.Instance.Save();
+                Settings.Instance.SelectedImageModel = ids[0];
             }
+            Settings.Instance.Save();
             UpdateCostEstimate();
         }
 
@@ -406,14 +477,18 @@ namespace WallTrek.Views
                 return;
             }
 
-            var llm = LlmSelectionComboBox.SelectedItem as LlmModelOption ?? LlmModelCatalog.Default;
-            var img = ImageModelSelectionComboBox.SelectedItem as ImageModelOption ?? ImageModelCatalog.Default;
+            // When several models are checked, show the average expected cost across them.
+            var llmSelected = LlmSelectionControl.SelectedItems.Cast<LlmModelOption>().ToList();
+            var imgSelected = ImageModelSelectionControl.SelectedItems.Cast<ImageModelOption>().ToList();
             var up = UpscalerSelectionComboBox.SelectedItem as UpscalerOption ?? UpscalerCatalog.Default;
 
-            decimal total = llm.Cents + img.Cents + up.Cents;
+            decimal llmCents = llmSelected.Count > 0 ? llmSelected.Average(o => o.Cents) : LlmModelCatalog.Default.Cents;
+            decimal imgCents = imgSelected.Count > 0 ? imgSelected.Average(o => o.Cents) : ImageModelCatalog.Default.Cents;
+
+            decimal total = llmCents + imgCents + up.Cents;
 
             RandomImageButton.Content = $"Random Image  (~{total:0}¢)";
-            CostEstimateTextBlock.Text = $"≈ {llm.Cents:0.#}¢ prompt + {img.Cents:0.#}¢ image + {up.Cents:0.#}¢ upscale";
+            CostEstimateTextBlock.Text = $"≈ {llmCents:0.#}¢ prompt + {imgCents:0.#}¢ image + {up.Cents:0.#}¢ upscale";
         }
     }
 }

@@ -7,14 +7,15 @@ namespace WallTrek.Services.TextGen
 {
   public class PromptGeneratorService
   {
-    public async Task<PromptGenerationResult?> GenerateRandomPromptAsync(CancellationToken cancellationToken = default)
+    public async Task<PromptGenerationResult?> GenerateRandomPromptAsync(CancellationToken cancellationToken = default, string? llmModelOverride = null)
     {
       var settings = Settings.Instance;
       var randomPrompts = settings.RandomPrompts;
 
-      // Create LLM service based on selected model
+      // Create LLM service based on the selected model (or the per-generation random pick).
+      var modelId = string.IsNullOrEmpty(llmModelOverride) ? settings.SelectedLlmModel : llmModelOverride;
       var llmService = LlmServiceFactory.CreateService(
-          settings.SelectedLlmModel,
+          modelId,
           settings.ApiKey ?? string.Empty,
           settings.AnthropicApiKey ?? string.Empty
       );
