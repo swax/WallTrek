@@ -73,10 +73,6 @@ namespace WallTrek.Views
             // Load startup setting from both settings and registry to ensure sync
             RunOnStartupCheckBox.IsChecked = StartupManager.IsStartupEnabled();
 
-            // Load random words on/off + count
-            AddRandomWordsCheckBox.IsChecked = settings.AddRandomWords;
-            RandomWordCountNumberBox.Value = settings.RandomWordCount;
-
             // Load the file-based category profiles and word lists into their dropdowns/editors.
             PopulateCategoryProfiles();
             PopulateWordLists();
@@ -123,9 +119,7 @@ namespace WallTrek.Views
                 settings.AutoGenerateSource = selectedItem.Tag?.ToString() ?? "current";
             }
 
-            // Save random words settings
-            settings.AddRandomWords = AddRandomWordsCheckBox.IsChecked ?? false;
-            settings.RandomWordCount = (int)RandomWordCountNumberBox.Value;
+            // Random word count is set on the main page now (0 = off), not here.
 
             // Handle startup setting - only update registry, no need to store in settings
             var runOnStartup = RunOnStartupCheckBox.IsChecked ?? false;

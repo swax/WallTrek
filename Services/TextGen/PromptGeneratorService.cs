@@ -26,8 +26,8 @@ namespace WallTrek.Services.TextGen
       var random = new Random();
       var selectedProperties = new List<string>();
 
-      // Check if we should use random words
-      if (settings.AddRandomWords)
+      // Add random seed words when the user has set a count above zero (0 = off).
+      if (settings.RandomWordCount > 0)
       {
         var randomWordService = new RandomWordService();
         var randomWords = await randomWordService.GetRandomWordsAsync(settings.RandomWordCount, cancellationToken);

@@ -73,8 +73,7 @@ namespace WallTrek.Services
         public string SelectedUpscaler { get; set; } = "fast";
         public string? GoogleApiKey { get; set; }
         public string? StabilityApiKey { get; set; }
-        public bool AddRandomWords { get; set; } = false;
-        public int RandomWordCount { get; set; } = 5;
+        public int RandomWordCount { get; set; } = 0;
     }
 
     public class Settings
@@ -243,12 +242,6 @@ namespace WallTrek.Services
         {
             get => _model.StabilityApiKey;
             set => _model.StabilityApiKey = value;
-        }
-
-        public bool AddRandomWords
-        {
-            get => _model.AddRandomWords;
-            set => _model.AddRandomWords = value;
         }
 
         public int RandomWordCount

@@ -11,6 +11,13 @@
     xmlns:imagegen="using:WallTrek.Services.ImageGen"
     mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <!-- Shared height for every control on the LLM and Image-Model rows so the combos,
+             multi-selects, and buttons all line up. 36 leaves room for the item-template
+             padding (a stock 32 clips the templated combos). -->
+        <x:Double x:Key="RowControlHeight">36</x:Double>
+    </UserControl.Resources>
+
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -30,10 +37,16 @@
         <!-- Prompt Input -->
         <StackPanel Grid.Row="1" Spacing="10" Margin="0,0,0,20">
             <StackPanel Orientation="Horizontal" Spacing="10">
-                <StackPanel Spacing="2">
-                    <TextBlock Text="LLM" FontWeight="SemiBold" FontSize="12"/>
-                    <wt:MultiSelectComboBox x:Name="LlmSelectionControl"
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="LLM" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+                    <wt:MultiSelectComboBox Grid.Row="1" x:Name="LlmSelectionControl"
                                             MinWidth="210"
+                                            Height="{StaticResource RowControlHeight}"
+                                            VerticalAlignment="Bottom"
                                             SelectionChanged="LlmSelectionControl_SelectionChanged">
                         <wt:MultiSelectComboBox.ItemTemplate>
                             <DataTemplate>
@@ -48,26 +61,54 @@
                             </DataTemplate>
                         </wt:MultiSelectComboBox.ItemTemplate>
                     </wt:MultiSelectComboBox>
-                </StackPanel>
-                <StackPanel Spacing="2">
-                    <TextBlock Text="Category set" FontWeight="SemiBold" FontSize="12"/>
-                    <ComboBox x:Name="CategoryProfileSelector"
+                </Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Category set" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+                    <ComboBox Grid.Row="1" x:Name="CategoryProfileSelector"
                               MinWidth="150"
+                              Height="{StaticResource RowControlHeight}"
+                              VerticalAlignment="Bottom"
                               SelectionChanged="CategoryProfileSelector_SelectionChanged"/>
-                </StackPanel>
-                <StackPanel Spacing="2">
-                    <TextBlock Text="Word list" FontWeight="SemiBold" FontSize="12"/>
-                    <ComboBox x:Name="WordListSelector"
+                </Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Word list" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+                    <ComboBox Grid.Row="1" x:Name="WordListSelector"
                               MinWidth="150"
+                              Height="{StaticResource RowControlHeight}"
+                              VerticalAlignment="Bottom"
                               SelectionChanged="WordListSelector_SelectionChanged"/>
-                </StackPanel>
+                </Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Words" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"
+                               ToolTipService.ToolTip="How many random words to add to the prompt (0 = none)"/>
+                    <NumberBox Grid.Row="1" x:Name="RandomWordCountNumberBox"
+                               Minimum="0" Maximum="50" SmallChange="1" LargeChange="5"
+                               Width="96"
+                               Height="{StaticResource RowControlHeight}"
+                               VerticalAlignment="Bottom"
+                               SpinButtonPlacementMode="Inline"
+                               ValueChanged="RandomWordCountNumberBox_ValueChanged"
+                               ToolTipService.ToolTip="How many random words to add to the prompt (0 = none)"/>
+                </Grid>
                 <Button x:Name="RandomPromptButton"
                         Content="Generate Prompt"
                         Click="RandomPromptButton_Click"
-                        FontSize="12"
-                        Padding="8,4"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Height="{StaticResource RowControlHeight}"
                         VerticalAlignment="Bottom"
-                        Margin="0,0,0,2"/>
+                        MinWidth="120"/>
             </StackPanel>
             <TextBox x:Name="PromptTextBox"
                      PlaceholderText="Enter a description for your wallpaper or click generate prompt above..."
@@ -97,10 +138,16 @@
             </ItemsControl>
 
             <StackPanel Orientation="Horizontal" Spacing="10">
-                <StackPanel Spacing="2">
-                    <TextBlock Text="Image Model" FontWeight="SemiBold" FontSize="12"/>
-                    <wt:MultiSelectComboBox x:Name="ImageModelSelectionControl"
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Image Model" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+                    <wt:MultiSelectComboBox Grid.Row="1" x:Name="ImageModelSelectionControl"
                                             MinWidth="360"
+                                            Height="{StaticResource RowControlHeight}"
+                                            VerticalAlignment="Bottom"
                                             SelectionChanged="ImageModelSelectionControl_SelectionChanged">
                         <wt:MultiSelectComboBox.ItemTemplate>
                             <DataTemplate>
@@ -119,10 +166,16 @@
                             </DataTemplate>
                         </wt:MultiSelectComboBox.ItemTemplate>
                     </wt:MultiSelectComboBox>
-                </StackPanel>
-                <StackPanel Spacing="2">
-                    <TextBlock Text="Upscale" FontWeight="SemiBold" FontSize="12"/>
-                    <ComboBox x:Name="UpscalerSelectionComboBox"
+                </Grid>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="Upscale" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,2"/>
+                    <ComboBox Grid.Row="1" x:Name="UpscalerSelectionComboBox"
+                              Height="{StaticResource RowControlHeight}"
+                              VerticalAlignment="Bottom"
                               SelectionChanged="UpscalerSelectionComboBox_SelectionChanged"
                               MinWidth="240">
                         <ComboBox.ItemTemplate>
@@ -140,11 +193,12 @@
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
-                </StackPanel>
+                </Grid>
                 <Button x:Name="GenerateButton"
                         Content="Generate Image"
                         Click="GenerateButton_Click"
                         Style="{StaticResource AccentButtonStyle}"
+                        Height="{StaticResource RowControlHeight}"
                         VerticalAlignment="Bottom"
                         MinWidth="120"/>
             </StackPanel>

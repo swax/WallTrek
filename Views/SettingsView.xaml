@@ -18,7 +18,16 @@
 
         <TextBlock Grid.Row="0" Text="WallTrek Settings" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
 
-        <TabView Grid.Row="1" x:Name="SettingsTabView" IsAddTabButtonVisible="False">
+        <!-- Card background + radius so the tab strip and content stand out against the
+             window's Mica backdrop (a bare TabView is transparent and disappears). -->
+        <TabView Grid.Row="1" x:Name="SettingsTabView" IsAddTabButtonVisible="False"
+                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                 CornerRadius="8">
+            <TabView.Resources>
+                <!-- Make the selected tab clearly distinct from the unselected ones on the card.
+                     Aliased to an existing brush (an invalid key fail-fast-crashes the TabView). -->
+                <StaticResource x:Key="TabViewItemHeaderBackgroundSelected" ResourceKey="ApplicationPageBackgroundThemeBrush"/>
+            </TabView.Resources>
             <!-- General Tab -->
             <TabViewItem Header="General" IsClosable="False">
                 <ScrollViewer>
@@ -161,11 +170,7 @@
 
                         <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,10">
                             <TextBlock Text="Word Lists" FontSize="16" FontWeight="SemiBold"/>
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <CheckBox x:Name="AddRandomWordsCheckBox" Content="Add this many random words:" VerticalAlignment="Center"/>
-                                <NumberBox x:Name="RandomWordCountNumberBox" Value="5" Minimum="1" Maximum="50" Width="80" VerticalAlignment="Center" SpinButtonPlacementMode="Inline"/>
-                            </StackPanel>
-                            <TextBlock Text="Each list is a flat text file (one word per line; lines starting with # are ignored). Pick a list to edit; the selected list seeds random prompts."
+                            <TextBlock Text="Each list is a flat text file (one word per line; lines starting with # are ignored). Pick a list to edit; the selected list seeds random prompts. Set how many words to add on the main page."
                                        TextWrapping="Wrap" FontSize="12" Opacity="0.7"/>
                         </StackPanel>
 

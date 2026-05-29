@@ -8,7 +8,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <DropDownButton HorizontalAlignment="Stretch"
+    <!-- Padding mirrors a stock ComboBox; height is left to the host so all row controls
+         can share one height value. Stretch makes the button fill that height. -->
+    <DropDownButton Padding="11,0"
+                    HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch"
                     VerticalAlignment="Stretch">
         <DropDownButton.Content>

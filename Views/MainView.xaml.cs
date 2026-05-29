@@ -90,6 +90,12 @@ namespace WallTrek.Views
             // Populate the random-prompt profile + word-list quick-switch dropdowns.
             PopulateProfileSelectors();
 
+            // Random word count (0 = off) is a per-run control on the main page. Suppress the
+            // ValueChanged save while restoring the persisted value.
+            _suppressProfileEvents = true;
+            RandomWordCountNumberBox.Value = settings.RandomWordCount;
+            _suppressProfileEvents = false;
+
             UpdateCostEstimate();
         }
 
@@ -512,6 +518,15 @@ namespace WallTrek.Views
                 Settings.Instance.SelectedWordList = name;
                 Settings.Instance.Save();
             }
+        }
+
+        private void RandomWordCountNumberBox_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            if (_suppressProfileEvents) return;
+            // NumberBox yields NaN when the field is cleared; treat that as 0 (off).
+            var count = double.IsNaN(sender.Value) ? 0 : (int)sender.Value;
+            Settings.Instance.RandomWordCount = count;
+            Settings.Instance.Save();
         }
 
         private async void RandomImageButton_Click(object sender, RoutedEventArgs e)
