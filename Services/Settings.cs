@@ -64,8 +64,8 @@ namespace WallTrek.Services
         public string? DeviantArtAccessToken { get; set; }
         public string? DeviantArtRefreshToken { get; set; }
         public DateTime? DeviantArtTokenExpiry { get; set; }
-        public string SelectedLlmModel { get; set; } = "gpt-5";
-        public string SelectedImageModel { get; set; } = "dalle-3";
+        public string SelectedLlmModel { get; set; } = "gpt-5.5";
+        public string SelectedImageModel { get; set; } = "imagen-4.0-generate-001";
         public string? GoogleApiKey { get; set; }
         public string? StabilityApiKey { get; set; }
         public bool AddRandomWords { get; set; } = false;

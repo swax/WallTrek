@@ -1,6 +1,6 @@
 # WallTrek
 
-WallTrek is a WinUI 3 application that generates AI-powered wallpapers using multiple AI providers (OpenAI DALL-E 3, Google Imagen). The application runs in the system tray and can automatically generate and set new wallpapers at specified intervals with customizable random prompt elements.
+WallTrek is a WinUI 3 application that generates AI-powered wallpapers using multiple AI providers (OpenAI GPT Image, Google Imagen & Gemini). The application runs in the system tray and can automatically generate and set new wallpapers at specified intervals with customizable random prompt elements.
 
 [Example Generated Wallpapers](https://www.deviantart.com/swaxtastic/gallery/all)
 
@@ -8,7 +8,7 @@ WallTrek is a WinUI 3 application that generates AI-powered wallpapers using mul
 
 ## Features
 
-- **Multi-provider AI support** - Choose between OpenAI DALL-E 3 and Google Imagen for image generation
+- **Multi-provider AI support** - Choose between OpenAI GPT Image and Google Imagen/Gemini for image generation
 - **Flexible LLM integration** - Use OpenAI GPT models or Anthropic Claude for text generation and image descriptions
 - **Customizable random prompts** - Configure random elements at the key level for varied prompt generation
 - **Prompt history management** with search, favorites, usage tracking, and model metadata
@@ -28,10 +28,10 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
 ## Requirements
 
 - Windows 10/11
-- .NET 9.0 Runtime
+- .NET 10.0 Runtime
 - At least one AI provider API key:
-  - OpenAI API key (for DALL-E 3 and GPT models)
-  - Google AI API key (for Imagen image generation)
+  - OpenAI API key (for GPT Image and GPT models)
+  - Google AI API key (for Imagen and Gemini image generation)
   - Anthropic API key (for Claude models and image descriptions)
 - DeviantArt API credentials (optional, for upload functionality)
 
@@ -57,7 +57,7 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
 1. **Initial Setup**: Right-click the system tray icon to open the application
 2. **API Configuration**: Navigate to Settings → API tab and configure your preferred AI providers:
    - **OpenAI**: Enter API key and select GPT model for text generation
-   - **Google AI**: Enter API key for Imagen image generation
+   - **Google AI**: Enter API key for Imagen and Gemini image generation
    - **Anthropic**: Enter API key for Claude models and image descriptions
 3. **Provider Selection**: Choose your preferred image generation and LLM services in the main interface
 4. **DeviantArt Setup** (Optional): Configure DeviantArt Client ID and Secret for upload functionality
@@ -88,9 +88,9 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
 
 ### Core Services
 
-- **Services/ImageGen/OpenAiImageGenerator**: OpenAI DALL-E 3 image generation implementation
+- **Services/ImageGen/OpenAiImageGenerator**: OpenAI GPT Image (gpt-image) generation implementation
 - **Services/ImageGen/ImageGenerationServiceFactory**: Creates appropriate image generation service instances
-- **Services/ImageGen/GoogleImagenService**: Google Imagen API integration for image generation
+- **Services/ImageGen/GoogleImagenService**: Google Imagen (predict) and Gemini (generateContent) image generation integration
 - **Services/FileService**: Image file persistence with EXIF metadata handling
 - **Services/TextGen/LlmServiceFactory**: Creates appropriate LLM service instances
 - **Services/TextGen/OpenAILlmService**: OpenAI GPT API integration for text generation
@@ -111,23 +111,23 @@ DeviantArt was chosen as the sharing platform because it supports API uploads wi
 
 ### Technical Stack
 
-- **.NET 9.0** with **WinUI 3** (Windows App SDK 1.7.250606001)
-- **OpenAI API v2.1.0** for DALL-E 3 image generation and GPT text generation
+- **.NET 10.0** with **WinUI 3** (Windows App SDK 2.1.3)
+- **OpenAI API v2.10.0** for GPT Image generation and GPT text generation
 - **Anthropic SDK** for Claude model text generation and image descriptions
-- **Google Generative AI** for Imagen image generation
+- **Google Generative AI** for Imagen and Gemini image generation
 - **SQLite** via Microsoft.Data.Sqlite for data persistence
 - **H.NotifyIcon.WinUI** for system tray functionality
 - **System.Drawing.Common** for image processing and metadata
 
 ## Packaging
 
-Build for distribution: Self-Contained (~80 MB includes .NET 9 and Windows App SDK)
+Build for distribution: Self-Contained (~80 MB includes .NET 10 and Windows App SDK)
 
 ```bash
 dotnet publish -c Release -r win-x64
 ```
 
-Output will be in `bin/Release/net9.0-windows10.0.19041.0/win-x64/publish/`
+Output will be in `bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/`
 
 ## License
 

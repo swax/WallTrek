@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-WallTrek is a WinUI 3 application that generates AI-powered wallpapers using multiple AI providers (OpenAI DALL-E 3, Google Imagen). The application runs with a system tray icon and can automatically generate wallpapers at specified intervals with customizable random prompt elements.
+WallTrek is a WinUI 3 application that generates AI-powered wallpapers using multiple AI providers (OpenAI GPT Image, Google Imagen & Gemini). The application runs with a system tray icon and can automatically generate wallpapers at specified intervals with customizable random prompt elements.
 
 ## Build and Development Commands
 
@@ -51,8 +51,8 @@ dotnet.exe restore
 #### Image Generation Services
 - **Services/ImageGen/IImageGenerationService**: Interface for image generation providers
 - **Services/ImageGen/ImageGenerationServiceFactory**: Factory for creating appropriate image generation service instances
-- **Services/ImageGen/OpenAiImageGenerator**: OpenAI DALL-E 3 image generation implementation (returns MemoryStream)
-- **Services/ImageGen/GoogleImagenService**: Google Imagen API integration for image generation (returns MemoryStream)
+- **Services/ImageGen/OpenAiImageGenerator**: OpenAI GPT Image (gpt-image) generation implementation
+- **Services/ImageGen/GoogleImagenService**: Google image generation — Imagen via the predict endpoint and Gemini (gemini-3-pro-image-preview) via generateContent
 
 #### Text Generation Services
 - **Services/TextGen/ILlmService**: Interface for LLM providers
@@ -75,7 +75,7 @@ dotnet.exe restore
 
 ### Key Technical Details
 
-- **Framework**: .NET 9.0 with WinUI 3 (Windows App SDK 1.7.250606001)
+- **Framework**: .NET 10.0 with WinUI 3 (Windows App SDK 2.1.3)
 - **Output**: Images saved to `%USERPROFILE%\Pictures\WallTrek\` with timestamp and prompt in filename
 - **Settings**: Stored in `%APPDATA%\WallTrek\settings.json`
 - **Database**: SQLite database at `%APPDATA%\WallTrek\walltrek.db`
@@ -83,9 +83,9 @@ dotnet.exe restore
 
 ### Dependencies
 
-- **OpenAI**: OpenAI API client (v2.1.0) for DALL-E 3 image generation and GPT model text generation
-- **Anthropic.SDK**: Anthropic API client for Claude model text generation and image descriptions
-- **Google AI**: Google Generative AI client for Imagen image generation
+- **OpenAI**: OpenAI API client (v2.10.0) for GPT Image (gpt-image) generation and GPT model text generation
+- **Anthropic.SDK**: Anthropic API client (v5.10.0) for Claude model text generation and image descriptions
+- **Google AI**: Google Generative AI client for Imagen and Gemini image generation
 - **Microsoft.Data.Sqlite**: SQLite database integration for data persistence
 - **System.Drawing.Common**: Image processing and metadata handling
 - **H.NotifyIcon.WinUI**: System tray integration for WinUI 3

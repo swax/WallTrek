@@ -120,15 +120,19 @@ namespace WallTrek.Views
             Settings.Instance.Save();
 
             var selectedImageModel = Settings.Instance.SelectedImageModel;
-            
-            // Check if required API key is available based on selected image model
-            if (selectedImageModel.StartsWith("imagen") && string.IsNullOrEmpty(Settings.Instance.GoogleApiKey))
+
+            // Check if required API key is available based on selected image model.
+            // Google: Imagen (imagen-*) and Gemini (gemini-*). OpenAI: gpt-image-* (and legacy dall-e-*).
+            bool isGoogleModel = selectedImageModel.StartsWith("imagen") || selectedImageModel.StartsWith("gemini");
+            bool isOpenAiModel = selectedImageModel.StartsWith("gpt-image") || selectedImageModel.StartsWith("dall-e");
+
+            if (isGoogleModel && string.IsNullOrEmpty(Settings.Instance.GoogleApiKey))
             {
                 SetStatus("Please set your Google API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
                 NavigateToSettings?.Invoke(this, EventArgs.Empty);
                 return;
             }
-            else if (selectedImageModel == "dalle-3" && string.IsNullOrEmpty(Settings.Instance.ApiKey))
+            else if (isOpenAiModel && string.IsNullOrEmpty(Settings.Instance.ApiKey))
             {
                 SetStatus("Please set your OpenAI API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
                 NavigateToSettings?.Invoke(this, EventArgs.Empty);

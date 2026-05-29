@@ -17,7 +17,7 @@
 
     <!-- Assembly Information -->
     <AssemblyTitle>WallTrek</AssemblyTitle>
-    <AssemblyDescription>Generate desktop wallpapers with DALL·E 3</AssemblyDescription>
+    <AssemblyDescription>Generate AI-powered desktop wallpapers</AssemblyDescription>
     <AssemblyCompany>John Marshall</AssemblyCompany>
     <AssemblyProduct>WallTrek</AssemblyProduct>
     <AssemblyVersion>1.1.0.0</AssemblyVersion>

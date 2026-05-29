@@ -8,23 +8,25 @@ namespace WallTrek.Services.ImageGen
         {
             var settings = Settings.Instance;
 
-            switch (imageModel)
+            // OpenAI image models (gpt-image family; "dall-e" kept for any legacy settings).
+            if (imageModel.StartsWith("gpt-image", StringComparison.OrdinalIgnoreCase)
+                || imageModel.StartsWith("dall-e", StringComparison.OrdinalIgnoreCase))
             {
-                case "dalle-3":
-                    if (string.IsNullOrEmpty(settings.ApiKey))
-                        throw new InvalidOperationException("OpenAI API key is required for DALL-E 3");
-                    return new OpenAiImageGenerator(settings.ApiKey);
-
-                case "gemini-3-pro-image-preview":
-                case "imagen-4.0-generate-001":
-                case "imagen-4.0-ultra-generate-001":
-                    if (string.IsNullOrEmpty(settings.GoogleApiKey))
-                        throw new InvalidOperationException("Google API key is required for Imagen models");
-                    return new GoogleImagenService(settings.GoogleApiKey);
-
-                default:
-                    throw new ArgumentException($"Unsupported image model: {imageModel}");
+                if (string.IsNullOrEmpty(settings.ApiKey))
+                    throw new InvalidOperationException("OpenAI API key is required for OpenAI image models");
+                return new OpenAiImageGenerator(settings.ApiKey, imageModel);
             }
+
+            // Google image models — Imagen (predict endpoint) and Gemini (generateContent endpoint).
+            if (imageModel.StartsWith("imagen", StringComparison.OrdinalIgnoreCase)
+                || imageModel.StartsWith("gemini", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrEmpty(settings.GoogleApiKey))
+                    throw new InvalidOperationException("Google API key is required for Imagen and Gemini image models");
+                return new GoogleImagenService(settings.GoogleApiKey, imageModel);
+            }
+
+            throw new ArgumentException($"Unsupported image model: {imageModel}");
         }
     }
 }
