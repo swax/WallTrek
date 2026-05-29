@@ -324,6 +324,34 @@ namespace WallTrek.Views
             ShowStatus("Default categories loaded into the editor. Click 'Save Settings' to apply.", Microsoft.UI.Colors.LimeGreen);
         }
 
+        private async void GenerateCategoryProfile_Click(object sender, RoutedEventArgs e)
+        {
+            var request = await DialogHelper.ShowInputAsync(XamlRoot,
+                "Generate Category Set",
+                "Describe the theme, e.g. 'deep-sea bioluminescent creatures in moody painterly styles'",
+                acceptsReturn: true);
+            if (string.IsNullOrWhiteSpace(request)) return;
+
+            var button = (Button)sender;
+            button.IsEnabled = false;
+            ShowStatus("Generating categories…", Microsoft.UI.Colors.Gray);
+            try
+            {
+                var json = await new ProfileContentGenerator()
+                    .GenerateCategoryJsonAsync(CategoryLlmSelector.SelectedModelId, request);
+                JsonTextBox.Text = json;
+                ShowStatus("Generated categories loaded into the editor. Click 'Save Settings' to apply.", Microsoft.UI.Colors.LimeGreen);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Generation failed: {ex.Message}", Microsoft.UI.Colors.Red);
+            }
+            finally
+            {
+                button.IsEnabled = true;
+            }
+        }
+
         // ---- Word lists -------------------------------------------------------
 
         private void PopulateWordLists()
@@ -431,6 +459,34 @@ namespace WallTrek.Views
             WordListTextBox.Text = RandomWordService.GetDefaultWordListText();
 
             ShowStatus("Default word list loaded into the editor. Click 'Save Settings' to apply.", Microsoft.UI.Colors.LimeGreen);
+        }
+
+        private async void GenerateWordList_Click(object sender, RoutedEventArgs e)
+        {
+            var request = await DialogHelper.ShowInputAsync(XamlRoot,
+                "Generate Word List",
+                "Describe the theme, e.g. 'cozy autumn cabin moods and textures'",
+                acceptsReturn: true);
+            if (string.IsNullOrWhiteSpace(request)) return;
+
+            var button = (Button)sender;
+            button.IsEnabled = false;
+            ShowStatus("Generating word list…", Microsoft.UI.Colors.Gray);
+            try
+            {
+                var words = await new ProfileContentGenerator()
+                    .GenerateWordListAsync(WordListLlmSelector.SelectedModelId, request);
+                WordListTextBox.Text = words;
+                ShowStatus("Generated word list loaded into the editor. Click 'Save Settings' to apply.", Microsoft.UI.Colors.LimeGreen);
+            }
+            catch (Exception ex)
+            {
+                ShowStatus($"Generation failed: {ex.Message}", Microsoft.UI.Colors.Red);
+            }
+            finally
+            {
+                button.IsEnabled = true;
+            }
         }
 
         private void OpenDataFolderButton_Click(object sender, RoutedEventArgs e)

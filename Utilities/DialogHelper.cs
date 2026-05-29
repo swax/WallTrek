@@ -83,14 +83,23 @@ namespace WallTrek.Utilities
             string placeholder = "",
             string initial = "",
             string primaryButtonText = "OK",
-            string closeButtonText = "Cancel")
+            string closeButtonText = "Cancel",
+            bool acceptsReturn = false)
         {
             var textBox = new TextBox
             {
                 PlaceholderText = placeholder,
                 Text = initial,
-                AcceptsReturn = false
+                AcceptsReturn = acceptsReturn,
+                TextWrapping = acceptsReturn ? TextWrapping.Wrap : TextWrapping.NoWrap
             };
+
+            // Give a multi-line prompt some room to breathe.
+            if (acceptsReturn)
+            {
+                textBox.MinHeight = 120;
+                textBox.MinWidth = 380;
+            }
 
             var dialog = new ContentDialog
             {

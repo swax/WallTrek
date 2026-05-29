@@ -1,0 +1,30 @@
+<!-- LlmModelSelector.xaml -->
+<UserControl
+    x:Class="WallTrek.Views.Controls.LlmModelSelector"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:textgen="using:WallTrek.Services.TextGen"
+    mc:Ignorable="d">
+
+    <!-- A single-select sibling of the main page's LLM picker: same catalog and the same
+         model / per-prompt-cost columns, but a stock ComboBox since only one model is chosen. -->
+    <ComboBox x:Name="ModelComboBox"
+              HorizontalAlignment="Stretch"
+              SelectionChanged="ModelComboBox_SelectionChanged">
+        <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="textgen:LlmModelOption">
+                <Grid ColumnSpacing="12" Padding="2,3">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{x:Bind Model}"/>
+                    <TextBlock Grid.Column="1" Text="{x:Bind PerPrompt}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </Grid>
+            </DataTemplate>
+        </ComboBox.ItemTemplate>
+    </ComboBox>
+</UserControl>
