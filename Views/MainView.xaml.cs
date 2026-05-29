@@ -151,6 +151,7 @@ namespace WallTrek.Views
             {
                 SetGeneratingState(true);
                 SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
+                Logger.Info($"Generating wallpaper — image model: {Settings.Instance.SelectedImageModel}, LLM: {Settings.Instance.SelectedLlmModel}");
 
                 // If we don't have a cached prompt generation result (e.g., user typed their own prompt),
                 // generate title and tags from the prompt
@@ -215,6 +216,7 @@ namespace WallTrek.Views
                     }
                     catch (Exception ex)
                     {
+                        Logger.Error("Image upscaling failed; proceeding with original image", ex);
                         await DialogHelper.ShowMessageAsync(
                             this.XamlRoot,
                             "Image Upscaling Failed",
@@ -246,6 +248,7 @@ namespace WallTrek.Views
             }
             catch (Exception ex)
             {
+                Logger.Error("Wallpaper generation failed", ex);
                 SetStatus($"Error: {ex.Message}", Microsoft.UI.Colors.OrangeRed);
             }
             finally
@@ -325,6 +328,7 @@ namespace WallTrek.Views
             {
                 SetGeneratingState(true);
                 SetStatus("Generating random prompt...", Microsoft.UI.Colors.DodgerBlue);
+                Logger.Info($"Generating random prompt — LLM: {Settings.Instance.SelectedLlmModel}");
 
                 var promptGenerator = new PromptGeneratorService();
                 var result = await promptGenerator.GenerateRandomPromptAsync(_cancellationTokenSource.Token);
@@ -347,6 +351,7 @@ namespace WallTrek.Views
             }
             catch (Exception ex)
             {
+                Logger.Error("Random prompt generation failed", ex);
                 SetStatus($"Error generating random prompt: {ex.Message}", Microsoft.UI.Colors.OrangeRed);
             }
             finally
