@@ -74,6 +74,39 @@ namespace WallTrek.Utilities
         }
 
         /// <summary>
+        /// Shows a single-line text-input dialog. Returns the entered text, or null if the
+        /// user cancelled.
+        /// </summary>
+        public static async Task<string?> ShowInputAsync(
+            XamlRoot xamlRoot,
+            string title,
+            string placeholder = "",
+            string initial = "",
+            string primaryButtonText = "OK",
+            string closeButtonText = "Cancel")
+        {
+            var textBox = new TextBox
+            {
+                PlaceholderText = placeholder,
+                Text = initial,
+                AcceptsReturn = false
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = textBox,
+                PrimaryButtonText = primaryButtonText,
+                CloseButtonText = closeButtonText,
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = xamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+            return result == ContentDialogResult.Primary ? textBox.Text : null;
+        }
+
+        /// <summary>
         /// Creates a ContentDialog with XamlRoot already set
         /// </summary>
         public static ContentDialog CreateDialog(XamlRoot xamlRoot)

@@ -30,34 +30,47 @@
         <!-- Prompt Input -->
         <StackPanel Grid.Row="1" Spacing="10" Margin="0,0,0,20">
             <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock Text="Describe your wallpaper:" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                <TextBlock Text="LLM:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="20,0,0,0"/>
-                <wt:MultiSelectComboBox x:Name="LlmSelectionControl"
-                                        MinWidth="210"
-                                        VerticalAlignment="Center"
-                                        SelectionChanged="LlmSelectionControl_SelectionChanged">
-                    <wt:MultiSelectComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <Grid ColumnSpacing="12" Padding="2,3">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150"/>
-                                    <ColumnDefinition Width="50"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding Model}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding PerPrompt}" HorizontalAlignment="Right"/>
-                            </Grid>
-                        </DataTemplate>
-                    </wt:MultiSelectComboBox.ItemTemplate>
-                </wt:MultiSelectComboBox>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="LLM" FontWeight="SemiBold" FontSize="12"/>
+                    <wt:MultiSelectComboBox x:Name="LlmSelectionControl"
+                                            MinWidth="210"
+                                            SelectionChanged="LlmSelectionControl_SelectionChanged">
+                        <wt:MultiSelectComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnSpacing="12" Padding="2,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="50"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Model}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding PerPrompt}" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </DataTemplate>
+                        </wt:MultiSelectComboBox.ItemTemplate>
+                    </wt:MultiSelectComboBox>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Category set" FontWeight="SemiBold" FontSize="12"/>
+                    <ComboBox x:Name="CategoryProfileSelector"
+                              MinWidth="150"
+                              SelectionChanged="CategoryProfileSelector_SelectionChanged"/>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Word list" FontWeight="SemiBold" FontSize="12"/>
+                    <ComboBox x:Name="WordListSelector"
+                              MinWidth="150"
+                              SelectionChanged="WordListSelector_SelectionChanged"/>
+                </StackPanel>
                 <Button x:Name="RandomPromptButton"
-                        Content="Random Prompt"
+                        Content="Generate Prompt"
                         Click="RandomPromptButton_Click"
                         FontSize="12"
                         Padding="8,4"
-                        VerticalAlignment="Center"/>
+                        VerticalAlignment="Bottom"
+                        Margin="0,0,0,2"/>
             </StackPanel>
             <TextBox x:Name="PromptTextBox"
-                     PlaceholderText="Enter a description for your AI-generated wallpaper..."
+                     PlaceholderText="Enter a description for your wallpaper or click generate prompt above..."
                      Height="120"
                      TextWrapping="Wrap"
                      AcceptsReturn="True"
@@ -84,55 +97,55 @@
             </ItemsControl>
 
             <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock Text="Image Model:" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                <wt:MultiSelectComboBox x:Name="ImageModelSelectionControl"
-                                        MinWidth="360"
-                                        VerticalAlignment="Center"
-                                        SelectionChanged="ImageModelSelectionControl_SelectionChanged">
-                    <wt:MultiSelectComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <Grid ColumnSpacing="14" Padding="2,3">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="116"/>
-                                    <ColumnDefinition Width="64"/>
-                                    <ColumnDefinition Width="92"/>
-                                    <ColumnDefinition Width="52"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding Model}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Quality}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <TextBlock Grid.Column="2" Text="{Binding Dimensions}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <TextBlock Grid.Column="3" Text="{Binding Price}" HorizontalAlignment="Right"/>
-                            </Grid>
-                        </DataTemplate>
-                    </wt:MultiSelectComboBox.ItemTemplate>
-                </wt:MultiSelectComboBox>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <TextBlock Text="Upscale:" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                <ComboBox x:Name="UpscalerSelectionComboBox"
-                          SelectionChanged="UpscalerSelectionComboBox_SelectionChanged"
-                          MinWidth="240">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="imagegen:UpscalerOption">
-                            <Grid ColumnSpacing="12" Padding="2,3">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="100"/>
-                                    <ColumnDefinition Width="96"/>
-                                    <ColumnDefinition Width="40"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{x:Bind Name}"/>
-                                <TextBlock Grid.Column="1" Text="{x:Bind Detail}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                <TextBlock Grid.Column="2" Text="{x:Bind Price}" HorizontalAlignment="Right"/>
-                            </Grid>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Image Model" FontWeight="SemiBold" FontSize="12"/>
+                    <wt:MultiSelectComboBox x:Name="ImageModelSelectionControl"
+                                            MinWidth="360"
+                                            SelectionChanged="ImageModelSelectionControl_SelectionChanged">
+                        <wt:MultiSelectComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnSpacing="14" Padding="2,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="116"/>
+                                        <ColumnDefinition Width="64"/>
+                                        <ColumnDefinition Width="92"/>
+                                        <ColumnDefinition Width="52"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Model}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Quality}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Dimensions}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding Price}" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </DataTemplate>
+                        </wt:MultiSelectComboBox.ItemTemplate>
+                    </wt:MultiSelectComboBox>
+                </StackPanel>
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Upscale" FontWeight="SemiBold" FontSize="12"/>
+                    <ComboBox x:Name="UpscalerSelectionComboBox"
+                              SelectionChanged="UpscalerSelectionComboBox_SelectionChanged"
+                              MinWidth="240">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="imagegen:UpscalerOption">
+                                <Grid ColumnSpacing="12" Padding="2,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="100"/>
+                                        <ColumnDefinition Width="96"/>
+                                        <ColumnDefinition Width="40"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{x:Bind Name}"/>
+                                    <TextBlock Grid.Column="1" Text="{x:Bind Detail}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock Grid.Column="2" Text="{x:Bind Price}" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
                 <Button x:Name="GenerateButton"
                         Content="Generate Image"
                         Click="GenerateButton_Click"
                         Style="{StaticResource AccentButtonStyle}"
-                        VerticalAlignment="Center"
+                        VerticalAlignment="Bottom"
                         MinWidth="120"/>
             </StackPanel>
         </StackPanel>
@@ -162,7 +175,7 @@
                         Background="Red"
                         Foreground="White"/>
                 <Button x:Name="ImageGridButton"
-                        Content="Image Grid"
+                        Content="Image History"
                         Click="ImageGridButton_Click"
                         MinWidth="100"/>
                 <Button x:Name="OpenFolderButton"

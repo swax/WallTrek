@@ -34,7 +34,12 @@ namespace WallTrek
             // Connect view events
             MainViewControl.NavigateToSettings += (s, e) => NavigateToSettings();
             MainViewControl.NavigateToImageGrid += (s, e) => NavigateToImageGrid();
-            SettingsViewControl.NavigateToMain += (s, e) => NavigateToHome();
+            SettingsViewControl.NavigateToMain += (s, e) =>
+            {
+                NavigateToHome();
+                // Profiles/word lists may have been added, renamed, deleted, or re-selected.
+                MainViewControl.RefreshProfileSelectors();
+            };
             ImageGridViewControl.NavigateBack += (s, e) => NavigateToHome();
         }
         

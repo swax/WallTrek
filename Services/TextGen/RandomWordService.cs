@@ -2,47 +2,150 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using WallTrek.Services;
 
 namespace WallTrek.Services.TextGen
 {
     /// <summary>
-    /// Supplies random "seed" words used to inject entropy into AI prompt
-    /// generation. By default words come from a list embedded in the assembly
-    /// (Services/TextGen/words.txt). Users can override the list from the Settings
-    /// UI; when they do, the custom list is persisted to %APPDATA%\WallTrek\words.txt
-    /// and takes precedence over the embedded one.
+    /// Supplies random "seed" words used to inject entropy into AI prompt generation.
+    /// Word lists are flat text files (one word per line; lines starting with '#' are
+    /// comments) stored under %APPDATA%\WallTrek\wordlists. The active list is chosen via
+    /// <see cref="Settings.SelectedWordList"/>; creating a new list is just dropping a new
+    /// .txt file in the folder. A list embedded in the assembly
+    /// (Services/TextGen/words.txt) seeds the default file on first run.
     /// </summary>
     public class RandomWordService
     {
-        private static readonly object _lock = new();
-        private static IReadOnlyList<string>? _cache;
+        public const string Extension = ".txt";
 
-        /// <summary>Path to the user's optional custom word list (app data folder).</summary>
-        public static string OverrideFilePath { get; } = Path.Combine(
+        public static string FolderPath { get; } = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "WallTrek",
+            "wordlists");
+
+        // Single-override path used before word lists became multi-file; migrated on first run.
+        private static string LegacyOverridePath { get; } = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "WallTrek",
             "words.txt");
 
         /// <summary>
-        /// Returns up to <paramref name="count"/> distinct words chosen at random
-        /// from the effective word list (custom override if present, else embedded).
+        /// Ensures the folder exists and holds at least one list, seeding "Default" from a
+        /// pre-existing legacy words.txt override (preserving an upgrading user's custom
+        /// list) or the embedded list on a fresh install.
+        /// </summary>
+        public static void EnsureSeeded()
+        {
+            Directory.CreateDirectory(FolderPath);
+
+            if (ListWordLists().Count > 0)
+                return;
+
+            string seedText;
+            try
+            {
+                seedText = File.Exists(LegacyOverridePath)
+                    ? File.ReadAllText(LegacyOverridePath)
+                    : GetDefaultWordListText();
+            }
+            catch
+            {
+                seedText = GetDefaultWordListText();
+            }
+
+            WriteText("Default", seedText);
+        }
+
+        /// <summary>Word-list names (file stems), sorted case-insensitively.</summary>
+        public static IReadOnlyList<string> ListWordLists()
+        {
+            if (!Directory.Exists(FolderPath))
+                return Array.Empty<string>();
+
+            return Directory.EnumerateFiles(FolderPath, "*" + Extension)
+                .Select(Path.GetFileNameWithoutExtension)
+                .Where(n => !string.IsNullOrEmpty(n))
+                .Select(n => n!)
+                .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        public static bool Exists(string name) => File.Exists(PathFor(name));
+
+        public static string PathFor(string name) =>
+            Path.Combine(FolderPath, SanitizeName(name) + Extension);
+
+        public static string LoadText(string name)
+        {
+            try
+            {
+                var path = PathFor(name);
+                return File.Exists(path) ? File.ReadAllText(path) : string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        public static void WriteText(string name, string text)
+        {
+            Directory.CreateDirectory(FolderPath);
+            File.WriteAllText(PathFor(name), text ?? string.Empty);
+        }
+
+        public static void Create(string name)
+        {
+            if (Exists(name))
+                throw new IOException($"A word list named '{name}' already exists.");
+            WriteText(name, "# One word per line. Lines starting with # are ignored.\n");
+        }
+
+        public static void Rename(string oldName, string newName)
+        {
+            var src = PathFor(oldName);
+            var dst = PathFor(newName);
+            if (!File.Exists(src))
+                throw new FileNotFoundException($"Word list '{oldName}' not found.");
+            if (File.Exists(dst))
+                throw new IOException($"A word list named '{newName}' already exists.");
+            File.Move(src, dst);
+        }
+
+        public static void Delete(string name)
+        {
+            var path = PathFor(name);
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+
+        /// <summary>Replaces path separators / invalid filename characters in a list name.</summary>
+        public static string SanitizeName(string name)
+        {
+            name = (name ?? string.Empty).Trim();
+            foreach (var c in Path.GetInvalidFileNameChars())
+                name = name.Replace(c, '_');
+            return name;
+        }
+
+        /// <summary>
+        /// Returns up to <paramref name="count"/> distinct words chosen at random from the
+        /// active word list.
         /// </summary>
         public Task<List<string>> GetRandomWordsAsync(int count, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var words = Words;
+            var words = GetActiveWords();
             if (count <= 0 || words.Count == 0)
                 return Task.FromResult(new List<string>());
 
             var take = Math.Min(count, words.Count);
 
-            // Partial Fisher-Yates over an index array: shuffles only the first
-            // `take` slots, giving distinct words (no repeats) without copying or
-            // sorting the whole list.
+            // Partial Fisher-Yates over an index array: shuffles only the first `take`
+            // slots, giving distinct words (no repeats) without copying or sorting the list.
             var indices = new int[words.Count];
             for (int i = 0; i < indices.Length; i++)
                 indices[i] = i;
@@ -58,47 +161,24 @@ namespace WallTrek.Services.TextGen
             return Task.FromResult(result);
         }
 
-        /// <summary>The cached, parsed effective word list.</summary>
-        private static IReadOnlyList<string> Words
-        {
-            get
-            {
-                lock (_lock)
-                {
-                    return _cache ??= ParseWords(GetEffectiveWordListText());
-                }
-            }
-        }
-
-        /// <summary>Forces the next access to reload the word list from disk/resource.</summary>
-        public static void InvalidateCache()
-        {
-            lock (_lock)
-            {
-                _cache = null;
-            }
-        }
-
-        /// <summary>True when a user-supplied custom word list exists on disk.</summary>
-        public static bool HasOverride() => File.Exists(OverrideFilePath);
-
         /// <summary>
-        /// Raw text of the list currently in effect: the custom override file if it
-        /// exists, otherwise the embedded default (comments and all).
+        /// Parsed words from the active list (<see cref="Settings.SelectedWordList"/>),
+        /// falling back to the first available list, then the embedded default.
         /// </summary>
-        public static string GetEffectiveWordListText()
+        public static List<string> GetActiveWords()
         {
-            try
+            var name = Settings.Instance.SelectedWordList;
+            string text;
+            if (!string.IsNullOrWhiteSpace(name) && Exists(name))
             {
-                if (HasOverride())
-                    return File.ReadAllText(OverrideFilePath);
+                text = LoadText(name);
             }
-            catch
+            else
             {
-                // Fall back to the embedded default if the override can't be read.
+                var first = ListWordLists().FirstOrDefault();
+                text = first != null ? LoadText(first) : GetDefaultWordListText();
             }
-
-            return GetDefaultWordListText();
+            return ParseWords(text);
         }
 
         /// <summary>Raw text of the embedded default word list (comments included).</summary>
@@ -106,8 +186,8 @@ namespace WallTrek.Services.TextGen
         {
             var assembly = typeof(RandomWordService).Assembly;
 
-            // Match by suffix so the resource keeps loading even if the root
-            // namespace or folder is renamed.
+            // Match by suffix so the resource keeps loading even if the root namespace or
+            // folder is renamed.
             var resourceName = assembly.GetManifestResourceNames()
                 .FirstOrDefault(n => n.EndsWith("words.txt", StringComparison.OrdinalIgnoreCase));
 
@@ -123,8 +203,8 @@ namespace WallTrek.Services.TextGen
         }
 
         /// <summary>
-        /// Parses raw list text into distinct words, skipping blank lines and lines
-        /// that start with '#'. De-duplicates case-insensitively, preserving order.
+        /// Parses raw list text into distinct words, skipping blank lines and lines that
+        /// start with '#'. De-duplicates case-insensitively, preserving order.
         /// </summary>
         public static List<string> ParseWords(string text)
         {
@@ -145,28 +225,6 @@ namespace WallTrek.Services.TextGen
             }
 
             return words;
-        }
-
-        /// <summary>Writes a custom word list to disk and refreshes the cache.</summary>
-        public static void SaveOverride(string text)
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(OverrideFilePath)!);
-            File.WriteAllText(OverrideFilePath, text);
-            InvalidateCache();
-        }
-
-        /// <summary>Removes the custom word list so the embedded default is used again.</summary>
-        public static void ClearOverride()
-        {
-            try
-            {
-                if (File.Exists(OverrideFilePath))
-                    File.Delete(OverrideFilePath);
-            }
-            finally
-            {
-                InvalidateCache();
-            }
         }
     }
 }

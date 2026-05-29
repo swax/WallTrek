@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using WallTrek.Services;
+using WallTrek.Services.Profiles;
 using WallTrek.Services.TextGen;
 using WallTrek.Utilities;
 using Windows.Storage;
@@ -17,6 +18,13 @@ namespace WallTrek.Views
     public sealed partial class SettingsView : UserControl
     {
         public event EventHandler? NavigateToMain;
+
+        // The profile / word list whose contents are currently shown in each editor.
+        private string? _currentCategoryProfile;
+        private string? _currentWordList;
+
+        // Guards the combo SelectionChanged handlers while we populate them in code.
+        private bool _suppressProfileEvents;
 
         public SettingsView()
         {
@@ -65,33 +73,34 @@ namespace WallTrek.Views
             // Load startup setting from both settings and registry to ensure sync
             RunOnStartupCheckBox.IsChecked = StartupManager.IsStartupEnabled();
 
-            // Load random prompt settings JSON
-            LoadRandomPromptSettingsToUI();
-
-            // Load random words settings
+            // Load random words on/off + count
             AddRandomWordsCheckBox.IsChecked = settings.AddRandomWords;
             RandomWordCountNumberBox.Value = settings.RandomWordCount;
 
-            // Load the effective random-word list (custom override or embedded default)
-            LoadRandomWordsToUI();
+            // Load the file-based category profiles and word lists into their dropdowns/editors.
+            PopulateCategoryProfiles();
+            PopulateWordLists();
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            // First try to save random prompt settings
-            if (!TryParseAndSaveRandomPromptSettings(out string errorMessage))
+            // Flush the open category editor to its file (must be valid JSON).
+            if (_currentCategoryProfile != null)
             {
-                StatusTextBlock.Text = errorMessage;
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
-                return;
+                if (!CategoryProfileService.TryValidate(JsonTextBox.Text, out string catError))
+                {
+                    ShowStatus(catError, Microsoft.UI.Colors.Red);
+                    return;
+                }
+                CategoryProfileService.WriteText(_currentCategoryProfile, JsonTextBox.Text);
+                Settings.Instance.SelectedCategoryProfile = _currentCategoryProfile;
             }
 
-            // Then validate and persist the random-word list (custom override file)
-            if (!TryParseAndSaveRandomWords(out string wordListError))
+            // Flush the open word-list editor to its file (any text is allowed).
+            if (_currentWordList != null)
             {
-                StatusTextBlock.Text = wordListError;
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
-                return;
+                RandomWordService.WriteText(_currentWordList, WordListTextBox.Text);
+                Settings.Instance.SelectedWordList = _currentWordList;
             }
 
             var settings = Settings.Instance;
@@ -125,7 +134,6 @@ namespace WallTrek.Views
             settings.Save();
 
             // Refresh auto-generate service based on new settings
-            // If hours changed and auto-generate is enabled, restart to recalculate next generation time
             if (settings.AutoGenerateEnabled && settings.AutoGenerateHours > 0 &&
                 Math.Abs(previousHours - settings.AutoGenerateHours) > 0.001)
             {
@@ -136,17 +144,15 @@ namespace WallTrek.Views
                 AutoGenerateService.Instance.RefreshFromSettings();
             }
 
-            StatusTextBlock.Text = "Settings saved successfully!";
-            StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
+            ShowStatus("Settings saved successfully!", Microsoft.UI.Colors.LimeGreen);
 
             // Navigate back to main view after saving
             NavigateToMain?.Invoke(this, EventArgs.Empty);
         }
 
-
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            // Reload settings to discard changes
+            // Reload settings to discard unsaved editor changes
             LoadSettingsToUI();
             StatusTextBlock.Text = "";
 
@@ -182,7 +188,6 @@ namespace WallTrek.Views
             AutoGenerateOptionsPanel.Visibility = AutoGenerateCheckBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         }
 
-
         private void ClearTokensButton_Click(object sender, RoutedEventArgs e)
         {
             var settings = Settings.Instance;
@@ -194,174 +199,244 @@ namespace WallTrek.Views
             StatusTextBlock.Text = "DeviantArt tokens cleared successfully!";
         }
 
-        private void LoadRandomPromptSettingsToUI()
+        // ---- Category profiles ------------------------------------------------
+
+        private void PopulateCategoryProfiles()
         {
-            var settings = Settings.Instance;
-            var randomPrompts = settings.RandomPrompts;
+            _suppressProfileEvents = true;
+            var profiles = CategoryProfileService.ListProfiles().ToList();
+            CategoryProfileComboBox.ItemsSource = profiles;
 
-            // Serialize the RandomPromptsSettings to JSON with better formatting
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            };
+            var active = profiles.FirstOrDefault(p =>
+                            string.Equals(p, Settings.Instance.SelectedCategoryProfile, StringComparison.OrdinalIgnoreCase))
+                        ?? profiles.FirstOrDefault();
+            CategoryProfileComboBox.SelectedItem = active;
+            _suppressProfileEvents = false;
 
-            string json = JsonSerializer.Serialize(randomPrompts, options);
-            JsonTextBox.Text = json;
+            _currentCategoryProfile = active;
+            JsonTextBox.Text = active != null ? CategoryProfileService.LoadText(active) : string.Empty;
         }
 
-        private bool TryParseAndSaveRandomPromptSettings(out string errorMessage)
+        private void CategoryProfileComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            errorMessage = "";
+            if (_suppressProfileEvents) return;
+            if (CategoryProfileComboBox.SelectedItem is not string target) return;
+            if (string.Equals(target, _currentCategoryProfile, StringComparison.Ordinal)) return;
 
-            try
+            // Auto-save the editor to the previously selected profile (must be valid JSON).
+            if (_currentCategoryProfile != null)
             {
-                string jsonText = JsonTextBox.Text;
-                if (string.IsNullOrWhiteSpace(jsonText))
+                if (!CategoryProfileService.TryValidate(JsonTextBox.Text, out var err))
                 {
-                    errorMessage = "JSON cannot be empty";
-                    return false;
+                    ShowStatus($"Can't switch — fix the JSON first: {err}", Microsoft.UI.Colors.Red);
+                    _suppressProfileEvents = true;
+                    CategoryProfileComboBox.SelectedItem = _currentCategoryProfile;
+                    _suppressProfileEvents = false;
+                    return;
                 }
-
-                var newSettings = JsonSerializer.Deserialize<Dictionary<string, string[]>>(jsonText);
-
-                if (newSettings == null)
-                {
-                    errorMessage = "Failed to deserialize JSON";
-                    return false;
-                }
-
-                // Validate that newSettings dictionary is not empty
-                if (newSettings.Count == 0)
-                {
-                    errorMessage = "At least one category is required";
-                    return false;
-                }
-
-                // Validate that each category has at least one non-empty value
-                foreach (var category in newSettings)
-                {
-                    if (string.IsNullOrWhiteSpace(category.Key))
-                    {
-                        errorMessage = "Category keys cannot be empty";
-                        return false;
-                    }
-
-                    if (category.Value == null || category.Value.Length == 0)
-                    {
-                        errorMessage = $"Category '{category.Key}' must have at least one value";
-                        return false;
-                    }
-
-                    if (category.Value.All(v => string.IsNullOrWhiteSpace(v)))
-                    {
-                        errorMessage = $"Category '{category.Key}' must have at least one non-empty value";
-                        return false;
-                    }
-                }
-
-                // Update the settings with the parsed JSON
-                var settings = Settings.Instance;
-                settings.RandomPrompts.Clear();
-
-                foreach (var category in newSettings)
-                {
-                    // Filter out empty values
-                    var validValues = category.Value.Where(v => !string.IsNullOrWhiteSpace(v)).ToArray();
-                    if (validValues.Length > 0)
-                    {
-                        settings.RandomPrompts[category.Key] = validValues;
-                    }
-                }
-
-                return true;
+                CategoryProfileService.WriteText(_currentCategoryProfile, JsonTextBox.Text);
             }
-            catch (JsonException ex)
+
+            _currentCategoryProfile = target;
+            JsonTextBox.Text = CategoryProfileService.LoadText(target);
+            Settings.Instance.SelectedCategoryProfile = target;
+            Settings.Instance.Save();
+        }
+
+        private async void NewCategoryProfile_Click(object sender, RoutedEventArgs e)
+        {
+            var input = await DialogHelper.ShowInputAsync(XamlRoot, "New Category Profile", "Profile name");
+            if (input == null) return;
+
+            var name = CategoryProfileService.SanitizeName(input);
+            if (name.Length == 0) { ShowStatus("Please enter a valid name.", Microsoft.UI.Colors.Red); return; }
+            if (CategoryProfileService.Exists(name)) { ShowStatus($"A profile named '{name}' already exists.", Microsoft.UI.Colors.Red); return; }
+
+            // Preserve any valid edits to the current profile before switching away.
+            if (_currentCategoryProfile != null && CategoryProfileService.TryValidate(JsonTextBox.Text, out _))
+                CategoryProfileService.WriteText(_currentCategoryProfile, JsonTextBox.Text);
+
+            try { CategoryProfileService.Create(name); }
+            catch (Exception ex) { ShowStatus(ex.Message, Microsoft.UI.Colors.Red); return; }
+
+            Settings.Instance.SelectedCategoryProfile = name;
+            Settings.Instance.Save();
+            PopulateCategoryProfiles();
+            ShowStatus($"Created profile '{name}'.", Microsoft.UI.Colors.LimeGreen);
+        }
+
+        private async void RenameCategoryProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentCategoryProfile == null) return;
+
+            var input = await DialogHelper.ShowInputAsync(XamlRoot, "Rename Category Profile", "New name", _currentCategoryProfile);
+            if (input == null) return;
+
+            var name = CategoryProfileService.SanitizeName(input);
+            if (name.Length == 0) { ShowStatus("Please enter a valid name.", Microsoft.UI.Colors.Red); return; }
+            if (string.Equals(name, _currentCategoryProfile, StringComparison.OrdinalIgnoreCase)) return;
+            if (CategoryProfileService.Exists(name)) { ShowStatus($"A profile named '{name}' already exists.", Microsoft.UI.Colors.Red); return; }
+
+            // Persist the open editor into the existing file before moving it.
+            if (!CategoryProfileService.TryValidate(JsonTextBox.Text, out var err))
             {
-                errorMessage = $"Invalid JSON: {ex.Message}";
-                return false;
+                ShowStatus($"Fix the JSON before renaming: {err}", Microsoft.UI.Colors.Red);
+                return;
             }
-            catch (Exception ex)
+            CategoryProfileService.WriteText(_currentCategoryProfile, JsonTextBox.Text);
+
+            try { CategoryProfileService.Rename(_currentCategoryProfile, name); }
+            catch (Exception ex) { ShowStatus(ex.Message, Microsoft.UI.Colors.Red); return; }
+
+            Settings.Instance.SelectedCategoryProfile = name;
+            Settings.Instance.Save();
+            PopulateCategoryProfiles();
+            ShowStatus($"Renamed to '{name}'.", Microsoft.UI.Colors.LimeGreen);
+        }
+
+        private async void DeleteCategoryProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentCategoryProfile == null) return;
+            if (CategoryProfileService.ListProfiles().Count <= 1)
             {
-                errorMessage = $"Error parsing JSON: {ex.Message}";
-                return false;
+                ShowStatus("At least one category profile is required.", Microsoft.UI.Colors.Red);
+                return;
             }
+
+            var confirmed = await DialogHelper.ShowConfirmationAsync(XamlRoot, "Delete Profile",
+                $"Delete category profile '{_currentCategoryProfile}'? This cannot be undone.",
+                "Delete", "Cancel");
+            if (!confirmed) return;
+
+            var deleted = _currentCategoryProfile;
+            CategoryProfileService.Delete(deleted);
+            Settings.Instance.SelectedCategoryProfile =
+                CategoryProfileService.ListProfiles().FirstOrDefault() ?? "Default";
+            Settings.Instance.Save();
+            PopulateCategoryProfiles();
+            ShowStatus($"Deleted profile '{deleted}'.", Microsoft.UI.Colors.LimeGreen);
         }
 
         private void RestorePromptDefaultsButton_Click(object sender, RoutedEventArgs e)
         {
-            // Create a new RandomPromptsSettings to get the default values
-            var defaultSettings = new DefaultRandomPrompts();
-
-            // Serialize to JSON and display with better formatting
             var options = new JsonSerializerOptions
             {
                 WriteIndented = true,
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             };
 
-            string json = JsonSerializer.Serialize(defaultSettings, options);
-            JsonTextBox.Text = json;
+            JsonTextBox.Text = JsonSerializer.Serialize(new DefaultRandomPrompts(), options);
 
-            StatusTextBlock.Text = "Default prompt categories restored. Click 'Save Settings' to apply.";
-            StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
+            ShowStatus("Default categories loaded into the editor. Click 'Save Settings' to apply.", Microsoft.UI.Colors.LimeGreen);
         }
 
-        private void LoadRandomWordsToUI()
+        // ---- Word lists -------------------------------------------------------
+
+        private void PopulateWordLists()
         {
-            // Show the override list if the user has one, otherwise the embedded default.
-            WordListTextBox.Text = RandomWordService.GetEffectiveWordListText();
+            _suppressProfileEvents = true;
+            var lists = RandomWordService.ListWordLists().ToList();
+            WordListComboBox.ItemsSource = lists;
+
+            var active = lists.FirstOrDefault(l =>
+                            string.Equals(l, Settings.Instance.SelectedWordList, StringComparison.OrdinalIgnoreCase))
+                        ?? lists.FirstOrDefault();
+            WordListComboBox.SelectedItem = active;
+            _suppressProfileEvents = false;
+
+            _currentWordList = active;
+            WordListTextBox.Text = active != null ? RandomWordService.LoadText(active) : string.Empty;
+        }
+
+        private void WordListComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressProfileEvents) return;
+            if (WordListComboBox.SelectedItem is not string target) return;
+            if (string.Equals(target, _currentWordList, StringComparison.Ordinal)) return;
+
+            // Auto-save the editor to the previously selected list.
+            if (_currentWordList != null)
+                RandomWordService.WriteText(_currentWordList, WordListTextBox.Text);
+
+            _currentWordList = target;
+            WordListTextBox.Text = RandomWordService.LoadText(target);
+            Settings.Instance.SelectedWordList = target;
+            Settings.Instance.Save();
+        }
+
+        private async void NewWordList_Click(object sender, RoutedEventArgs e)
+        {
+            var input = await DialogHelper.ShowInputAsync(XamlRoot, "New Word List", "Word list name");
+            if (input == null) return;
+
+            var name = RandomWordService.SanitizeName(input);
+            if (name.Length == 0) { ShowStatus("Please enter a valid name.", Microsoft.UI.Colors.Red); return; }
+            if (RandomWordService.Exists(name)) { ShowStatus($"A word list named '{name}' already exists.", Microsoft.UI.Colors.Red); return; }
+
+            // Preserve edits to the current list before switching away.
+            if (_currentWordList != null)
+                RandomWordService.WriteText(_currentWordList, WordListTextBox.Text);
+
+            try { RandomWordService.Create(name); }
+            catch (Exception ex) { ShowStatus(ex.Message, Microsoft.UI.Colors.Red); return; }
+
+            Settings.Instance.SelectedWordList = name;
+            Settings.Instance.Save();
+            PopulateWordLists();
+            ShowStatus($"Created word list '{name}'.", Microsoft.UI.Colors.LimeGreen);
+        }
+
+        private async void RenameWordList_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentWordList == null) return;
+
+            var input = await DialogHelper.ShowInputAsync(XamlRoot, "Rename Word List", "New name", _currentWordList);
+            if (input == null) return;
+
+            var name = RandomWordService.SanitizeName(input);
+            if (name.Length == 0) { ShowStatus("Please enter a valid name.", Microsoft.UI.Colors.Red); return; }
+            if (string.Equals(name, _currentWordList, StringComparison.OrdinalIgnoreCase)) return;
+            if (RandomWordService.Exists(name)) { ShowStatus($"A word list named '{name}' already exists.", Microsoft.UI.Colors.Red); return; }
+
+            RandomWordService.WriteText(_currentWordList, WordListTextBox.Text);
+
+            try { RandomWordService.Rename(_currentWordList, name); }
+            catch (Exception ex) { ShowStatus(ex.Message, Microsoft.UI.Colors.Red); return; }
+
+            Settings.Instance.SelectedWordList = name;
+            Settings.Instance.Save();
+            PopulateWordLists();
+            ShowStatus($"Renamed to '{name}'.", Microsoft.UI.Colors.LimeGreen);
+        }
+
+        private async void DeleteWordList_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentWordList == null) return;
+            if (RandomWordService.ListWordLists().Count <= 1)
+            {
+                ShowStatus("At least one word list is required.", Microsoft.UI.Colors.Red);
+                return;
+            }
+
+            var confirmed = await DialogHelper.ShowConfirmationAsync(XamlRoot, "Delete Word List",
+                $"Delete word list '{_currentWordList}'? This cannot be undone.",
+                "Delete", "Cancel");
+            if (!confirmed) return;
+
+            var deleted = _currentWordList;
+            RandomWordService.Delete(deleted);
+            Settings.Instance.SelectedWordList =
+                RandomWordService.ListWordLists().FirstOrDefault() ?? "Default";
+            Settings.Instance.Save();
+            PopulateWordLists();
+            ShowStatus($"Deleted word list '{deleted}'.", Microsoft.UI.Colors.LimeGreen);
         }
 
         private void RestoreWordsDefaultsButton_Click(object sender, RoutedEventArgs e)
         {
             WordListTextBox.Text = RandomWordService.GetDefaultWordListText();
 
-            StatusTextBlock.Text = "Default word list restored. Click 'Save Settings' to apply.";
-            StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.LimeGreen);
-        }
-
-        private bool TryParseAndSaveRandomWords(out string errorMessage)
-        {
-            errorMessage = "";
-
-            try
-            {
-                string text = WordListTextBox.Text ?? string.Empty;
-
-                // An empty editor means "fall back to the built-in default list".
-                if (string.IsNullOrWhiteSpace(text))
-                {
-                    RandomWordService.ClearOverride();
-                    return true;
-                }
-
-                var words = RandomWordService.ParseWords(text);
-                if (words.Count == 0)
-                {
-                    errorMessage = "The word list must contain at least one word (only comments or blank lines were found).";
-                    return false;
-                }
-
-                // If the edited list matches the embedded default, drop any override
-                // file so future updates to the built-in list still reach the user.
-                var defaultWords = RandomWordService.ParseWords(RandomWordService.GetDefaultWordListText());
-                if (words.SequenceEqual(defaultWords, StringComparer.OrdinalIgnoreCase))
-                {
-                    RandomWordService.ClearOverride();
-                }
-                else
-                {
-                    RandomWordService.SaveOverride(text);
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                errorMessage = $"Error saving word list: {ex.Message}";
-                return false;
-            }
+            ShowStatus("Default word list loaded into the editor. Click 'Save Settings' to apply.", Microsoft.UI.Colors.LimeGreen);
         }
 
         private void OpenDataFolderButton_Click(object sender, RoutedEventArgs e)
@@ -386,9 +461,14 @@ namespace WallTrek.Views
             }
             catch (Exception ex)
             {
-                StatusTextBlock.Text = $"Error opening folder: {ex.Message}";
-                StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                ShowStatus($"Error opening folder: {ex.Message}", Microsoft.UI.Colors.Red);
             }
+        }
+
+        private void ShowStatus(string message, Windows.UI.Color color)
+        {
+            StatusTextBlock.Text = message;
+            StatusTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(color);
         }
     }
 }

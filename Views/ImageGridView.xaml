@@ -20,7 +20,7 @@
         <StackPanel Grid.Row="0" Margin="20,20,20,10" Spacing="10">
             <StackPanel Orientation="Horizontal">
                 <Button x:Name="BackButton" Content="← Back" Click="BackButton_Click" Margin="0,0,20,0"/>
-                <TextBlock Text="Image Grid" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <TextBlock Text="Image History" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center"/>
             </StackPanel>
 
             <Grid>

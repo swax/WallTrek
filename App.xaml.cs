@@ -88,6 +88,19 @@ namespace WallTrek
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {             
             Settings.Instance.Load();
+
+            // Seed the category-profile and word-list folders on first run (and migrate an
+            // upgrading user's existing categories / words.txt into a "Default" file).
+            try
+            {
+                WallTrek.Services.Profiles.CategoryProfileService.EnsureSeeded();
+                WallTrek.Services.TextGen.RandomWordService.EnsureSeeded();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to seed category profiles / word lists", ex);
+            }
+
             InitializeTrayIcon();
 
             _window = new MainWindow();

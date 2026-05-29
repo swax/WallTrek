@@ -107,21 +107,36 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Left panel: Random prompt categories (JSON) -->
+                    <!-- Left panel: Category profiles -->
                     <Grid Grid.Column="0">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,10">
-                            <TextBlock Text="Random Prompt Categories (JSON)" FontSize="16" FontWeight="SemiBold"/>
-                            <TextBlock Text="Categories and values the AI draws from when building a random prompt."
+                            <TextBlock Text="Category Profiles" FontSize="16" FontWeight="SemiBold"/>
+                            <TextBlock Text="Each profile is a JSON file of categories and values the AI draws from. Pick one to edit; the selected profile is the active one used for generation."
                                        TextWrapping="Wrap" FontSize="12" Opacity="0.7"/>
                         </StackPanel>
 
-                        <ScrollViewer Grid.Row="1" ZoomMode="Disabled" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <Grid Grid.Row="1" Margin="0,0,0,8" ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" x:Name="CategoryProfileComboBox" HorizontalAlignment="Stretch"
+                                      SelectionChanged="CategoryProfileComboBox_SelectionChanged"/>
+                            <Button Grid.Column="1" Content="New" Click="NewCategoryProfile_Click"/>
+                            <Button Grid.Column="2" Content="Rename" Click="RenameCategoryProfile_Click"/>
+                            <Button Grid.Column="3" Content="Delete" Click="DeleteCategoryProfile_Click"/>
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="2" ZoomMode="Disabled" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                             <TextBox x:Name="JsonTextBox"
                                      AcceptsReturn="True"
                                      TextWrapping="NoWrap"
@@ -132,28 +147,43 @@
                                      ScrollViewer.VerticalScrollBarVisibility="Auto"/>
                         </ScrollViewer>
 
-                        <Button Grid.Row="2" x:Name="RestorePromptDefaultsButton" Content="Restore Defaults" Click="RestorePromptDefaultsButton_Click" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+                        <Button Grid.Row="3" x:Name="RestorePromptDefaultsButton" Content="Restore Defaults" Click="RestorePromptDefaultsButton_Click" HorizontalAlignment="Left" Margin="0,10,0,0"/>
                     </Grid>
 
-                    <!-- Right panel: Random words -->
+                    <!-- Right panel: Word lists -->
                     <Grid Grid.Column="1">
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Spacing="6" Margin="0,0,0,10">
-                            <TextBlock Text="Random Words" FontSize="16" FontWeight="SemiBold"/>
+                            <TextBlock Text="Word Lists" FontSize="16" FontWeight="SemiBold"/>
                             <StackPanel Orientation="Horizontal" Spacing="10">
                                 <CheckBox x:Name="AddRandomWordsCheckBox" Content="Add this many random words:" VerticalAlignment="Center"/>
                                 <NumberBox x:Name="RandomWordCountNumberBox" Value="5" Minimum="1" Maximum="50" Width="80" VerticalAlignment="Center" SpinButtonPlacementMode="Inline"/>
                             </StackPanel>
-                            <TextBlock Text="One word per line; lines starting with # are ignored. Edit or paste your own list — custom lists are saved to words.txt in the WallTrek data folder."
+                            <TextBlock Text="Each list is a flat text file (one word per line; lines starting with # are ignored). Pick a list to edit; the selected list seeds random prompts."
                                        TextWrapping="Wrap" FontSize="12" Opacity="0.7"/>
                         </StackPanel>
 
-                        <ScrollViewer Grid.Row="1" ZoomMode="Disabled" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <Grid Grid.Row="1" Margin="0,0,0,8" ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" x:Name="WordListComboBox" HorizontalAlignment="Stretch"
+                                      SelectionChanged="WordListComboBox_SelectionChanged"/>
+                            <Button Grid.Column="1" Content="New" Click="NewWordList_Click"/>
+                            <Button Grid.Column="2" Content="Rename" Click="RenameWordList_Click"/>
+                            <Button Grid.Column="3" Content="Delete" Click="DeleteWordList_Click"/>
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="2" ZoomMode="Disabled" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                             <TextBox x:Name="WordListTextBox"
                                      AcceptsReturn="True"
                                      TextWrapping="NoWrap"
@@ -164,7 +194,7 @@
                                      ScrollViewer.VerticalScrollBarVisibility="Auto"/>
                         </ScrollViewer>
 
-                        <Button Grid.Row="2" x:Name="RestoreWordsDefaultsButton" Content="Restore Defaults" Click="RestoreWordsDefaultsButton_Click" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+                        <Button Grid.Row="3" x:Name="RestoreWordsDefaultsButton" Content="Restore Defaults" Click="RestoreWordsDefaultsButton_Click" HorizontalAlignment="Left" Margin="0,10,0,0"/>
                     </Grid>
                 </Grid>
             </TabViewItem>

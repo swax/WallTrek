@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using WallTrek.Services;
 using WallTrek.Services.ImageGen;
+using WallTrek.Services.Profiles;
 using WallTrek.Services.TextGen;
 using WallTrek.Utilities;
 using Windows.System;
@@ -22,6 +23,8 @@ namespace WallTrek.Views
         private CancellationTokenSource? _cancellationTokenSource;
         private PromptGenerationResult? _currentPromptGenerationResult;
         private readonly Random _random = new();
+        // Guards the profile/word-list quick-switch dropdowns while we populate them in code.
+        private bool _suppressProfileEvents;
 
         public void SetPromptText(string prompt)
         {
@@ -83,6 +86,9 @@ namespace WallTrek.Views
             UpscalerSelectionComboBox.ItemsSource = UpscalerCatalog.Options;
             UpscalerSelectionComboBox.SelectedItem =
                 UpscalerCatalog.FindById(settings.SelectedUpscaler) ?? UpscalerCatalog.Default;
+
+            // Populate the random-prompt profile + word-list quick-switch dropdowns.
+            PopulateProfileSelectors();
 
             UpdateCostEstimate();
         }
@@ -457,6 +463,51 @@ namespace WallTrek.Views
                 Settings.Instance.Save();
             }
             UpdateCostEstimate();
+        }
+
+        // Populates the category-profile and word-list quick-switch dropdowns from the files
+        // on disk and selects the active one saved in settings.
+        private void PopulateProfileSelectors()
+        {
+            _suppressProfileEvents = true;
+
+            var profiles = CategoryProfileService.ListProfiles().ToList();
+            CategoryProfileSelector.ItemsSource = profiles;
+            CategoryProfileSelector.SelectedItem =
+                profiles.FirstOrDefault(p => string.Equals(p, Settings.Instance.SelectedCategoryProfile, StringComparison.OrdinalIgnoreCase))
+                ?? profiles.FirstOrDefault();
+
+            var lists = RandomWordService.ListWordLists().ToList();
+            WordListSelector.ItemsSource = lists;
+            WordListSelector.SelectedItem =
+                lists.FirstOrDefault(l => string.Equals(l, Settings.Instance.SelectedWordList, StringComparison.OrdinalIgnoreCase))
+                ?? lists.FirstOrDefault();
+
+            _suppressProfileEvents = false;
+        }
+
+        // Re-reads the lists/selection (e.g., after returning from Settings, where profiles
+        // and word lists may have been added, renamed, deleted, or re-selected).
+        public void RefreshProfileSelectors() => PopulateProfileSelectors();
+
+        private void CategoryProfileSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressProfileEvents) return;
+            if (CategoryProfileSelector.SelectedItem is string name)
+            {
+                Settings.Instance.SelectedCategoryProfile = name;
+                Settings.Instance.Save();
+            }
+        }
+
+        private void WordListSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressProfileEvents) return;
+            if (WordListSelector.SelectedItem is string name)
+            {
+                Settings.Instance.SelectedWordList = name;
+                Settings.Instance.Save();
+            }
         }
 
         private async void RandomImageButton_Click(object sender, RoutedEventArgs e)

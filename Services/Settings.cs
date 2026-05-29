@@ -68,6 +68,8 @@ namespace WallTrek.Services
         public string SelectedImageModel { get; set; } = "imagen-4.0-generate-001@2K";
         public List<string> SelectedLlmModels { get; set; } = new();
         public List<string> SelectedImageModels { get; set; } = new();
+        public string SelectedCategoryProfile { get; set; } = "Default";
+        public string SelectedWordList { get; set; } = "Default";
         public string SelectedUpscaler { get; set; } = "fast";
         public string? GoogleApiKey { get; set; }
         public string? StabilityApiKey { get; set; }
@@ -207,6 +209,22 @@ namespace WallTrek.Services
         {
             get => _model.SelectedImageModels;
             set => _model.SelectedImageModels = value;
+        }
+
+        // Name (file stem) of the active random-prompt category profile in the
+        // categories folder. See WallTrek.Services.Profiles.CategoryProfileService.
+        public string SelectedCategoryProfile
+        {
+            get => _model.SelectedCategoryProfile;
+            set => _model.SelectedCategoryProfile = value;
+        }
+
+        // Name (file stem) of the active word list in the wordlists folder.
+        // See WallTrek.Services.TextGen.RandomWordService.
+        public string SelectedWordList
+        {
+            get => _model.SelectedWordList;
+            set => _model.SelectedWordList = value;
         }
 
         public string SelectedUpscaler

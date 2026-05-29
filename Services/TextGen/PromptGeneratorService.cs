@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WallTrek.Services;
+using WallTrek.Services.Profiles;
 
 namespace WallTrek.Services.TextGen
 {
@@ -10,7 +11,8 @@ namespace WallTrek.Services.TextGen
     public async Task<PromptGenerationResult?> GenerateRandomPromptAsync(CancellationToken cancellationToken = default, string? llmModelOverride = null)
     {
       var settings = Settings.Instance;
-      var randomPrompts = settings.RandomPrompts;
+      // Categories come from the active profile file in the categories folder.
+      var randomPrompts = CategoryProfileService.LoadActive();
 
       // Create LLM service based on the selected model (or the per-generation random pick).
       var modelId = string.IsNullOrEmpty(llmModelOverride) ? settings.SelectedLlmModel : llmModelOverride;
