@@ -105,7 +105,6 @@
                 <Button x:Name="RandomPromptButton"
                         Content="Generate Prompt"
                         Click="RandomPromptButton_Click"
-                        Style="{StaticResource AccentButtonStyle}"
                         Height="{StaticResource RowControlHeight}"
                         VerticalAlignment="Bottom"
                         MinWidth="120"/>
@@ -194,13 +193,23 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
                 </Grid>
-                <Button x:Name="GenerateButton"
-                        Content="Generate Image"
-                        Click="GenerateButton_Click"
-                        Style="{StaticResource AccentButtonStyle}"
-                        Height="{StaticResource RowControlHeight}"
-                        VerticalAlignment="Bottom"
-                        MinWidth="120"/>
+                <SplitButton x:Name="GenerateButton"
+                             Content="Generate Image"
+                             Click="GenerateButton_Click"
+                             Height="{StaticResource RowControlHeight}"
+                             VerticalAlignment="Bottom"
+                             MinWidth="120">
+                    <SplitButton.Flyout>
+                        <MenuFlyout Placement="Bottom">
+                            <MenuFlyoutItem Text="Generate 2 images" Tag="2" Click="GenerateBatchMenuItem_Click"/>
+                            <MenuFlyoutItem Text="Generate 4 images" Tag="4" Click="GenerateBatchMenuItem_Click"/>
+                            <MenuFlyoutItem Text="Generate 8 images" Tag="8" Click="GenerateBatchMenuItem_Click"/>
+                            <MenuFlyoutItem Text="Generate 16 images" Tag="16" Click="GenerateBatchMenuItem_Click"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="Custom…" Tag="custom" Click="GenerateBatchMenuItem_Click"/>
+                        </MenuFlyout>
+                    </SplitButton.Flyout>
+                </SplitButton>
             </StackPanel>
         </StackPanel>
         
@@ -216,11 +225,21 @@
         <!-- Action Buttons -->
         <StackPanel Grid.Row="3" Spacing="6" HorizontalAlignment="Center" Margin="0,20,0,10">
             <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
-                <Button x:Name="RandomImageButton"
-                        Content="Random Image"
-                        Click="RandomImageButton_Click"
-                        Style="{StaticResource AccentButtonStyle}"
-                        MinWidth="170"/>
+                <SplitButton x:Name="RandomImageButton"
+                             Content="Random Image"
+                             Click="RandomImageButton_Click"
+                             MinWidth="170">
+                    <SplitButton.Flyout>
+                        <MenuFlyout Placement="Bottom">
+                            <MenuFlyoutItem Text="Generate 2 images" Tag="2" Click="RandomBatchMenuItem_Click"/>
+                            <MenuFlyoutItem Text="Generate 4 images" Tag="4" Click="RandomBatchMenuItem_Click"/>
+                            <MenuFlyoutItem Text="Generate 8 images" Tag="8" Click="RandomBatchMenuItem_Click"/>
+                            <MenuFlyoutItem Text="Generate 16 images" Tag="16" Click="RandomBatchMenuItem_Click"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="Custom…" Tag="custom" Click="RandomBatchMenuItem_Click"/>
+                        </MenuFlyout>
+                    </SplitButton.Flyout>
+                </SplitButton>
                 <Button x:Name="CancelButton"
                         Content="Cancel"
                         Click="CancelButton_Click"

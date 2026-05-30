@@ -56,15 +56,7 @@ namespace WallTrek.Views
         public async void TriggerAutoGenerate()
         {
             var settings = Settings.Instance;
-            
-            if (settings.AutoGenerateSource == "random")
-            {
-                // Generate a random prompt first
-                await GenerateRandomPrompt();
-            }
-            
-            // Generate wallpaper using whatever is in the prompt text box
-            await GenerateWallpaper();
+            await RunGenerationBatch(1, randomPromptEachTime: settings.AutoGenerateSource == "random");
         }
 
         private void LoadSettings()
@@ -166,9 +158,20 @@ namespace WallTrek.Views
             return selected[_random.Next(selected.Count)];
         }
 
-        private async void GenerateButton_Click(object sender, RoutedEventArgs e)
+        private async void GenerateButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
         {
-            await GenerateWallpaper();
+            await RunGenerationBatch(1, randomPromptEachTime: false);
+        }
+
+        // Dropdown entries on the Generate Image split button: 2/4/8/16 or a custom count,
+        // all from the prompt currently in the text box.
+        private async void GenerateBatchMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var count = await ResolveBatchCountAsync(sender);
+            if (count > 0)
+            {
+                await RunGenerationBatch(count, randomPromptEachTime: false);
+            }
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
@@ -176,148 +179,63 @@ namespace WallTrek.Views
             _cancellationTokenSource?.Cancel();
         }
         
-        private async Task GenerateWallpaper()
+        // Runs one or more generations as a single cancellable batch. When randomPromptEachTime
+        // is true (the Random Image button) a fresh random prompt is generated before every image;
+        // otherwise each image uses the prompt currently in the text box.
+        private async Task RunGenerationBatch(int count, bool randomPromptEachTime)
         {
-            // Save prompt when generating
-            Settings.Instance.LastPrompt = PromptTextBox.Text;
-            Settings.Instance.Save();
-
-            // Pick the models for this run. When multiple are checked, one is chosen at random.
-            var selectedOption = PickImageModel();
-            var selectedLlm = PickLlmModel();
-
-            // Check the required API key for the selected provider.
-            if (selectedOption.Provider == ImageProvider.Google && string.IsNullOrEmpty(Settings.Instance.GoogleApiKey))
-            {
-                SetStatus("Please set your Google API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
-                NavigateToSettings?.Invoke(this, EventArgs.Empty);
-                return;
-            }
-            else if (selectedOption.Provider == ImageProvider.OpenAI && string.IsNullOrEmpty(Settings.Instance.ApiKey))
-            {
-                SetStatus("Please set your OpenAI API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
-                NavigateToSettings?.Invoke(this, EventArgs.Empty);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(PromptTextBox.Text))
-            {
-                SetStatus("Please enter a prompt for your wallpaper.", Microsoft.UI.Colors.OrangeRed);
-                return;
-            }
+            if (count < 1) count = 1;
 
             _cancellationTokenSource = new CancellationTokenSource();
+            var token = _cancellationTokenSource.Token;
 
+            int succeeded = 0;
             try
             {
                 SetGeneratingState(true);
-                SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
-                Logger.Info($"Generating wallpaper — image: {selectedOption.Id}, LLM: {selectedLlm.ModelId}");
 
-                // If we don't have a cached prompt generation result (e.g., user typed their own prompt),
-                // generate title and tags from the prompt
-                if (_currentPromptGenerationResult == null)
+                for (int i = 0; i < count; i++)
                 {
-                    SetStatus("Generating title and tags...", Microsoft.UI.Colors.DodgerBlue);
-                    var titleService = new TitleService();
-                    var titleResult = await titleService.GenerateTitleAndTagsAsync(PromptTextBox.Text, _cancellationTokenSource.Token, selectedLlm.ModelId);
+                    token.ThrowIfCancellationRequested();
+                    var batchLabel = count > 1 ? $" ({i + 1} of {count})" : "";
 
-                    if (titleResult != null)
+                    if (randomPromptEachTime && !await GenerateRandomPromptCore(token, batchLabel))
                     {
-                        _currentPromptGenerationResult = new PromptGenerationResult
-                        {
-                            Prompt = PromptTextBox.Text,
-                            Title = titleResult.Title,
-                            Tags = titleResult.Tags
-                        };
+                        // Soft failure (e.g. the model returned nothing) — status already set.
+                        break;
+                    }
+
+                    await GenerateWallpaperCore(token, batchLabel);
+                    succeeded++;
+                }
+
+                if (succeeded > 0)
+                {
+                    if (count > 1)
+                    {
+                        SetStatus($"Generated {succeeded} of {count} wallpapers successfully!", Microsoft.UI.Colors.LimeGreen);
+                        ((App)Application.Current).ShowBalloonTip("Wallpapers Generated", $"{succeeded} new wallpapers were generated; the latest is set as your background!");
+                    }
+                    else
+                    {
+                        SetStatus("Wallpaper generated and set successfully!", Microsoft.UI.Colors.LimeGreen);
+                        ((App)Application.Current).ShowBalloonTip("Wallpaper Generated", "New wallpaper has been generated and set as your background!");
                     }
                 }
-
-                if (_currentPromptGenerationResult == null)
-                {
-                    SetStatus("Failed to generate title and tags.", Microsoft.UI.Colors.OrangeRed);
-                    return;
-                }
-
-                SetStatus("Generating wallpaper...", Microsoft.UI.Colors.DodgerBlue);
-
-                var imageGenerator = ImageGenerationServiceFactory.CreateService(selectedOption);
-
-                // Record the models actually used for this generation.
-                var currentLlmModel = selectedLlm.ModelId;
-                var currentImgModel = selectedOption.ModelId;
-
-                if (string.IsNullOrEmpty(currentLlmModel))
-                {
-                    SetStatus("Please select an LLM model.", Microsoft.UI.Colors.OrangeRed);
-                    return;
-                }
-
-                if (string.IsNullOrEmpty(currentImgModel))
-                {
-                    SetStatus("Please select an image model.", Microsoft.UI.Colors.OrangeRed);
-                    return;
-                }
-
-                var tags = _currentPromptGenerationResult.Tags.ToList();
-
-                // Generate image
-                var result = await imageGenerator.GenerateImage(PromptTextBox.Text, _cancellationTokenSource.Token);
-
-                // Upscale image (Stability AI) when a tier other than "None" is selected.
-                var selectedUpscaler = UpscalerSelectionComboBox.SelectedItem as UpscalerOption
-                    ?? UpscalerCatalog.FindById(Settings.Instance.SelectedUpscaler)
-                    ?? UpscalerCatalog.Default;
-
-                if (selectedUpscaler.Mode != UpscaleMode.None && string.IsNullOrEmpty(Settings.Instance.StabilityApiKey))
-                {
-                    Logger.Warn($"Upscaler '{selectedUpscaler.Id}' selected but no Stability API key is set — skipping upscale.");
-                }
-                else if (selectedUpscaler.Mode != UpscaleMode.None)
-                {
-                    try
-                    {
-                        SetStatus($"Upscaling image ({selectedUpscaler.Name})...", Microsoft.UI.Colors.DodgerBlue);
-                        var upscaleService = new UpscaleService(Settings.Instance.StabilityApiKey);
-                        result.ImageData = await upscaleService.UpscaleImageAsync(result.ImageData, selectedUpscaler.Mode, PromptTextBox.Text, _cancellationTokenSource.Token);
-                        tags.Add("stability_ai");
-                        tags.Add("4k");
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error("Image upscaling failed; proceeding with original image", ex);
-                        await DialogHelper.ShowMessageAsync(
-                            this.XamlRoot,
-                            "Image Upscaling Failed",
-                            $"Image upscaling failed with {ex.Message}. Proceeding with original image.");
-                    }
-                }
-
-                // A cancel may have arrived during the synchronous gaps between API calls
-                // (e.g. upscale cropping). Honor it before we persist and swap the wallpaper.
-                _cancellationTokenSource.Token.ThrowIfCancellationRequested();
-
-                // Save image with metadata
-                var fileService = new FileService(Settings.Instance.OutputDirectory);
-                var title = _currentPromptGenerationResult.Title;
-                var tagString = string.Join(", ", tags);
-                var metadata = $"Title: {title}\nPrompt: {PromptTextBox.Text}\nTags: {tagString}";
-                var filePath = fileService.SaveImageWithMetadata(result.ImageData, metadata, title);
-
-                // Register in database
-                var databaseService = new DatabaseService();
-                await databaseService.AddGeneratedImageAsync(filePath, currentLlmModel, currentImgModel, PromptTextBox.Text, title, tagString);
-
-                Wallpaper.Set(filePath);
-
-                SetStatus("Wallpaper generated and set successfully!", Microsoft.UI.Colors.LimeGreen);
-
-                // Show balloon tip notification
-                ((App)Application.Current).ShowBalloonTip("Wallpaper Generated", "New wallpaper has been generated and set as your background!");
             }
             catch (OperationCanceledException)
             {
-                SetStatus("Wallpaper generation cancelled.", Microsoft.UI.Colors.Orange);
+                SetStatus(succeeded > 0
+                    ? $"Cancelled after {succeeded} image{(succeeded == 1 ? "" : "s")}."
+                    : "Wallpaper generation cancelled.", Microsoft.UI.Colors.Orange);
+            }
+            catch (GenerationAbortedException ex)
+            {
+                SetStatus(ex.Message, Microsoft.UI.Colors.OrangeRed);
+                if (ex.NavigateToSettings)
+                {
+                    NavigateToSettings?.Invoke(this, EventArgs.Empty);
+                }
             }
             catch (Exception ex)
             {
@@ -332,17 +250,142 @@ namespace WallTrek.Views
             }
         }
 
+        // Generates a single wallpaper from the current prompt and sets it as the desktop background.
+        // The busy UI, cancellation token, and success notification are owned by the caller so this can
+        // run repeatedly inside a batch. batchLabel is an optional " (n of m)" suffix for status text.
+        private async Task GenerateWallpaperCore(CancellationToken token, string batchLabel = "")
+        {
+            // Save prompt when generating
+            Settings.Instance.LastPrompt = PromptTextBox.Text;
+            Settings.Instance.Save();
+
+            // Pick the models for this run. When multiple are checked, one is chosen at random.
+            var selectedOption = PickImageModel();
+            var selectedLlm = PickLlmModel();
+
+            // Check the required API key for the selected provider.
+            if (selectedOption.Provider == ImageProvider.Google && string.IsNullOrEmpty(Settings.Instance.GoogleApiKey))
+            {
+                throw new GenerationAbortedException("Please set your Google API key in Settings first.", navigateToSettings: true);
+            }
+            else if (selectedOption.Provider == ImageProvider.OpenAI && string.IsNullOrEmpty(Settings.Instance.ApiKey))
+            {
+                throw new GenerationAbortedException("Please set your OpenAI API key in Settings first.", navigateToSettings: true);
+            }
+
+            if (string.IsNullOrWhiteSpace(PromptTextBox.Text))
+            {
+                throw new GenerationAbortedException("Please enter a prompt for your wallpaper.", navigateToSettings: false);
+            }
+
+            SetStatus($"Generating wallpaper{batchLabel}...", Microsoft.UI.Colors.DodgerBlue);
+            Logger.Info($"Generating wallpaper — image: {selectedOption.Id}, LLM: {selectedLlm.ModelId}");
+
+            // If we don't have a cached prompt generation result (e.g., user typed their own prompt),
+            // generate title and tags from the prompt
+            if (_currentPromptGenerationResult == null)
+            {
+                SetStatus($"Generating title and tags{batchLabel}...", Microsoft.UI.Colors.DodgerBlue);
+                var titleService = new TitleService();
+                var titleResult = await titleService.GenerateTitleAndTagsAsync(PromptTextBox.Text, token, selectedLlm.ModelId);
+
+                if (titleResult != null)
+                {
+                    _currentPromptGenerationResult = new PromptGenerationResult
+                    {
+                        Prompt = PromptTextBox.Text,
+                        Title = titleResult.Title,
+                        Tags = titleResult.Tags
+                    };
+                }
+            }
+
+            if (_currentPromptGenerationResult == null)
+            {
+                throw new GenerationAbortedException("Failed to generate title and tags.", navigateToSettings: false);
+            }
+
+            SetStatus($"Generating wallpaper{batchLabel}...", Microsoft.UI.Colors.DodgerBlue);
+
+            var imageGenerator = ImageGenerationServiceFactory.CreateService(selectedOption);
+
+            // Record the models actually used for this generation.
+            var currentLlmModel = selectedLlm.ModelId;
+            var currentImgModel = selectedOption.ModelId;
+
+            if (string.IsNullOrEmpty(currentLlmModel))
+            {
+                throw new GenerationAbortedException("Please select an LLM model.", navigateToSettings: false);
+            }
+
+            if (string.IsNullOrEmpty(currentImgModel))
+            {
+                throw new GenerationAbortedException("Please select an image model.", navigateToSettings: false);
+            }
+
+            var tags = _currentPromptGenerationResult.Tags.ToList();
+
+            // Generate image
+            var result = await imageGenerator.GenerateImage(PromptTextBox.Text, token);
+
+            // Upscale image (Stability AI) when a tier other than "None" is selected.
+            var selectedUpscaler = UpscalerSelectionComboBox.SelectedItem as UpscalerOption
+                ?? UpscalerCatalog.FindById(Settings.Instance.SelectedUpscaler)
+                ?? UpscalerCatalog.Default;
+
+            if (selectedUpscaler.Mode != UpscaleMode.None && string.IsNullOrEmpty(Settings.Instance.StabilityApiKey))
+            {
+                Logger.Warn($"Upscaler '{selectedUpscaler.Id}' selected but no Stability API key is set — skipping upscale.");
+            }
+            else if (selectedUpscaler.Mode != UpscaleMode.None)
+            {
+                try
+                {
+                    SetStatus($"Upscaling image ({selectedUpscaler.Name}){batchLabel}...", Microsoft.UI.Colors.DodgerBlue);
+                    var upscaleService = new UpscaleService(Settings.Instance.StabilityApiKey);
+                    result.ImageData = await upscaleService.UpscaleImageAsync(result.ImageData, selectedUpscaler.Mode, PromptTextBox.Text, token);
+                    tags.Add("stability_ai");
+                    tags.Add("4k");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("Image upscaling failed; proceeding with original image", ex);
+                    await DialogHelper.ShowMessageAsync(
+                        this.XamlRoot,
+                        "Image Upscaling Failed",
+                        $"Image upscaling failed with {ex.Message}. Proceeding with original image.");
+                }
+            }
+
+            // A cancel may have arrived during the synchronous gaps between API calls
+            // (e.g. upscale cropping). Honor it before we persist and swap the wallpaper.
+            token.ThrowIfCancellationRequested();
+
+            // Save image with metadata
+            var fileService = new FileService(Settings.Instance.OutputDirectory);
+            var title = _currentPromptGenerationResult.Title;
+            var tagString = string.Join(", ", tags);
+            var metadata = $"Title: {title}\nPrompt: {PromptTextBox.Text}\nTags: {tagString}";
+            var filePath = fileService.SaveImageWithMetadata(result.ImageData, metadata, title);
+
+            // Register in database
+            var databaseService = new DatabaseService();
+            await databaseService.AddGeneratedImageAsync(filePath, currentLlmModel, currentImgModel, PromptTextBox.Text, title, tagString);
+
+            Wallpaper.Set(filePath);
+        }
+
         private async void OpenFolderButton_Click(object sender, RoutedEventArgs e)
         {
             await Launcher.LaunchFolderPathAsync(Settings.Instance.OutputDirectory);
         }
 
-        private void PromptTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        private async void PromptTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
         {
             if (e.Key == VirtualKey.Enter && !e.KeyStatus.IsMenuKeyDown && GenerateButton.IsEnabled)
             {
                 e.Handled = true;
-                GenerateButton_Click(sender, e);
+                await RunGenerationBatch(1, randomPromptEachTime: false);
             }
         }
 
@@ -384,53 +427,31 @@ namespace WallTrek.Views
 
         private async void RandomPromptButton_Click(object sender, RoutedEventArgs e)
         {
-            await GenerateRandomPrompt();
-        }
-
-        private async Task<bool> GenerateRandomPrompt()
-        {
-            if (string.IsNullOrEmpty(Settings.Instance.ApiKey))
-            {
-                SetStatus("Please set your OpenAI API key in Settings first.", Microsoft.UI.Colors.OrangeRed);
-                NavigateToSettings?.Invoke(this, EventArgs.Empty);
-                return false;
-            }
-
             _cancellationTokenSource = new CancellationTokenSource();
-
             try
             {
                 SetGeneratingState(true);
-                SetStatus("Generating random prompt...", Microsoft.UI.Colors.DodgerBlue);
-
-                var selectedLlm = PickLlmModel();
-                Logger.Info($"Generating random prompt — LLM: {selectedLlm.ModelId}");
-
-                var promptGenerator = new PromptGeneratorService();
-                var result = await promptGenerator.GenerateRandomPromptAsync(_cancellationTokenSource.Token, selectedLlm.ModelId);
-
-                if (result != null)
+                if (await GenerateRandomPromptCore(_cancellationTokenSource.Token))
                 {
-                    _currentPromptGenerationResult = result;
-                    PromptTextBox.Text = result.Prompt;
-                    PropertiesBadgesControl.ItemsSource = result.SelectedProperties;
                     SetStatus("Random prompt generated!", Microsoft.UI.Colors.LimeGreen);
-                    return true;
                 }
-
-                SetStatus("Failed to generate random prompt.", Microsoft.UI.Colors.OrangeRed);
-                return false;
             }
             catch (OperationCanceledException)
             {
                 SetStatus("Random prompt generation cancelled.", Microsoft.UI.Colors.Orange);
-                return false;
+            }
+            catch (GenerationAbortedException ex)
+            {
+                SetStatus(ex.Message, Microsoft.UI.Colors.OrangeRed);
+                if (ex.NavigateToSettings)
+                {
+                    NavigateToSettings?.Invoke(this, EventArgs.Empty);
+                }
             }
             catch (Exception ex)
             {
                 Logger.Error("Random prompt generation failed", ex);
                 SetStatus($"Error generating random prompt: {ex.Message}", Microsoft.UI.Colors.OrangeRed);
-                return false;
             }
             finally
             {
@@ -438,6 +459,36 @@ namespace WallTrek.Views
                 _cancellationTokenSource?.Dispose();
                 _cancellationTokenSource = null;
             }
+        }
+
+        // Generates a random prompt into the text box. The caller owns the busy UI / cancellation token
+        // so this can run standalone (Generate Prompt button) or inside a batch (Random Image).
+        // Returns false on a soft failure (model returned nothing); throws to abort the batch.
+        private async Task<bool> GenerateRandomPromptCore(CancellationToken token, string batchLabel = "")
+        {
+            if (string.IsNullOrEmpty(Settings.Instance.ApiKey))
+            {
+                throw new GenerationAbortedException("Please set your OpenAI API key in Settings first.", navigateToSettings: true);
+            }
+
+            SetStatus($"Generating random prompt{batchLabel}...", Microsoft.UI.Colors.DodgerBlue);
+
+            var selectedLlm = PickLlmModel();
+            Logger.Info($"Generating random prompt — LLM: {selectedLlm.ModelId}");
+
+            var promptGenerator = new PromptGeneratorService();
+            var result = await promptGenerator.GenerateRandomPromptAsync(token, selectedLlm.ModelId);
+
+            if (result != null)
+            {
+                _currentPromptGenerationResult = result;
+                PromptTextBox.Text = result.Prompt;
+                PropertiesBadgesControl.ItemsSource = result.SelectedProperties;
+                return true;
+            }
+
+            SetStatus("Failed to generate random prompt.", Microsoft.UI.Colors.OrangeRed);
+            return false;
         }
 
         private void LlmSelectionControl_SelectionChanged(object? sender, EventArgs e)
@@ -529,12 +580,19 @@ namespace WallTrek.Views
             Settings.Instance.Save();
         }
 
-        private async void RandomImageButton_Click(object sender, RoutedEventArgs e)
+        private async void RandomImageButton_Click(SplitButton sender, SplitButtonClickEventArgs args)
         {
-            // Full pipeline: generate a random prompt, then generate the image from it.
-            if (await GenerateRandomPrompt())
+            await RunGenerationBatch(1, randomPromptEachTime: true);
+        }
+
+        // Dropdown entries on the Random Image split button: 2/4/8/16 or a custom count, each with
+        // its own freshly generated random prompt.
+        private async void RandomBatchMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var count = await ResolveBatchCountAsync(sender);
+            if (count > 0)
             {
-                await GenerateWallpaper();
+                await RunGenerationBatch(count, randomPromptEachTime: true);
             }
         }
 
@@ -559,6 +617,71 @@ namespace WallTrek.Views
 
             RandomImageButton.Content = $"Random Image  (~{total:0}¢)";
             CostEstimateTextBlock.Text = $"≈ {llmCents:0.#}¢ prompt + {imgCents:0.#}¢ image + {up.Cents:0.#}¢ upscale";
+        }
+
+        // Maps a batch menu item's Tag ("2"/"4"/"8"/"16"/"custom") to an image count.
+        // "custom" prompts the user; returns 0 when the user cancels or enters nothing.
+        private async Task<int> ResolveBatchCountAsync(object sender)
+        {
+            if (sender is FrameworkElement element && element.Tag is string tag)
+            {
+                if (string.Equals(tag, "custom", StringComparison.OrdinalIgnoreCase))
+                {
+                    return await PromptForCustomCountAsync();
+                }
+
+                if (int.TryParse(tag, out var count))
+                {
+                    return count;
+                }
+            }
+
+            return 1;
+        }
+
+        // Asks the user how many images to generate via a simple NumberBox dialog.
+        private async Task<int> PromptForCustomCountAsync()
+        {
+            var numberBox = new NumberBox
+            {
+                Minimum = 1,
+                Maximum = 100,
+                Value = 4,
+                SmallChange = 1,
+                LargeChange = 5,
+                SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline,
+                Header = "Number of images to generate (1–100)"
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Generate multiple images",
+                Content = numberBox,
+                PrimaryButtonText = "Generate",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            {
+                return 0;
+            }
+
+            return double.IsNaN(numberBox.Value) ? 0 : (int)numberBox.Value;
+        }
+
+        // Thrown by the generation cores to abort with a user-facing message; NavigateToSettings
+        // requests a jump to the Settings view (e.g. a missing API key).
+        private sealed class GenerationAbortedException : Exception
+        {
+            public bool NavigateToSettings { get; }
+
+            public GenerationAbortedException(string message, bool navigateToSettings)
+                : base(message)
+            {
+                NavigateToSettings = navigateToSettings;
+            }
         }
     }
 }
