@@ -9,6 +9,10 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsPackageType>None</WindowsPackageType>
 
+    <!-- Per-Monitor-V2 DPI awareness (see app.manifest). Required so the unpackaged app
+         renders crisp on scaled displays and so tray-menu cursor coordinates land correctly. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
     <!-- Project Options -->
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>

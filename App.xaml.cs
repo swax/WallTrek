@@ -73,6 +73,11 @@ namespace WallTrek
             {
                 ToolTipText = "WallTrek - AI Wallpaper Generator",
                 ContextFlyout = contextMenu,
+                // Render the menu in its own transparent popup at the cursor. The default
+                // (PopupMenu / Win32 TrackPopupMenuEx) needs a foreground owner window, which we
+                // don't have while minimized to the tray in an unpackaged app — so it falls back to
+                // pinning the menu in the screen corner. SecondWindow positions correctly at the cursor.
+                ContextMenuMode = H.NotifyIcon.ContextMenuMode.SecondWindow,
                 IconSource = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///assets/walltrek.ico"))
             };
 
