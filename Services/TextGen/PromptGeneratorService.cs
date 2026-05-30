@@ -19,7 +19,8 @@ namespace WallTrek.Services.TextGen
       var llmService = LlmServiceFactory.CreateService(
           modelId,
           settings.ApiKey ?? string.Empty,
-          settings.AnthropicApiKey ?? string.Empty
+          settings.AnthropicApiKey ?? string.Empty,
+          settings.GoogleApiKey ?? string.Empty
       );
 
       // Randomize the prompt generation approach

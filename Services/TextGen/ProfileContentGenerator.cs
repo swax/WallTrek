@@ -135,7 +135,8 @@ namespace WallTrek.Services.TextGen
             return LlmServiceFactory.CreateService(
                 modelId,
                 settings.ApiKey ?? string.Empty,
-                settings.AnthropicApiKey ?? string.Empty);
+                settings.AnthropicApiKey ?? string.Empty,
+                settings.GoogleApiKey ?? string.Empty);
         }
 
         private class GeneratedCategorySet

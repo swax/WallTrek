@@ -18,6 +18,8 @@ namespace WallTrek.Services.TextGen
             new() { ModelId = "claude-opus-4-8",           Model = "Claude Opus 4.8",   PerPrompt = "~1.1¢", Cents = 1.1m },
             new() { ModelId = "claude-sonnet-4-6",         Model = "Claude Sonnet 4.6", PerPrompt = "~0.7¢", Cents = 0.7m },
             new() { ModelId = "claude-haiku-4-5-20251001", Model = "Claude Haiku 4.5",  PerPrompt = "~0.2¢", Cents = 0.2m },
+            new() { ModelId = "gemini-3.1-pro-preview",   Model = "Gemini 3 Pro",   PerPrompt = "~0.9¢", Cents = 0.9m },
+            new() { ModelId = "gemini-3-flash-preview", Model = "Gemini 3 Flash", PerPrompt = "~0.1¢", Cents = 0.1m },
         };
 
         public static LlmModelOption Default =>
