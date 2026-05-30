@@ -305,6 +305,11 @@ namespace WallTrek.Views
                 throw new GenerationAbortedException("Failed to generate title and tags.", navigateToSettings: false);
             }
 
+            // Capture into a local. A PromptTextBox.TextChanged (raised deferred by WinUI) can fire
+            // during the GenerateImage await below and null the field out from under us — e.g. when the
+            // TextBox normalizes the prompt's line endings so its text no longer equals the cached Prompt.
+            var promptResult = _currentPromptGenerationResult;
+
             SetStatus($"Generating wallpaper{batchLabel}...", Microsoft.UI.Colors.DodgerBlue);
 
             var imageGenerator = ImageGenerationServiceFactory.CreateService(selectedOption);
@@ -323,7 +328,7 @@ namespace WallTrek.Views
                 throw new GenerationAbortedException("Please select an image model.", navigateToSettings: false);
             }
 
-            var tags = _currentPromptGenerationResult.Tags.ToList();
+            var tags = promptResult.Tags.ToList();
 
             // Generate image
             var result = await imageGenerator.GenerateImage(PromptTextBox.Text, token);
@@ -363,7 +368,7 @@ namespace WallTrek.Views
 
             // Save image with metadata
             var fileService = new FileService(Settings.Instance.OutputDirectory);
-            var title = _currentPromptGenerationResult.Title;
+            var title = promptResult.Title;
             var tagString = string.Join(", ", tags);
             var metadata = $"Title: {title}\nPrompt: {PromptTextBox.Text}\nTags: {tagString}";
             var filePath = fileService.SaveImageWithMetadata(result.ImageData, metadata, title);
@@ -391,13 +396,24 @@ namespace WallTrek.Views
 
         private void PromptTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // Set _currentPromptGenerationResult to null if the current prompt text does not equal the cached prompt
-            if (_currentPromptGenerationResult != null && PromptTextBox.Text != _currentPromptGenerationResult.Prompt)
+            // Drop the cached result only when the prompt was genuinely edited. Compare with newlines
+            // normalized: a TextBox stores '\n' back as '\r', so a freshly injected generated prompt
+            // would otherwise look "changed" and discard the cached title/tags (and trigger a redundant
+            // title-generation call on the next generate).
+            if (_currentPromptGenerationResult != null &&
+                !string.Equals(NormalizeNewlines(PromptTextBox.Text),
+                               NormalizeNewlines(_currentPromptGenerationResult.Prompt),
+                               StringComparison.Ordinal))
             {
                 _currentPromptGenerationResult = null;
                 PropertiesBadgesControl.ItemsSource = null;
             }
         }
+
+        // A WinUI TextBox stores newlines back as '\r', while generated prompts use '\n'. Normalize
+        // both to '\n' so equality checks compare content, not line-ending representation.
+        private static string NormalizeNewlines(string? text) =>
+            (text ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
